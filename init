@@ -1945,6 +1945,9 @@ hq()     { echo "$hi_co$*$m_co"           ;}
 
 get_time() { cut -d" " -f22 /proc/self/stat ;}
 
+show_time() {
+    msg "$(printf "$green%ss$yellow %s" $(get_seconds) "$*")"
+}
 get_seconds() {
     local dt=${1:-$(get_time)}
     printf "%02d" $dt | sed -r 's/(..)$/.\1/'
