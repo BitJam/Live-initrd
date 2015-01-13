@@ -19,8 +19,8 @@ wait_for_user() {
     local nc="[0m"
 
     stty sane < /dev/console
-    local message="$(pf "$_Please_remove_the_disc_close_the_tray_")"
-    local press_enter="$(pf "$_and_press_ENTER_to_continue_")"
+    local message="$(pf "Please remove the disc, close the tray")"
+    local press_enter="$(pf  "and press ENTER to continue")"
     printf "\n\n$rev_cyan$message: $press_enter$nc" > /dev/console
     read x < /dev/console
 }

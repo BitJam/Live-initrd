@@ -4,10 +4,20 @@ Contents of the live antiX initrd.gz file
 
 Notes:
 ------
-The scripts init, bin/umount-live, bin/tsplash have fixed
-English strings in this repo.  Use the Translastions tool
-chain to convert these strings to variables for on the fly
-tranlation.
+The following scripts have English strings in this repo.  Use the
+Translations tool chain to convert the strings in these scripts
+to variables for on the fly translation.
+
+    ejectcd
+    init
+    live-L10n
+    live-disable-services
+    live-init
+    live-init-utils.sh
+    live-restore-services
+    live-shutdown
+    persist-password
+    tsplash
 
 To create an initrd.gz file:
 

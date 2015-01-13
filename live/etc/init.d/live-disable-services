@@ -20,6 +20,7 @@ LEAN_SERVICES="
     acpid
     bootlogs
     bluetooth
+    #cherokee
     cpufrequtils
     cron
     cups
@@ -177,7 +178,7 @@ disable_services() {
         esac
         unused="$unused $name"
     done
-    [ "$unused" ] && echo_live "$_Unused_X_" "$AMBER$unused"
+    [ "$unused" ] && echo_live "  Unused: %s" "$AMBER$unused"
 
 }
 
@@ -189,25 +190,25 @@ load_translation
 {
     # Prevent other messages stepping on ours
     # sleep 2
-    echo_script "$_Customizing_services_" $0
+    echo_script "Customizing services" $0
 
     if [ "$LEAN" ]; then
-        echo_live "$_Disabling_services_X_" "$(paren lean)"
+        echo_live "Disabling services %s" "$(paren lean)"
         disable_services "$LEAN_SERVICES" "rc3.d rc5.d"
     fi
 
     if [ "$MEAN" ]; then
-        echo_live "$_Disabling_network_auto_start_X_" "$(paren mean)"
+        echo_live "Disabling network auto start %s" "$(paren mean)"
         disable_services "$MEAN_SERVICES" "rcS.d"
     fi
 
     if [ "$XTRA_LEAN" ]; then
-        echo_live "$_Disabling_more_services_X_" "$(paren Xtralean)"
+        echo_live "Disabling more services %s" "$(paren Xtralean)"
         disable_services "$XTRA_LEAN_SERVICES" "rcS.d"
     fi
 
     if [ "$NO_DBUS" ]; then
-        echo_live "$_Disabling_dbus_X_" "$(paren nodbus)"
+        echo_live "Disabling dbus %s" "$(paren nodbus)"
         disable_services "$NO_DBUS_SERVICES" "rc3.d rc5.d"
     fi
 

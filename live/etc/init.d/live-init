@@ -87,14 +87,14 @@ save_desktop() {
 
         get_init_param BOOT_UUID
         if [ -z "$BOOT_UUID" ; then
-            echo_live "$_Could_not_find_UUID_of_boot_device_for_remounting_"
-            echo_live "$_Will_not_save_defaults_desktops_"
+            echo_live "Could not find UUID of boot device for remounting"
+            echo_live "Will not save defaults desktops"
             return
         fi
         mkdir -p /live/boot-dev/
         if ! mount -U $BOOT_UUID /live/boot-dev; then
-            echo_live "$_Could_not_remount_boot_device_"
-            echo_live "$_Will_not_save_defaults_desktops_"
+            echo_live "Could not remount boot device"
+            echo_live "Will not save defaults desktops"
             return
         fi
     fi
@@ -109,7 +109,7 @@ save_desktop() {
         to="$to_dir/$user/default-desktop"
         should_copy "$from" "$to" || continue
         mkdir -p $(dirname "$to")
-        echo_live "$_Save_X_desktop_Y_" $(pquote $user) $(pquote $(cat $from))
+        echo_live "Save %s desktop %s" $(pquote $user) $(pquote $(cat $from))
         cp "$from" "$to"
     done
 }
@@ -152,7 +152,7 @@ restore_desktop() {
         [ -e "$sorc"     ] || continue
         local dest=$dest_dir/default-desktop
         should_copy $sorc $dest || continue
-        echo_live "$_restore_X_desktop_to_Y_" $(pquote $user) $(pquote $(cat $sorc))
+        echo_live "restore %s desktop to %s" $(pquote $user) $(pquote $(cat $sorc))
         cp "$sorc" "$dest"
         chown $user:users $dest
     done
@@ -163,12 +163,12 @@ create_home() {
     rmdir $demo 2>/dev/null
 
     if test -d /home && ls /home | grep -v lost+found | grep -q [a-zA-Z0-9]; then
-        echo_live "$_Files_already_exist_under_X_" $(pquote /home)
-        echo_live "$_Not_creating_or_populating_X_" $(pquote $demo)
+        echo_live "Files already exist under %s" $(pquote /home)
+        echo_live "Not creating or populating %s" $(pquote $demo)
         return
     fi
 
-    echo_live "$_Populating_X_directory_" $(pquote $demo)
+    echo_live "Populating %s directory" $(pquote $demo)
 
     mkdir -p $demo
     cp -r -P -p mode /etc/skel/* /etc/skel/.[a-zA-Z]* $demo 2>/dev/null
@@ -184,12 +184,12 @@ localize_skel() {
     [ -d "$l10n_dir" ] || return
 
     if ! [ -d $from ]; then
-        error "$_Unknown_menu_localization_language_X_" $(pquote $1)
-        error "$_Directory_not_found_X_" $from
+        error "Unknown menu localization language %s" $(pquote $1)
+        error "Directory not found %s" $from
         return
     fi
 
-    echo_live "$_Localizing_menus_to_X_in_Y_" $(pquote $1) $(pquote $dest)
+    echo_live "Localizing menus to %s in %s" $(pquote $1) $(pquote $dest)
 
     # Basically a cp -a but make all top level files and directories hidden
     for file in $(ls $from); do
@@ -220,11 +220,11 @@ set_dpi() {
     local dpi=$1
 
     if ! echo $dpi | grep -q "^[[:digit:]]\+$"; then
-        error "$_Invalid_X_boot_parameter_Y_" $(pquote dpi) $(pquote $dpi)
+        error "Invalid %s boot parameter %s" $(pquote dpi) $(pquote $dpi)
         return
     fi
 
-    echo_live "$_Setting_X_to_Y_" $(pquote dpi) $(pquote $dpi)
+    echo_live "Setting %s to %s" $(pquote dpi) $(pquote $dpi)
 
     local file
     for file in /etc/slim.conf /usr/share/slim/themes/antiX/slim-install.conf; do
@@ -244,7 +244,7 @@ set_mirror() {
     case "$mirror" in
         [a-zA-Z][a-zA-Z]) ;;
         *)
-            error "$_Bad_mirror_code_X_expected_two_letters_" $(pquote $mirror)
+            error "Bad mirror code %s (expected two letters)" $(pquote $mirror)
             return;;
     esac
 
@@ -252,13 +252,13 @@ set_mirror() {
 
     first_write $source_list || [ "$CMD_MIRROR" ] || return
 
-    echo_live "$_Localizing_X_to_Y_mirror_" $(pquote $source_list) $(pquote $MIRROR)
+    echo_live "Localizing %s to %s mirror" $(pquote $source_list) $(pquote $MIRROR)
     sed -i "s=/ftp\.\(..\.\)\\?debian\.org/=/ftp.$mirror.debian.org/=" $source_list
 }
 
 set_default_desktop() {
     local desktop=$1 desktop_file=/home/demo/.desktop-session/default-desktop
-    echo_live "$_Setting_X_to_Y_" desktop $(pquote $desktop)
+    echo_live "Setting %s to %s" desktop $(pquote $desktop)
     echo $desktop > $desktop_file
 }
 
@@ -276,12 +276,12 @@ automount_and_fstab() {
 
     # "off" means "off"
     if [ "$CMD_MOUNT" = 'off' -o -n "$AUTOMOUNT_OFF" ]; then
-        echo_live "$_Turning_all_boot_mount_options_off_"
+        echo_live "Turning all boot mount options off"
         rm -f $mount_file
         CMD_MOUNT=
 
         if [ -n "$AUTOMOUNT_OFF" ]; then
-            echo_live "$_Turning_automount_off_"
+            echo_live "Turning automount off"
             AUTOMOUNT=
             rm -f $am_file
         fi
@@ -302,7 +302,7 @@ automount_and_fstab() {
         ,)
             ;;
         *)
-            error "$_Invalid_X_option_Y_" 'mount/automount' $(pquote $CMD_MOUNT)
+            error "Invalid %s option %s" 'mount/automount' $(pquote $CMD_MOUNT)
     esac
 
     if [ -e /etc/fstab  ]; then
@@ -314,9 +314,9 @@ automount_and_fstab() {
     [ "$AUTOMOUNT" ] && touch $am_file
 
     if [ -e $am_file ]; then
-        echo_live "$_Automount_enabled_"
+        echo_live "Automount enabled"
     else
-        echo_live "$_Automount_disabled_"
+        echo_live "Automount disabled"
     fi
 
     # The hp_file is removed by /init
@@ -325,18 +325,18 @@ automount_and_fstab() {
 
     case ",$CMD_FSTAB" in
         ,off)
-            echo_live "$_Disabling_fstab_hotplugging_this_will_also_disable_automount_"
+            echo_live "Disabling fstab hotplugging (this will also disable automount)"
             echo $CMD_FSTAB > $hp_state_file
             rm -f $hp_file  ;;
 
         ,on|,)
-            echo_live "$_Enabling_fstab_hotplugging_"
+            echo_live "Enabling fstab hotplugging"
             rm -f $hp_state_file
             touch $hp_file;;
 
         *)
-            error "$_Bad_fstab_option_X_" $(pquote $CMD_FSTAB)
-            echo_live "$_Enabling_fstab_hotplugging_"
+            error "Bad fstab option %s" $(pquote $CMD_FSTAB)
+            echo_live "Enabling fstab hotplugging"
             touch $hp_file;;
     esac
 }
@@ -344,7 +344,7 @@ automount_and_fstab() {
 #----- Main code starts here --------------------------------------------------
 
 do_start() {
-    echo_script "$_Localizing_configuring_X_Windows_" $0
+    echo_script "Localizing/configuring X-Windows" $0
 
     DISTRO="unknown"
     for live_config in /live/config/init.out /live/config/linuxrc.out; do
@@ -378,10 +378,10 @@ do_start() {
 
     if first_write $kb_file || [ "$DO_XKBD" ]; then
         XKBLAYOUT=${CMD_KBD:-$XKBLAYOUT}
-        [ "$XKBLAYOUT"  ] && echo_live "$_Setting_X_to_Y_" $(pquote xkb-layout)  $(pquote $XKBLAYOUT)
-        [ "$XKBMODEL"   ] && echo_live "$_Setting_X_to_Y_" $(pquote xkb-model)   $(pquote $XKBMODEL)
-        [ "$XKBVARIANT" ] && echo_live "$_Setting_X_to_Y_" $(pquote xkb-variant) $(pquote $XKBVARIANT)
-        [ "$XKBOPTIONS" ] && echo_live "$_Setting_X_to_Y_" $(pquote xkb-options) $(pquote $XKBOPTIONS)
+        [ "$XKBLAYOUT"  ] && echo_live "Setting %s to %s" $(pquote xkb-layout)  $(pquote $XKBLAYOUT)
+        [ "$XKBMODEL"   ] && echo_live "Setting %s to %s" $(pquote xkb-model)   $(pquote $XKBMODEL)
+        [ "$XKBVARIANT" ] && echo_live "Setting %s to %s" $(pquote xkb-variant) $(pquote $XKBVARIANT)
+        [ "$XKBOPTIONS" ] && echo_live "Setting %s to %s" $(pquote xkb-options) $(pquote $XKBOPTIONS)
 
         cat > $kb_file <<Keyboard_Out
 XKBMODEL="${XKBMODEL:=pc105}"
@@ -404,7 +404,7 @@ Keyboard_Out
     xorg_conf=/etc/X11/xorg.conf
 
     if [ "$MAKE_XORG" ]; then
-        echo_live "$_Configuring_X_file_" $(pquote $xorg_conf)
+        echo_live "Configuring %s file" $(pquote $xorg_conf)
         [ -f "$xorg_conf" ] && mv -f $xorg_conf $xorg_conf.bak
         /usr/sbin/buildxconfig $xorg_conf
         sed -i "s/XkbLayout.*/XkbLayout \"$XKBLAYOUT\"/g" $xorg_conf

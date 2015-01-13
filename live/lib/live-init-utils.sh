@@ -104,7 +104,7 @@ error() {
 
     # This is not optimally fast but it allows "Error" to get transated
     # via the normal mechanism.
-    err=$(pf "$_Error_")
+    err=$(pf "Error")
     printf "  ${ERROR_PARAM_COLOR}$err:$LIVE_COLOR $fmt$NO_COLOR\n" "$@"
 }
 
@@ -143,7 +143,7 @@ get_init_lang() {
         return 1
     fi
 
-    echo_live "$_Setting_language_via_X_" $(pquote lang=$lang)
+    echo_live "Setting language via: %s" $(pquote lang=$lang)
     . $lang_file
     return 0
 }
@@ -153,12 +153,12 @@ init_lang_error() {
 
     load_translation live-init-utils
 
-    error "$_Unknown_language_code_X_" $(pquote $lang)
+    error "Unknown language code: %s" $(pquote $lang)
     local vlangs
     for vlang in $(ls $INIT_LANG_DIR | sed 's/\.sh//g'); do
         vlangs="$vlangs $vlang"
     done
-    echo_live "$_Valid_languages_codes_X_" "$NO_COLOR$vlangs";
+    echo_live "Valid languages codes: %s" "$NO_COLOR$vlangs";
 }
 
 #------------------------------------------------------------------------------

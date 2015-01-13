@@ -84,11 +84,11 @@ run_command() {
 }
 
 do_welcome() {
-    do_startup "$(printf  "$_Welcome_to_X_" "${1:-Linux}")"
+    do_startup "$(printf "Welcome to %s!" "${1:-Linux}")"
 }
 
 do_startup() {
-    _first_screen "$1" start_subtitle  "$_Press_X_to_see_boot_process_"  "$_Press_X_to_return_here_"
+    _first_screen "$1" start_subtitle "Press %s to see boot process" "Press %s to return here"
 
 }
 
@@ -145,7 +145,7 @@ do_alert() {
     local title=$(get_string $cmd)
     local cnt=$ITEM_COUNT
     local a_msg=$(get_string "$*")
-    local b_msg=$(get_string  "$_press_enter_")
+    local b_msg=$(get_string "press_enter")
     local width=$(str_len "$a_msg")
     local width2=$(str_len "$b_msg")
     [ $width -lt $width2 ] && width=$width2
@@ -259,31 +259,31 @@ prepend_time() {
 
 get_string() {
     case $1 in
-               title) printf  "$_Welcome_to_X_" Linux                        ;;
-      start_subtitle) printf  "$_Please_wait_while_the_system_boots_up_"       ;;
+               title) printf "Welcome to %s!" Linux                        ;;
+      start_subtitle) printf "Please wait while the system boots up"       ;;
 #       stop_subtitle) printf "Please wait while the system shuts down"     ;;
-        load_modules) printf  "$_Loading_kernel_modules_"                      ;;
-      modules_loaded) printf  "$_Kernel_modules_loaded_"                       ;;
-        find_linuxfs) printf  "$_Looking_for_Linux_filesystem_"                ;;
-        linuxfs_pass) printf  "$_Found_Linux_filesystem_"                      ;;
-        linuxfs_fail) printf  "$_Could_not_find_Linux_filesystem_"             ;;
-      frugal_install) printf  "$_Doing_frugal_install_Please_wait_"      ;;
-         frugal_pass) printf  "$_Frugal_install_successful_"                   ;;
-         frugal_fail) printf  "$_Frugal_install_failed_"                       ;;
-               toram) printf  "$_Copying_filesystem_to_RAM_Please_wait_" ;;
-          toram_pass) printf  "$_Copy_to_RAM_was_successful_"                  ;;
-          toram_fail) printf  "$_Copy_to_RAM_failed_"                          ;;
-           check_md5) printf  "$_Verifying_integrity_Please_wait_"       ;;
-            md5_pass) printf  "$_Integrity_verified_"                          ;;
-            md5_fail) printf  "$_Verification_error_"                         ;;
-            md5_skip) printf  "$_Skipped_verification_"                        ;;
-          start_init) printf  "$_Starting_system_initialization_"              ;;
-           init_pass) printf  "$_System_initialized_"                          ;;
-          start_desk) printf  "$_Starting_desktop_environment_"                ;;
-               fatal) printf  "$_Cant_Boot_"                                  ;;
-           non_fatal) printf  "$_Warning_"                                     ;;
-               input) printf  "$_Input_Required_"                              ;;
-         press_enter) printf  "$_Press_X_to_go_to_the_boot_text_screen_" $(mk_key  "$_Alt_F1_" $NC$white) ;;
+        load_modules) printf "Loading kernel modules"                      ;;
+      modules_loaded) printf "Kernel modules loaded"                       ;;
+        find_linuxfs) printf "Looking for Linux filesystem"                ;;
+        linuxfs_pass) printf "Found Linux filesystem"                      ;;
+        linuxfs_fail) printf "Could not find Linux filesystem"             ;;
+      frugal_install) printf "Doing frugal install.  Please wait ..."      ;;
+         frugal_pass) printf "Frugal install successful"                   ;;
+         frugal_fail) printf "Frugal install failed"                       ;;
+               toram) printf "Copying filesystem to RAM.  Please wait ..." ;;
+          toram_pass) printf "Copy to RAM was successful"                  ;;
+          toram_fail) printf "Copy to RAM failed"                          ;;
+           check_md5) printf "Verifying integrity.  Please wait ..."       ;;
+            md5_pass) printf "Integrity verified"                          ;;
+            md5_fail) printf "Verification error!"                         ;;
+            md5_skip) printf "Skipped verification"                        ;;
+          start_init) printf "Starting system initialization"              ;;
+           init_pass) printf "System initialized"                          ;;
+          start_desk) printf "Starting desktop environment"                ;;
+               fatal) printf "Can't Boot"                                  ;;
+           non_fatal) printf "Warning"                                     ;;
+               input) printf "Input Required"                              ;;
+         press_enter) printf "Press %s to go to the boot text screen" $(mk_key "Alt-F1" $NC$white) ;;
                    *) printf "$@"                                               ;;
     esac
 }

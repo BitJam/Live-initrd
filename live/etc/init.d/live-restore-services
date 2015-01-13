@@ -54,7 +54,7 @@ start_init_logging
 load_translation
 
 {
-    echo_script "$_restoring_service_links_" $0
+    echo_script "restoring service links" $0
 
      for rc_dir in $from/rc?.d; do
         [ -d "$rc_dir" ] || continue
