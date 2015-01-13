@@ -1,7 +1,7 @@
-#!/live/bin/sh
+#!/bin/sh
 
 for param in $(cat /proc/cmdline); do
-    case "$param" in
+    case $param in
                bootdir=*|bdir=*) ;;
     bootlabel=*|blabel=*|blab=*) ;;
              bootuuid=*|buuid=*) ;;

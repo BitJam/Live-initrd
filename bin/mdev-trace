@@ -1,5 +1,5 @@
-#!/live/bin/sh
-PATH=/live/bin
+#!/bin/sh
+PATH=/bin
 
 trace=/live/config/mdev-trace.out
 

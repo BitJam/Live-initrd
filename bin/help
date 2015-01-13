@@ -1,4 +1,4 @@
-#!/live/bin/sh
+#!/bin/sh
 
 EXCLUDE="\[|ash|addgroup|adduser|bbconfig|busybox|chpassed|conspy|cryptpw|"
 EXCLUDE=$EXCLUDE"cttyhack|delgroup|deluser|false|gfxsave.sh|login|"
@@ -9,7 +9,7 @@ EXCLUDE=$EXCLUDE"auto-load-modules|bb-chroot|killall5|umount-|live-chroot|"
 EXCLUDE=$EXCLUDE"load-live-modules|usb-report.sh|usb2-re-enable"
 
 main() {
-    local dir=${1:-/live/bin}
+    local dir=${1:-/bin}
     set_color
 
     echo -e "$white\nAvailable commands:"

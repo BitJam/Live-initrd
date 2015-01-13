@@ -1,5 +1,5 @@
-#!/live/bin/sh
-PATH=/live/bin
+#!/bin/sh
+PATH=/bin
 
 ps_no_kthreads() {
     local pid user time cmnd start_t

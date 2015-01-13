@@ -1,6 +1,6 @@
-#!/live/bin/sh
+#!/bin/sh
 
-PATH=/live/bin
+PATH=/bin
 
 e=$(printf "\e")
  cyan="$e[0;36m";     red="$e[0;31m";      nc="$e[0m"

@@ -1,8 +1,9 @@
-#!/live/bin/sh
+#!/bin/sh
 
 ME=${0##*/}
 
-[ -x /live/bin/busybox ] && PATH=/live/bin
+[ -x /live/bin/busybox -a -z "$NO_LOOP" ] \
+    && PATH=/live/bin NO_LOOP=true exec /live/bin/sh $0 "$@"
 
 old_stty=$(stty -g)
 
