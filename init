@@ -29,7 +29,7 @@
 
           LIVE_DIR="/live"
          FINAL_DIR="/live"
-          LIVE_BIN="$LIVE_DIR/bin"
+          LIVE_BIN="/bin"
 
           AUFS_DIR="aufs"
 
@@ -192,7 +192,7 @@ main_wrapper() {
     
     breakpoint 8 "before running init.d scripts"
 
-    PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/live/bin
+    PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin
     run_init_scripts $NEW_ROOT $LIVE_SCRIPTS
     PATH=$LIVE_BIN
 
@@ -270,7 +270,7 @@ main_core() {
     [ "$DID_ISO" ] && REMASTERABLE=
 
     BOOT_UUID=$(device_uuid $SQFILE_DEV)
-    vmsg 6 "boot device uuid: $BOOT_UUID"
+    [ "$BOOT_UUID" ] && vmsg 6 "boot device uuid: $BOOT_UUID"
     breakpoint 3 "after mounting boot device"
 
     mount -o remount,rw $SQFILE_DEV 2>/dev/null
@@ -359,14 +359,6 @@ main_core() {
     write_output_files     $OUTPUT_DIR
     old_write_output_files $OUTPUT_DIR
 
-#--    # FIXME: remove after syslinux, isolinux are updated in iso file
-#--    local boot_dir=/live/boot-dev/boot/syslinux
-#--    if [ -n "$REMASTERABLE" -a -d $boot_dir -a ! -e $boot_dir/back640.jpg ]; then
-#--        msg "Update bootloader"
-#--        cp -a /live/syslinux/* $boot_dir
-#--        rm -r /live/syslinux
-#--    fi
-
     # FIXME: since we are using the real persist-save we can do these either
     # before or after we run the init scripts!
 
@@ -407,7 +399,7 @@ make_nodes() {
 
 read_distro_release() {
     local file=$1
-    sed -r -n 's/^\s*([A-Z0-9_]+=)/DISTRO_\1/p' $file
+    sed -r -n 's/^\s*([A-Z0-9_]+=)/DISTRO_\1/p' $file >> $MY_LOG
     eval $(sed -r -n 's/^\s*([A-Z0-9_]+=)/DISTRO_\1/p' $file)
 }
 
@@ -3996,8 +3988,8 @@ late_umount() {
 
 prepare_switch_root() {
     local new_root=$1  live_dir=$2  final_live=$3
-
     local new_live=$new_root${final_live:-$live_dir}
+    local root_dir=""
 
     # FIXME!
     # new_live=$new_root/run/initramfs
@@ -4030,18 +4022,19 @@ prepare_switch_root() {
     done
 
     # Remove libs, modules, and programs we won't need to save a little RAM
-    rm -f $(find $live_dir/lib -type f -o -type l | egrep -v "/(live-init|ld|libc|libm)[.-][^/]*$")
+    rm -f $(find $root_dir/lib -type f -o -type l | egrep -v "/(live-init|ld|libc|libm)[.-][^/]*$")
 
-    (cd $live_dir/bin && rm -rf fbcondecor_helper ntfs-3g)
-    rm -rf /$live_dir/etc/splash
+    (cd $root_dir/bin && rm -rf fbcondecor_helper ntfs-3g)
+    rm -rf /$root_dir/etc/splash
 
     # Work around a bug in fbcondecor_helper
-    local fbsys=$live_dir/lib/splash/sys
+    local fbsys=$root_dir/lib/splash/sys
     mountpoint $fbsys &>/dev/null && umount $fbsys
 
     local dir old new
     for dir in bin config etc lib locale; do
-        old=$live_dir/$dir
+        old=$root_dir/$dir
+        test -e $old || old=$live_dir/$dir
         new=$new_live/$dir
         mkdir -p $new
         cp -a $old/* $new
