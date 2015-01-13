@@ -1,0 +1,27 @@
+#!/bin/bash
+
+### BEGIN INIT INFO
+# Provides:          persist-autosave
+# Required-Start:
+# Required-Stop:
+# Should-Start:
+# Default-Start:     3 4 5
+# Default-Stop:      0 1 6
+# Short-Description:
+# Description:       Save persistent root filesystem changes at shutdown
+### END INIT INFO
+
+case "$1" in
+    start)
+        /usr/local/bin/persist-config --cli --startup --nolog
+        ;;
+    stop)
+        /usr/local/bin/persist-config --cli --shutdown --nolog
+        ;;
+    *)
+        echo "Usage: $0 {start|stop}"
+        ;;
+esac
+
+exit 0
+

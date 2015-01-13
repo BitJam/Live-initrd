@@ -1,0 +1,102 @@
+#!/bin/sh
+
+### BEGIN INIT INFO
+# Provides: live-shutdown
+# Required-Start:
+# Required-Stop:
+# Should-Start:
+# Should-Stop:
+# Default-Start:
+# Default-Stop: 0 6
+# Short-Description: Save live persistent information
+# Description:
+### END INIT INFO
+
+INIT_OUT=/live/config/init.out
+
+#-jbb For debugging
+#  CMDLINE=${CMDLINE:-$(cat /proc/cmdline)}
+#  for param in $CMDLINE; do
+#      value=${param#*=}
+#      case "$param" in
+#      esac
+#  done
+
+PATH="/bin:/sbin:/usr/bin:/usr/sbin:/usr/X11R6/bin:/live/bin"; export PATH
+
+umask 022
+
+#. /usr/share/antiX/lib/live-init-utils.sh
+. /live/lib/live-init-utils.sh
+
+start_init_logging
+load_translation
+
+main() {
+    case $1 in
+        start) exit 0      ;;
+         stop) do_shutdown ;;
+            *) echo "Usage: $0 stop"
+               exit 1      ;;
+    esac
+}
+
+get_init_param() { eval $(grep ^$1= $INIT_OUT) ;}
+
+do_shutdown() {
+
+    echo_script "$_Possibly_save_persistent_information_" $0
+
+    save_desktop
+
+    p_config=/usr/local/bin/persist-config
+    test -x $p_config && $p_config --cli --shutdown
+}
+
+save_desktop() {
+    get_init_param REMASTERABLE
+    [ "$REMASTERABLE" ] || return
+
+    get_init_param DID_TORAM
+    if [ "$DID_TORAM" ]; then
+
+        get_init_param BOOT_UUID
+        if [ -z "$BOOT_UUID" ; then
+            echo_live "$_Could_not_find_UUID_of_boot_device_for_remounting_"
+            echo_live "$_Will_not_save_defaults_desktops_"
+            return
+        fi
+        mkdir -p /live/boot-dev/
+        if ! mount -U $BOOT_UUID /live/boot-dev; then
+            echo_live "$_Could_not_remount_boot_device_"
+            echo_live "$_Will_not_save_defaults_desktops_"
+            return
+        fi
+    fi
+
+    get_init_param SQFILE_PATH
+    local to_dir=/live/boot-dev/$SQFILE_PATH/personalize/by-user
+
+    local user from to
+    for user in $(ls /home); do
+        from="/home/$user/.desktop-session/default-desktop"
+        [ -e "$from" ] || continue
+        to="$to_dir/$user/default-desktop"
+        should_copy "$from" "$to" || continue
+        mkdir -p $(dirname "$to")
+        echo_live "$_Save_X_desktop_Y_" $(pquote $user) $(pquote $(cat $from))
+        cp "$from" "$to"
+    done
+}
+
+should_copy() {
+    local from="$1"  to="$2"
+    [ -e "$from" ] || return 1
+    [ -e "$to"   ] || return 0
+    diff -q "$from" "$to" 1>/dev/null 2>/dev/null && return 1
+    return 0
+}
+
+main "$@" 2>&1 | tee -a $INIT_LOG_FILE
+
+exit 0
