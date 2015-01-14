@@ -244,12 +244,11 @@ main_core() {
     breakpoint 1 "before loading modules"
 
     start_hotplug "$DO_HOTPLUG" "$TRACE_LOAD"
-    load_kernel_modules "$NO_LOAD" "$DO_LOAD"
 
     do_welcome "$DISTRO_PRETTY_NAME" "$VERSION" "$VERSION_DATE"
-
     show_bootcodes "$UNKNOWN_BOOTCODES"
     show_integer_errors "$INTEGER_ERRORS"
+    load_kernel_modules "$NO_LOAD" "$DO_LOAD"
 
     : ${SQFILE_FILE:=$DEFAULT_SQFILE}
     : ${SQFILE_NAME:=${SQFILE_FILE##*/}}
@@ -890,7 +889,7 @@ load_kernel_modules() {
             modprobe -q -b $module
         done
     fi
-    autoload_modules 6
+    autoload_modules 5
 }
 
 load_all_modules() {
@@ -909,7 +908,7 @@ autoload_modules() {
 
     [ "$DISABLE_LOAD" ] && return
 
-    [ "$verb" ] && vmsg $verb "Load hardware specific modules"
+    [ "$verb" ] && vmsg $verb "Loading hardware specific modules ..."
 
     local alias_file alias
     find /sys/devices -name modalias | while read alias_file; do
