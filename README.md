@@ -21,7 +21,8 @@ to variables for on the fly translation.
 
 To create an initrd.gz file:
 
-    find . | cpio -o -H newc | gzip -9 > ../initrd.gz
+    IGNORE="/\..*\.swp$$|README.md|^./\.git|Private"
+    find . | grep -v "$IGNORE" | cpio -o -H newc | gzip -9 > ../initrd.gz
 
 To unpack an initrd.gz file:
 
