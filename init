@@ -433,6 +433,8 @@ read_cmdline_params()
         value=${param#*=}
 
         case $param in
+                       poweroff) poweroff -f -n                                  ;;
+                         reboot) reboot -f -n                                    ;;
                bootdir=*|bdir=*) BOOT_DIR=$value                                 ;;
     bootlabel=*|blabel=*|blab=*) BOOT_ID=label=$value                            ;;
              bootuuid=*|buuid=*) BOOT_ID=uuid=$value                             ;;
