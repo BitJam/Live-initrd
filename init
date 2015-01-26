@@ -3293,7 +3293,7 @@ _persist_makefs() {
     #[ "$needed" ] && quit=
 
     heading "create %s persistence file" "$(fq $file)"
-    vmsg 1 "Default size: %s Meg.  Default type: %s" $(nq $default_size) $(pq ext3)
+    vmsg 1 "Default size: %s Meg.  Filesystem type: %s" $(nq $default_size) $(pq ext4)
     warn "Warning: this operation can take a few minutes"
 
     if [ "$AUTO_MAKE_FS" ]; then
