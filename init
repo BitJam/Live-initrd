@@ -410,7 +410,7 @@ make_nodes() {
 
 read_distro_release() {
     local file=$1
-    sed -r -n 's/^\s*([A-Z0-9_]+=)/DISTRO_\1/p' $file >> $MY_LOG
+    #sed -r -n 's/^\s*([A-Z0-9_]+=)/DISTRO_\1/p' $file >> $MY_LOG
     eval $(sed -r -n 's/^\s*([A-Z0-9_]+=)/DISTRO_\1/p' $file)
 }
 
