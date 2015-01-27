@@ -91,6 +91,8 @@ MKFS_FREE_MARGIN=20
 
       LIVE_SCRIPTS="live-L10n live-init persist-password persist-autosave live-disable-services"
 
+      LAST_BP_TIME=0
+
 set_live_dirs() {
     local dir=$1
 
@@ -1925,7 +1927,10 @@ breakpoint() {
         fi
 
         [ "$DB_PLUS" ] || return
-        vmsg 9 "$green@bp$cyan[$num_co$bp$m_co]$hi_co $(get_seconds)s$m_co: $desc"
+        local now=$(get_time)
+        local delta=$(get_seconds $((now - LAST_BP_TIME)))
+        vmsg 9 "$green@bp$cyan[$num_co$bp$m_co]$hi_co $(get_seconds $now)s ($delta)$m_co: $desc"
+        LAST_BP_TIME=$now
         [ "$TEST_FATAL" ] && [ "$TEST_FATAL" = "$bp" ] && non_fatal "Test at bp=$bp $desc"
         return
     fi
@@ -1937,7 +1942,7 @@ breakpoint() {
     local bp_time_1=$(get_time)
     env PS1="${green}bp $red$bp$cyan>$nc_co " BP=$bp PATH=$LIVE_BIN:$PATH \
         setsid cttyhack sh 17>/dev/null
-    local bp_time_2=$(get_time)
+    bp_time_2=$(get_time)
     time_0=$((time_0 + bp_time_2 - bp_time_1))
     echo
 }
@@ -1971,6 +1976,7 @@ get_time() { cut -d" " -f22 /proc/self/stat ;}
 show_time() {
     msg "$(printf "$green%ss$yellow %s" $(get_seconds) "$*")"
 }
+
 get_seconds() {
     local dt=${1:-$(get_time)}
     printf "%02d" $dt | sed -r 's/(..)$/.\1/'
