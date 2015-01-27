@@ -3956,7 +3956,7 @@ write_log_files() {
     local my_log=$1 final_log=$2 e=$(printf "\e")
     mkdir -p $(dirname $final_log)
     sed -r "s/$e\[[0-9;]+[mK]//g" $my_log > $final_log
-    cp  $my_log $final_log.color
+    cp $my_log $final_log.color
 }
 
 find_init_prog() {
