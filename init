@@ -24,8 +24,8 @@
 # over-ridden by boot parameters.  Use 1.sh to override boot parameters
 # that you don't want users to be able to adjust.
 
-                VERSION="7.12.00"
-           VERSION_DATE="Thu Nov  6 21:00:00 MST 2014"
+                VERSION="7.14.00"
+           VERSION_DATE="Mon Jan 26 20:54:50 MST 2015"
               DEVELOPER="BitJam"
   DISTRO_BUG_REPORT_URL="http://antix.freeforums.org"
 
