@@ -890,10 +890,7 @@ load_kernel_modules() {
     depmod &>/dev/null
 
     # These ones must be loaded before the others
-    local module
-    for module in $LOAD_FIRST; do
-        modprobe -q $BLACKLIST_OPT $module 2>/dev/null
-    done
+    echo $LOAD_FIRST | xargs modprobe -q -a $BLACKLIST_OPT 2>/dev/null
 
     if [ -r $file -a -n "$do_load" ]; then
         vmsg 7 'Load modules from file %s' "$(fq $file)"
@@ -909,14 +906,23 @@ load_kernel_modules() {
               *) modprobe -q $module || warn  "Could not load module %s" $(pqw $module);;
         esac
     done
-
 }
 
+#FIXME: enable extra debugging
 load_all_modules() {
     local subdir=$1
     msg "Loading all live modules"
+    debug_cmd lsmod
+    debug_cmd lspci
+    DEBUG_MODULES=true
     find $MOD_DIR/$subdir -name "*.ko" | sed -e 's=.*/==' -e 's/\.ko$//' \
-        | xargs modprobe -q $BLACKLIST_OPT
+        | xargs modprobe -q -a $BLACKLIST_OPT
+}
+
+debug_cmd() {
+    echo "== $*"                          >> $MY_LOG
+    "$@"                                  >> $MY_LOG
+    echo "==============================" >> $MY_LOG
 }
 
 autoload_modules() {
@@ -926,12 +932,12 @@ autoload_modules() {
 
     [ "$verb" ] && vmsg $verb "Loading hardware specific modules ..."
 
-    #find /sys/devices -name uevent -exec grep -h ^MODALIAS= '{}' + 2>/dev/null | sort -u \
-    #    | cut -c 10- | xargs modprobe -a -q $BLACKLIST_OPT
-    #return
+    find /sys/devices -name uevent -exec sed -n 's/^MODALIAS=//p' '{}' + 2>/dev/null \
+        | sort -u | xargs modprobe -a -q $BLACKLIST_OPT
+    return
 
-    find /sys/devices -name modalias -exec cat '{}' + | sort -u \
-         | xargs modprobe -a -q $BLACKLIST_OPT 2>/dev/null
+    find /sys/devices -name modalias -exec cat '{}' + 2>/dev/null | sort -u \
+        | xargs modprobe -a -q $BLACKLIST_OPT 2>/dev/null
     return
 
     # local alias_file alias
