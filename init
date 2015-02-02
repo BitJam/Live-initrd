@@ -74,7 +74,7 @@
       LINUXFS_NAME=linuxfs
 
         BLACK_LIST=
-   BLACK_LIST_FILE=/etc/modprobe.d/initrd.blacklist
+   BLACK_LIST_FILE=/etc/modprobe.d/initrd.conf
 
            DO_LOAD=
       DISABLE_LOAD=
@@ -526,7 +526,7 @@ read_cmdline_params()
                          load=*) MODULE_LIST=$MODULE_LIST,$value                 ;;
 #                           load) DO_LOAD=true                                    ;;
                           noload) DISABLE_LOAD=true                              ;;
-                     blacklist=*) BLACK_LIST=$BLACK_LIST,$value                  ;;
+                bl=*|blacklist=*) BLACK_LIST=$BLACK_LIST,$value                  ;;
 
                       nohotplug) DO_HOTPLUG=                                     ;;
                       traceload) TRACE_LOAD=true                                 ;;
@@ -894,7 +894,7 @@ load_kernel_modules() {
     if [ "$black_list" ]; then
         black_list=$(echo $black_list | sed 's/VIDEO/nouveau,nvidia,i915,radeon/');
         mkdir -p /etc/modprobe.d/
-        echo $black_list | sed 's/,/\n/g' | sed -r 's/^([a-z])/black_list \1/' >> $BLACK_LIST_FILE
+        echo $black_list | sed 's/,/\n/g' | sed -r 's/^([a-z])/blacklist \1/' >> $BLACK_LIST_FILE
         BLACKLIST_OPT=-b
     fi
 
