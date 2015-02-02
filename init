@@ -91,6 +91,7 @@ MKFS_FREE_MARGIN=20
       MAX_MKFS_SIZE=${MKFS_SIZES##* }
 
       LIVE_SCRIPTS="live-L10n live-init persist-password persist-autosave live-disable-services"
+      LIVE_SCRIPTS="live-L10n live-init live-disable-services"
 
       LAST_BP_TIME=0
 
@@ -203,6 +204,9 @@ main_wrapper() {
 #--    #----------------------------------------------------------------
 
     breakpoint 8 "before running init.d scripts"
+
+    [ "$PERSIST_ROOT" ] && LIVE_SCRIPTS="$LIVE_SCRIPTS persist-password"
+    [ "$PERSIST_ROOT" -a -z "$STATIC_ROOT" ] && LIVE_SCRIPTS="$LIVE_SCRIPTS persist-autosave"
 
     PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin
     run_init_scripts $NEW_ROOT $LIVE_SCRIPTS
