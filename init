@@ -298,6 +298,11 @@ main_core() {
 
     mount_linuxfs "$SQFS_MP" "$SQFILE_FULL" "$WRAP_FILE_MP"
 
+    if [ "$LOAD_ALL_MODULES" ]; then
+        debug_cmd find /sys/devices -name uevent -exec sed -n 's/^MODALIAS=//p' '{}' + 2>/dev/null | sort -u
+        debug_cmd lsmod
+    fi
+
     prep_ld_path
 
     RW_MODE=rw
@@ -903,28 +908,26 @@ load_kernel_modules() {
 
     autoload_modules 5
 
-    for module in $(echo $list | sed 's/,/ /g'); do
+    for module in ${list//,/ }; do
         case $module in
-            all) load_all_modules live/ ;;
-            ALL) load_all_modules       ;;
+            all) load_all_modules ;;
               *) modprobe -q $module || warn  "Could not load module %s" $(pqw $module);;
         esac
     done
 }
 
-#FIXME: enable extra debugging
 load_all_modules() {
     local subdir=$1
     msg "Loading all live modules"
     debug_cmd lsmod
     debug_cmd lspci
-    DEBUG_MODULES=true
+    LOAD_ALL_MODULES=true
     find $MOD_DIR/$subdir -name "*.ko" | sed -e 's=.*/==' -e 's/\.ko$//' \
         | xargs modprobe -q -a $BLACKLIST_OPT
 }
 
 debug_cmd() {
-    echo "== $*"                          >> $MY_LOG
+    echo "==== $*"                        >> $MY_LOG
     "$@"                                  >> $MY_LOG
     echo "==============================" >> $MY_LOG
 }
@@ -1934,6 +1937,14 @@ breakpoint() {
         msg "$bold_co$DBV=$white$val"
     fi
 
+    if [ "$DB_PLUS" ]; then
+        local now=$(get_time)
+        local delta=$(get_seconds $((now - LAST_BP_TIME)))
+        vmsg 9 "$green@bp$cyan[$num_co$bp$m_co]$hi_co $(get_seconds $now)s ($delta)$m_co: $desc"
+        LAST_BP_TIME=$now
+        [ "$TEST_FATAL" ] && [ "$TEST_FATAL" = "$bp" ] && non_fatal "Test at bp=$bp $desc"
+    fi
+
     if ! should_break_at $bp; then
 
         if [ "$TEST_ERRORS" ]; then
@@ -1942,12 +1953,6 @@ breakpoint() {
             msg "normal message two"
         fi
 
-        [ "$DB_PLUS" ] || return
-        local now=$(get_time)
-        local delta=$(get_seconds $((now - LAST_BP_TIME)))
-        vmsg 9 "$green@bp$cyan[$num_co$bp$m_co]$hi_co $(get_seconds $now)s ($delta)$m_co: $desc"
-        LAST_BP_TIME=$now
-        [ "$TEST_FATAL" ] && [ "$TEST_FATAL" = "$bp" ] && non_fatal "Test at bp=$bp $desc"
         return
     fi
 
