@@ -501,6 +501,7 @@ read_cmdline_params()
                          doxtra) DO_XTRA=true                                    ;;
 
                             db+) DO_AUTO_LOGIN=true; DO_FANCY=true; DB_PLUS=true ;;
+                           db++)                                                 ;;
 
             fancyprompt|fprompt) DO_FANCY=true                                   ;;
                autologin|alogin) DO_AUTO_LOGIN=true                              ;;
