@@ -467,7 +467,7 @@ read_cmdline_params()
 
  persistretry=*|pretry=*|ptry=*) valid_int PERSIST_RETRY $param                  ;;
 
-                          dbv=*) DBV=$value ;;
+                          dbv=*) DBV=$value                                      ;;
                         fneed=*) FRUGAL_NEEDED=$value                            ;;
                          fforce) FORCE_FRUGAL=true                               ;;
                          frugal) FRUGAL_ID=label=$DISTRO_NAME-Frugal ; FRUGAL=true                   ;;
