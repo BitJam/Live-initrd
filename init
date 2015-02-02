@@ -939,9 +939,9 @@ autoload_modules() {
 
     [ "$verb" ] && vmsg $verb "Loading hardware specific modules ..."
 
-    find /sys/devices -name uevent -exec sed -n 's/^MODALIAS=//p' '{}' + 2>/dev/null \
-        | sort -u | xargs modprobe -a -q $BLACKLIST_OPT
-    return
+    #find /sys/devices -name uevent -exec sed -n 's/^MODALIAS=//p' '{}' + 2>/dev/null \
+    #    | sort -u | xargs modprobe -a -q $BLACKLIST_OPT
+    #return
 
     find /sys/devices -name modalias -exec cat '{}' + 2>/dev/null | sort -u \
         | xargs modprobe -a -q $BLACKLIST_OPT 2>/dev/null
