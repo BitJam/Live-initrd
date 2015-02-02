@@ -73,7 +73,9 @@
           VID_NAME=VID
       LINUXFS_NAME=linuxfs
 
-      NO_LOAD_LIST=
+        BLACK_LIST=
+   BLACK_LIST_FILE=/etc/modprobe.d/initrd.blacklist
+
            DO_LOAD=
       DISABLE_LOAD=
 
@@ -259,7 +261,7 @@ main_core() {
     show_integer_errors "$INTEGER_ERRORS"
 
     breakpoint 2 "before loading modules"
-    load_kernel_modules "$NO_LOAD_LIST" "$DO_LOAD" "$MODULE_LIST"
+    load_kernel_modules "$BLACK_LIST" "$DO_LOAD" "$MODULE_LIST"
 
     : ${SQFILE_FILE:=$DEFAULT_SQFILE}
     : ${SQFILE_NAME:=${SQFILE_FILE##*/}}
@@ -359,6 +361,9 @@ main_core() {
     [ "$SYSTEM_D" ] && msg "Detected systemd init system"
 
     breakpoint 6 "after mounting aufs"
+
+    rm -f $NEW_ROOT$BLACK_LIST_FILE
+    [ -e $BLACK_LIST_FILE ] && cp $BLACK_LIST_FILE $NEW_ROOT$BLACK_LIST_FILE
 
     [ "$WANT_HOMEFS" ] && copy_homefs $PERSIST_FULL_PATH
 
@@ -520,9 +525,8 @@ read_cmdline_params()
 
                          load=*) MODULE_LIST=$MODULE_LIST,$value                 ;;
 #                           load) DO_LOAD=true                                    ;;
-#                         noload) DO_LOAD=                                        ;;
                           noload) DISABLE_LOAD=true                              ;;
-                        noload=*) NO_LOAD_LIST=$NO_LOAD_LIST,$value              ;;
+                     blacklist=*) BLACK_LIST=$BLACK_LIST,$value                  ;;
 
                       nohotplug) DO_HOTPLUG=                                     ;;
                       traceload) TRACE_LOAD=true                                 ;;
@@ -885,12 +889,12 @@ disable_hcd() {
 }
 
 load_kernel_modules() {
-    local no_load=$1 do_load=$2  list=$3 file=$CUSTOM_DIR/$DISTRO_NAME/modules.load
+    local black_list=$1 do_load=$2  list=$3 file=$CUSTOM_DIR/$DISTRO_NAME/modules.load
 
-    if [ "$no_load" ]; then
-        no_load=$(echo $no_load | sed 's/VIDEO/nouveau,nvidia,i915,radeon/');
+    if [ "$black_list" ]; then
+        black_list=$(echo $black_list | sed 's/VIDEO/nouveau,nvidia,i915,radeon/');
         mkdir -p /etc/modprobe.d/
-        echo $no_load | sed 's/,/\n/g' | sed -r 's/^([a-z])/blacklist \1/' >> /etc/modprobe.d/initrd.conf
+        echo $black_list | sed 's/,/\n/g' | sed -r 's/^([a-z])/black_list \1/' >> $BLACK_LIST_FILE
         BLACKLIST_OPT=-b
     fi
 
