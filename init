@@ -1680,7 +1680,7 @@ mount_aufs() {
     fi
 
     # Do the actual aufs mount
-    vmsg 6 "Mount %s at %s" 'aufs' "$(fq aufs_mp)"
+    vmsg 6 "Mount %s at %s" 'aufs' "$(fq $aufs_mp)"
 
     log_cmd mount -t aufs -o "br:$aufs_arg" $aufs_mp $aufs_mp \
         || fatal "Could not mount %s" aufs
