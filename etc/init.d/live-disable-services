@@ -139,7 +139,7 @@ disable_services() {
                 [ -e "$slink" ] || continue
                 mv -f $slink $dest
 
-                [ "$DEBUGGING" ] || continue
+                #[ "$DEBUGGING" ] || continue
 
                 [ "$moved" ] || echo -n "    "
 
@@ -164,10 +164,9 @@ disable_services() {
         done
     done
 
-    [ "$DEBUGGING" ] || return
-
     [ "$moved" ] && echo
 
+    [ "$DEBUGGING" ] || return
 
     local unused
     for name in $NAMES; do
@@ -193,22 +192,22 @@ load_translation
     echo_script "Customizing services" $0
 
     if [ "$LEAN" ]; then
-        echo_live "Disabling services %s" "$(paren lean)"
+        echo_live "Disabling services %s" "$(paren L, lean)"
         disable_services "$LEAN_SERVICES" "rc3.d rc5.d"
     fi
 
     if [ "$MEAN" ]; then
-        echo_live "Disabling network auto start %s" "$(paren mean)"
+        echo_live "Disabling network auto start %s" "$(paren M, mean)"
         disable_services "$MEAN_SERVICES" "rcS.d"
     fi
 
     if [ "$XTRA_LEAN" ]; then
-        echo_live "Disabling more services %s" "$(paren Xtralean)"
+        echo_live "Disabling more services %s" "$(paren X, Xtralean)"
         disable_services "$XTRA_LEAN_SERVICES" "rcS.d"
     fi
 
     if [ "$NO_DBUS" ]; then
-        echo_live "Disabling dbus %s" "$(paren nodbus)"
+        echo_live "Disabling dbus %s" "$(paren D, nodbus)"
         disable_services "$NO_DBUS_SERVICES" "rc3.d rc5.d"
     fi
 
