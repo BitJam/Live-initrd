@@ -159,13 +159,16 @@ restore_desktop() {
 }
 
 create_home() {
-    local demo=/home/demo
+    local demo=/home/demo hfile
     rmdir $demo 2>/dev/null
 
-    if test -d /home && ls /home | grep -v lost+found | grep -q [a-zA-Z0-9]; then
-        echo_live "Files already exist under %s" $(pquote /home)
-        echo_live "Not creating or populating %s" $(pquote $demo)
-        return
+    if grep -q "^demo:[^:]*:[^:]*:[^:]*:[^:]*:/home/demo:" /etc/passwd; then
+        for hfile in .config .local .bashrc .zshrc; do
+            test -e $demo/$hfile || continue
+            echo_live "Files already exist under %s" $(pquote $demo)
+            echo_live "Not creating or populating %s" $(pquote $demo)
+            return
+        done
     fi
 
     echo_live "Populating %s directory" $(pquote $demo)
