@@ -44,7 +44,7 @@ done
 
 [ "$MUST_RUN" ] || exit 0
 
-. /usr/share/antiX/lib/live-init-utils.sh
+. /live/lib/live-init-utils.sh
 
 from=$DISABLED_RC_DIR
 

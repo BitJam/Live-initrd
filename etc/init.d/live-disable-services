@@ -181,7 +181,7 @@ disable_services() {
 
 }
 
-. /usr/share/antiX/lib/live-init-utils.sh
+. /live/lib/live-init-utils.sh
 
 start_init_logging
 load_translation
