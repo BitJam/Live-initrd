@@ -89,6 +89,8 @@ CMDLINE=${CMDLINE:-$(cat /proc/cmdline)}
 for param in $CMDLINE; do
     case "$param" in
         antiX=*|aX=*) antiX_param=${param#*=}; MUST_RUN=true ;;
+       disable_srv=*) antiX_param=${param#*=}; MUST_RUN=true ;;
+   disable_service=*) antiX_param=${param#*=}; MUST_RUN=true ;;
                 lean)        LEAN=true;        MUST_RUN=true ;;
                 mean)        MEAN=true;        MUST_RUN=true ;;
             Xtralean)   XTRA_LEAN=true;        MUST_RUN=true ;;
