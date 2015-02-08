@@ -267,7 +267,7 @@ set_default_desktop() {
 
 add_fstab_swap() {
     echo_live 'Possibly adding swap partitions to fstab'
-    make-fstab --swap-only
+    make-fstab --quiet --swap-only
 }
 
 automount_and_fstab() {
@@ -312,7 +312,7 @@ automount_and_fstab() {
         grep -q -e ^/dev -e ^UUID= -e ^LABEL=  /etc/fstab || rm /etc/fstab
     fi
 
-    make-fstab $fstab_opt
+    make-fstab --quiet $fstab_opt
 
     [ "$AUTOMOUNT" ] && touch $am_file
 
@@ -436,7 +436,7 @@ Keyboard_Out
         rm -f /etc/skel/Desktop/Install.desktop
     done
 
-} 
+}
 
 main "$@" 2>&1 | tee -a $INIT_LOG_FILE
 
