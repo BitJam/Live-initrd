@@ -8,19 +8,28 @@
 # Default-Start:     3 4 5
 # Default-Stop:      0 1 6
 # Short-Description:
-# Description:       Save persistent root filesystem changes at shutdown
+# Description:       Run persist-config on startup if needed.  Run persist-save if needed
 ### END INIT INFO
 
-case "$1" in
-    start)
-        /usr/local/bin/persist-config --cli --startup --nolog
-        ;;
-    stop)
-        /usr/local/bin/persist-config --cli --shutdown --nolog
-        ;;
-    *)
-        echo "Usage: $0 {start|stop}"
-        ;;
+[ -e /live/config/persist-save ] || return 0
+PATH=$PATH:/usr/local/bin
+
+start() {
+    # Bail early if no persist-config is needed
+    if [ ! -e /etc/live/config/persist-config.conf ]; then
+        # But still do a persist-save if there are new passwords
+        [ -e /live/config/new-passwords ] || return 0
+        echo_live "Saving new passwords in persistence file"
+        persist-save --quiet -cli --nolog
+        return 0
+    fi
+    /usr/local/bin/persist-config --cli --startup --nolog
+
+}
+
+case $1 in
+    start) start                   ;;
+        *)echo "Usage: $0 {start}" ;;
 esac
 
 exit 0
