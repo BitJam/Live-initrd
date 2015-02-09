@@ -125,8 +125,7 @@ fi
 
 disable_services() {
 
-    local NAMES="$1" RC_DIRS="$2"
-    [ "$RC_DIRS" ] || RC_DIRS="rc?.d"
+    local NAMES="$1" RC_DIRS="${2:-rc?.d}"
 
     local rc_dir dest name slink moved length
 
