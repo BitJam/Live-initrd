@@ -370,6 +370,8 @@ main_core() {
     if mount_persist_file 'homefs' $NEW_ROOT/home 'home' "$WANT_HOMEFS" "$NEED_HOMEFS"; then
         HOMEFS_DEV=$PERSIST_DEVICE
         msg "Enabled %s persistence" "$(cq home)"
+        PERSISTENCE="$PERSISTENCE,home"
+
     else
         [ "$NEED_HOMEFS" ] && non_fatal "Could not enable required %s persistence" "$(pqh home!)"
     fi
@@ -3115,8 +3117,7 @@ prepare_persistence() {
     for param in $(echo "$PERSIST" | sed 's/,/ /g'); do
 
         case $param in
-            s|static)
-                STATIC_ROOT=true;;
+            s|static) STATIC_ROOT=true;;
         esac
 
         # You can't always get what you want ...
@@ -3463,8 +3464,10 @@ mount_and_copy_rootfs() {
         if [ "$STATIC_ROOT" ]; then
             ROOTFS_DEV=$PERSIST_DEVICE
             msg "Enabled %s persistence" "$(cq static root)"
+            PERSISTENCE="root,static"
         else
             msg "Enabled %s persistence" "$(cq dynamic root)"
+            PERSISTENCE="root,dynamic"
         fi
     else
 
@@ -3478,6 +3481,7 @@ _mount_and_copy_rootfs() {
     PERSIST_ROOT_FULL="$PERSIST_FULL_PATH/rootfs"
     check_vid "$SQFS_VID" "$ROOTFS_MP" rootfs                                 || return 1
     [ "$STATIC_ROOT" ] || copy_persist_to_ram                                 || return 1
+
     return 0
 }
 
@@ -3547,8 +3551,6 @@ mount_persist_file() {
         return 4
     fi
 
-    PERSISTENCE=$PERSISTENCE,$type
-    PERSISTENCE=${PERSISTENCE#,}
     return 0
 }
 
