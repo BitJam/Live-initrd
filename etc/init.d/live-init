@@ -16,7 +16,7 @@ XSESSION_DIR=/usr/share/xsessions
 
       MENU_WMs="fluxbox icewm jwm"
       FF_PREFS="/etc/skel/.mozilla/firefox/*/prefs.js"
-      INIT_OUT=/live/config/init.out
+    INITRD_OUT=/live/config/initrd.out
 AUTOMOUNT=
 
 #-jbb For debugging
@@ -76,7 +76,7 @@ main() {
     esac
 }
 
-get_init_param() { eval $(grep ^$1= $INIT_OUT) ;}
+get_init_param() { eval $(grep ^$1= $INITRD_OUT) ;}
 
 save_desktop() {
     get_init_param REMASTERABLE
@@ -350,7 +350,7 @@ do_start() {
     echo_script "Localizing/configuring X-Windows" $0
 
     DISTRO="unknown"
-    for live_config in /live/config/init.out /live/config/linuxrc.out; do
+    for live_config in /live/config/initrd.out /live/config/linuxrc.out; do
         [ -r "$live_config" ] || continue
         eval $(grep ^DISTRO= $live_config)
         break
