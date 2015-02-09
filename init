@@ -3840,7 +3840,7 @@ chroot_umount() {
 }
 
 write_output_files() {
-    local dir=$1  out_file=$1/init.out
+    local dir=$1  out_file=$1/initrd.out
     mkdir -p $dir
     rm -f $dir/* 2>/dev/null
 
