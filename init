@@ -207,8 +207,8 @@ main_wrapper() {
 
     breakpoint 8 "before running init.d scripts"
 
-    [ "$PERSIST_ROOT" ] && LIVE_SCRIPTS="$LIVE_SCRIPTS persist-password"
-    [ "$PERSIST_ROOT" -a -z "$STATIC_ROOT" ] && LIVE_SCRIPTS="$LIVE_SCRIPTS persist-autosave"
+    [ -e /live/config/persist-root ] && LIVE_SCRIPTS="$LIVE_SCRIPTS persist-password"
+    [ -e /live/config/save-persist ] && LIVE_SCRIPTS="$LIVE_SCRIPTS persist-autosave"
 
     PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin
     run_init_scripts $NEW_ROOT $LIVE_SCRIPTS
@@ -3889,9 +3889,10 @@ Bootstrap_Out
 
     echo "$FINAL_DIR" > $dir/live-dir
 
-    [ "$DID_TORAM"    ]                         && touch $dir/did-toram
-    [ "$REMASTERABLE" ]                         && touch $dir/remasterable
-    [ -n "$PERSIST_ROOT" -a -z "$STATIC_ROOT" ] && touch $dir/save-persist
+    [ "$DID_TORAM"    ]                      && touch $dir/did-toram
+    [ "$REMASTERABLE" ]                      && touch $dir/remasterable
+    [ "$PERSIST_ROOT" ]                      && touch $dir/persist-root
+    [ "$PERSIST_ROOT" -a -z "$STATIC_ROOT" ] && touch $dir/save-persist
 
     echo "$SQFILE_DEV" > $dir/boot-device
 }
