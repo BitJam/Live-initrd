@@ -152,6 +152,7 @@ main_wrapper() {
     custom_code 0 'before reading boot codes'
 
     read_cmdline_params
+    select_breakpoints
 
     FREE_MEM=$(mem_info MemFree)
 
@@ -251,13 +252,11 @@ main_core() {
 
     vmsg 6 '%s started at %s seconds' "$ME" $(nq $(get_seconds $time_0))
 
-    select_breakpoints
-
     start_hotplug "$DO_HOTPLUG" "$TRACE_LOAD"
 
     #breakpoint 1 "before welcome"
     do_welcome "$DISTRO_PRETTY_NAME" "$VERSION" "$VERSION_DATE"
-    show_bootcodes "$UNKNOWN_BOOTCODES"
+    show_bootcodes "$(live_param_filter $UNKNOWN_BOOTCODES)"
     show_integer_errors "$INTEGER_ERRORS"
 
     breakpoint 1 "before loading modules"
@@ -4118,6 +4117,8 @@ prepare_switch_root() {
 
     (cd $new_root && mkdir -p sys proc dev/pts)
 }
+
+live_param_filter() { echo $*; }
 
 #==============================================================================
 # What was last shall be first
