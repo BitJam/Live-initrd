@@ -4030,14 +4030,14 @@ run_init_scripts() {
         last_time=$now
     done
 
-    # Do a persist-save to save new passwords and persist save mode
-    [ -f $new_root/live/config/new-passwords       ] || return
-    [ -f $new_root/live/config/persist-save.conf   ] || return
+    #-jbb # Do a persist-save to save new passwords and persist save mode
+    #-jbb [ -f $new_root/live/config/new-passwords       ] || return
+    #-jbb [ -f $new_root/live/config/persist-save.conf   ] || return
 
-    local persist_save=/usr/local/bin/persist-save
-    [ -x $new_root$persist_save                    ] || return
-    msg "Do persist-save"
-    chroot $new_root $persist_save --cli --nolog --quiet
+    #-jbb local persist_save=/usr/local/bin/persist-save
+    #-jbb [ -x $new_root$persist_save                    ] || return
+    #-jbb msg "Do persist-save"
+    #-jbb chroot $new_root $persist_save --cli --nolog --quiet
 }
 
 late_umount() {
