@@ -92,8 +92,7 @@ MKFS_FREE_MARGIN=20
          MKFS_SIZES="250 375 500 750 1000 1500 2000 2500 3000 4000 5000 6000"
       MAX_MKFS_SIZE=${MKFS_SIZES##* }
 
-      LIVE_SCRIPTS="live-L10n live-init persist-password persist-autosave live-disable-services"
-      LIVE_SCRIPTS="live-L10n live-init live-disable-services"
+      LIVE_SCRIPTS="live-L10n live-init"
 
       LAST_BP_TIME=0
 
@@ -210,6 +209,9 @@ main_wrapper() {
 
     [ -e /live/config/persist-root ] && LIVE_SCRIPTS="$LIVE_SCRIPTS persist-password"
     [ -e /live/config/save-persist ] && LIVE_SCRIPTS="$LIVE_SCRIPTS persist-autosave"
+
+    # Do this last so the changes aren't saved until a "real" persist-save
+    LIVE_SCRIPTS="$LIVE_SCRIPTS live-disable-services"
 
     PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin
     run_init_scripts $NEW_ROOT $LIVE_SCRIPTS
