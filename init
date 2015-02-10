@@ -1810,13 +1810,15 @@ should_fsck() {
 
     local days=$((SB_CHECKINTERVAL /60/60/24))
 
-    vmsg 7 "Check filesystem on %s"                        $(dq $dev)
-    vmsg 9 "${green}         Device:$white %s"             $dev
-    vmsg 9 "${green}    Mount count:$white %s"             $SB_MOUNT_CNT
-    vmsg 9 "${green}Max mount count:$white %s"             $SB_MAX_MOUNT_CNT
-    vmsg 9 "${green}   Last checked:$white %s"             "$(date --date=@$SB_LASTCHECK)"
-    vmsg 9 "${green}   Magic number:$white 0x%04X"         $SB_MAGIC
-    vmsg 9 "${green} Check interval:$white %d$m_co (days)" $days
+    vmsg 7 "precheck filesystem on %s"                     $(dq $dev)
+    if [ "$DB_PLUS" ]; then
+        vmsg 9 "${green}         Device:$white %s"             $dev
+        vmsg 9 "${green}    Mount count:$white %s"             $SB_MOUNT_CNT
+        vmsg 9 "${green}Max mount count:$white %s"             $SB_MAX_MOUNT_CNT
+        vmsg 9 "${green}   Last checked:$white %s"             "$(date --date=@$SB_LASTCHECK)"
+        vmsg 9 "${green}   Magic number:$white 0x%04X"         $SB_MAGIC
+        vmsg 9 "${green} Check interval:$white %d$m_co (days)" $days
+    fi
 
     [ "$FORCE_FSCK" ] && return 0
 
