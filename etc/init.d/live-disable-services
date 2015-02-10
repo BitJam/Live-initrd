@@ -1,8 +1,8 @@
 #!/bin/sh
 
 ### BEGIN INIT INFO
-# Provides:          live-disable-services 
-# Required-Start:    checkfs checkroot-bootclean live-init 
+# Provides:          live-disable-services
+# Required-Start:    checkfs checkroot-bootclean live-init
 # Required-Stop:
 # Should-Start:
 # Default-Start:     S
@@ -100,7 +100,7 @@ for param in $CMDLINE; do
 done
 
 if [ "$antiX_param" ]; then
-    
+
     # If the ## expression matches then the resulting string length is zero
     [ "${antiX_param##*[lL]*}" ] ||      LEAN=true
     [ "${antiX_param##*[mM]*}" ] ||      MEAN=true
@@ -151,16 +151,16 @@ disable_services() {
                         ;;
                 esac
 
-                # Wrap long lines 
+                # Wrap long lines
                 if [ "${#length}" -ge "60" ]; then
                     unset length
-                    echo 
+                    echo
                     echo -n "    "
                 fi
                 length="$length $name"
                 moved="$moved,$name"
                 echo -n "${PARAM_COLOR}$name$NO_COLOR "
-                
+
             done
         done
     done
