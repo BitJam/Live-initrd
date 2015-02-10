@@ -32,23 +32,12 @@ case "$1" in
         exit 1
         ;;
 esac
-    
 
-CMDLINE=${CMDLINE:-$(cat /proc/cmdline)}
-for param in $CMDLINE; do
-    case "$param" in
-        antiX=*|aX=*|nodbus) MUST_RUN=true ;;
-         lean|mean|Xtralean) MUST_RUN=true ;;
-    esac
-done
+from=/etc/live/disabled-rc.d
 
-[ "$MUST_RUN" ] || exit 0
+[ -d $from ] || exit 0
 
 . /live/lib/live-init-utils.sh
-
-from=$DISABLED_RC_DIR
-
-[ -d "$from" ] || exit 0
 
 start_init_logging
 load_translation
