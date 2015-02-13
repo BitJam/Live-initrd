@@ -1692,8 +1692,8 @@ mount_aufs() {
     cp -a /etc/mtab $aufs_mp/etc/
 
     # Always a good idea
-    mkdir -p   $aufs_mp/tmp /var/tmp
-    chmod 1777 $aufs_mp/tmp /var/tmp
+    mkdir -p   $aufs_mp/tmp $aufs_mp/var/tmp
+    chmod 1777 $aufs_mp/tmp $aufs_mp/var/tmp
 }
 
 link_top_dirs() {
