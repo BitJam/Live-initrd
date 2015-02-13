@@ -4025,6 +4025,7 @@ run_init_scripts() {
         full=/live/etc/init.d/$script
         test -x $new_root/$full || continue
         chroot $new_root $full start
+        [ "$DB_PLUS" ] || continue
         now=$(get_time)
         vmsg 6 "%25s @ %s seconds" $script $(pq $(get_seconds $((now - last_time))))
         last_time=$now
