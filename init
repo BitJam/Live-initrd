@@ -1366,21 +1366,18 @@ find_device() {
 }
 
 device_uuid() {
-    local device=$1 LABEL TYPE UUID
-    eval $(blkid $device | sed 's/^[^:]*://')
-    echo $UUID
+    local device=$1
+    blkid $device | sed -n -r 's/.* UUID="([^"]*)"( |$).*/\1/p'
 }
 
 device_label() {
-    local device=$1 LABEL TYPE UUID
-    eval $(blkid $device | sed 's/^[^:]*://')
-    echo $LABEL
+    local device=$1
+    blkid $device | sed -n -r -e 's/" (UUID=|TYPE=)".*//' -e 's/[^:]*: LABEL="//p'
 }
 
 device_fstype() {
-    local device=$1 LABEL TYPE UUID
-    eval $(blkid $device | sed 's/^[^:]*://')
-    echo $TYPE
+    local device=$1
+    blkid $device | sed -n -r 's/.* TYPE="([^"]*)"$/\1/p' | tail -n 1
 }
 
 frugal_error() {
@@ -1712,8 +1709,7 @@ link_top_dirs() {
 
 try_mount() {
     local dev=$1  mp=$2  rw=${3:-$RW_MODE}
-    local LABEL UUID TYPE
-    eval local $(blkid $dev | sed -r 's/^[^:]+://')
+    local type=$(blkid $dev | sed -n -r 's/.* TYPE="([^"]*)"$/\1/p' | tail -n 1)
     [ "$TYPE" ] || return 1
     case $TYPE in
             vfat) mount -t vfat -o $rw,umask=000,shortname=winnt  "$dev" "$mp" 2>/dev/null ;;
@@ -2551,22 +2547,26 @@ general_device_error() {
 }
 
 label_error() {
-    local find_type=$1  param=$1$2 name=$2  value=$3  field=$(echo $2 | tr 'a-z' 'A-Z')
+    local find_type=$1  param=${1:0:1}$2 name=$2  value=$3
     ##warn "$hbar"
     warn
     err "Fatal Error"
     err "No device with %s was found" "$name $(cqe $value)"
 
     vmsg_nc 3 "Valid %s" "${name}s:"
-    local line val LABEL TYPE UUID
-    while read line; do
-        eval $field=
-        eval local "$line"
-        eval val=\$$field
+    local val
+    while read val; do
         [ "$val" ] && echo "$white  $param=$val$nc_co"
-    done <<EOT
-$(blkid | sed 's/^[^:]*://')
-EOT
+    done <<Label_Error
+$(
+case $name in
+    label)
+        blkid | sed -n -r -e 's/" (UUID=|TYPE=)".*//' -e 's/[^:]*: LABEL="//p' ;;
+     uuid)
+        blkid | sed -n -r 's/.* UUID="([^"]*)"( |$).*/\1/p' ;;
+esac
+)
+Label_Error
     #warn "$hbar"
     warn
     case $from_type in
