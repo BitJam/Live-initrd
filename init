@@ -2509,11 +2509,6 @@ label_device() {
     msg "Label updated to %s" $(pq $new)
 }
 
-
-sync_fs() {
-    sync
-}
-
 label_to_dev() {
     local label=$2 devices
     local dev line lab
@@ -2751,7 +2746,7 @@ check_vid() {
 
             log_cmd mkdir -p "$mp$VID_DIR"      || return 1
             log_cmd cp $SQFS_VID_FILE $vid_file || return 2
-            sync_fs
+            sync
             return 0
 
         elif ! [ -f "$vid_file" ]; then
@@ -2943,7 +2938,7 @@ do_remaster() {
         done
 
         DID_ROLLBACK=true
-        sync_fs
+        sync
         sleep 2
         return 0
     fi
@@ -2978,7 +2973,7 @@ do_remaster() {
     done
 
     DID_REMASTER=true
-    sync_fs
+    sync
     sleep 2
     return 0
 }
