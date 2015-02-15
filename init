@@ -211,7 +211,7 @@ main_wrapper() {
     [ -e /live/config/save-persist ] && LIVE_SCRIPTS="$LIVE_SCRIPTS persist-autosave"
 
     # Do this last so the changes aren't saved until a "real" persist-save
-    [ "$SYSTEM_D" ] && LIVE_SCRIPTS="$LIVE_SCRIPTS live-disable-services"
+    [ "$SYSTEM_D" ] || LIVE_SCRIPTS="$LIVE_SCRIPTS live-disable-services"
 
     PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin
     run_init_scripts $NEW_ROOT $LIVE_SCRIPTS
