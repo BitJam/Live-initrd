@@ -11,33 +11,76 @@
 # Description:       Run persist-config on startup if needed.  Run persist-save if needed
 ### END INIT INFO
 
-[ -e /live/config/save-persist ] || return 0
-PATH=$PATH:/usr/local/bin
+#. /usr/share/antiX/lib/live-init-utils.sh
+. /live/lib/live-init-utils.sh
 
-persist_conf=/etc/live/config/persist-config.conf
-new_passwd=/live/config/new-passwords
+start_init_logging
+load_translation
 
-start() {
+main() {
+    case $1 in
+        start) do_start                      ;;
+         stop) do_stop                       ;;
+            *) echo "Usage: $0 {start|stop}" ;;
+    esac
+    exit 0
+}
+
+
+do_start() {
+    PATH=$PATH:/usr/local/bin
+
+    local persist_conf=/etc/live/config/persist-config.conf
+    local new_passwd=/live/config/new-passwords
+
     # Bail early if no persist-config is needed
     if [ -e $persist_conf ]; then
         # But still do a persist-save if there are new passwords
         [ -e $new_passwd ] || exit 0
-        echo_live "Saving new passwords in persistence file"
+        echo "Saving new passwords in persistence file"
         persist-save --quiet -cli --nolog
         exit 0
     fi
 
     persist-config --cli --startup --nolog
     [ -e $persist_conf -o -e $new_passwd ] || exit 0
-    [ -e $new_passwd ]   && echo_live "Save new passwords"
-    [ -e $persist_conf ] && echo_live "Save new autosave selection"
+    [ -e $new_passwd ]   && echo "Save new passwords"
+    [ -e $persist_conf ] && echo "Save new autosave selection"
 
     persist-save --quiet -cli --nolog
 }
 
-case $1 in
-    start) start                   ;;
-        *)echo "Usage: $0 {start}" ;;
-esac
+get_init_param() { eval $(grep ^$1= $INITRD_OUT) ;}
+
+do_stop() {
+
+    echo_script "Possibly save persistent information" $0
+
+    save_desktop
+
+    persist_save
+}
+
+persist_save() {
+    # bail early
+    test -e /live/config/persist-save.conf || return
+
+    # Don't auto-save twice in a row
+    local last_save_file=/live/config/last-auto-save
+    if test -r $last_save_file; then
+        local prev=$(cat $last_save_file)
+        local diff=$(( $(date +%s) - $(cat $last_save_file)))
+        if [ $diff -le 10 ]; then
+            echo_live "Already autosaved %s seconds ago" $diff
+            echo_live "Won't autosave again"
+            return
+        fi
+    fi
+
+    local p_config=/usr/local/bin/persist-config
+    test -x $p_config && $p_config --cli --shutdown
+}
+
+main "$@" 2>&1 | tee -a $INIT_LOG_FILE
 
 exit 0
