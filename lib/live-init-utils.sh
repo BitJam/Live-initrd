@@ -7,7 +7,7 @@
 #          protecting files from being written to more than once.
 
 
-INIT_LANG_DIR=/usr/share/antiX/init-lang
+INIT_LANG_DIR=/live/locale/init-lang
 #INIT_XLAT_DIR=/usr/share/antiX/init-xlat
 INIT_XLAT_DIR=/live/locale/xlat
 
