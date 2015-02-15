@@ -1304,7 +1304,7 @@ _find_files() {
 
                     #. <type> device filesystem: <filesystem-name>
                     vmsg 5 "%s device filesystem: %s" $find_type \
-                        "$(cq $(grep " $mntpnt " /proc/mounts | cut -d" " -f3))"
+                        "$(cq $(mntpnt_fstype $mntpnt))"
 
                     local short_dev=${dev##*/}
                     local model=$(cat /sys/block/${short_dev%%[0-9]*}/device/model 2>/dev/null)
@@ -1378,6 +1378,11 @@ device_label() {
 device_fstype() {
     local device=$1
     blkid $device | sed -n -r 's/.* TYPE="([^"]*)"$/\1/p' | tail -n 1
+}
+
+mntpnt_fstype() {
+    local dev=$(df $1 | tail -n1 | cut -d" " -f1)
+    device_fstype $dev
 }
 
 frugal_error() {
