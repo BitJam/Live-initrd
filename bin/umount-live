@@ -658,9 +658,8 @@ shutdown_or_reboot() {
 wait_for_user() {
 
     stty sane < /dev/console
-    local message="$_Please_remove_the_disc_close_the_tray_"
-    local press_enter="$_and_press_ENTER_to_continue_"
-    printf "$rev_cyan$message: $press_enter$nc" > /dev/console
+    printf "$rev_cyan%s: %s$nc" "Please remove the disc close the tray" \
+        "and press ENTER to continue" > /dev/console
     read x < /dev/console
 }
 
