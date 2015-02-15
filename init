@@ -1710,13 +1710,13 @@ link_top_dirs() {
 try_mount() {
     local dev=$1  mp=$2  rw=${3:-$RW_MODE}
     local type=$(blkid $dev | sed -n -r 's/.* TYPE="([^"]*)"$/\1/p' | tail -n 1)
-    [ "$TYPE" ] || return 1
-    case $TYPE in
+    [ "$type" ] || return 1
+    case $type in
             vfat) mount -t vfat -o $rw,umask=000,shortname=winnt  "$dev" "$mp" 2>/dev/null ;;
          iso9660) mount -t iso9660 -o ro                          "$dev" "$mp" 2>/dev/null ;;
             ntfs) ntfs-3g -o umask=000,force,"$rw"                "$dev" "$mp" 2>/dev/null 17>/dev/null || \
                   mount -t ntfs -o umask=000,ro                   "$dev" "$mp" 2>/dev/null ;;
-               *) mount -t $TYPE -o "$rw"                         "$dev" "$mp" 2>/dev/null ;;
+               *) mount -t $type -o "$rw"                         "$dev" "$mp" 2>/dev/null ;;
     esac
     return $?
 }
@@ -2510,7 +2510,7 @@ label_device() {
 }
 
 label_to_dev() {
-    local label=$2 devices
+    local label=$1 devices
     local dev line lab
     while read dev line; do
         lab=$( echo "$line" |sed -n -r -e 's/" (UUID=|TYPE=)".*//' -e 's/^LABEL="//p')
@@ -2522,11 +2522,11 @@ EOT
 }
 
 uuid_to_dev() {
-    local uuid=$2 devices
+    local uuid=$1 devices
     local dev line id
     while read dev line; do
         id=$( echo "$line" | sed -n -r 's/.* UUID="([^"]*)"( |$).*/\1/p')
-        [ "$id" = "$uuid" ] && devices="$devices$dev "
+        [ -n "$id" -a -z "${id##$uuid}" ] && devices="$devices$dev "
     done <<EOT
 $(blkid)
 EOT
@@ -2551,7 +2551,10 @@ general_device_error() {
 }
 
 label_error() {
-    local find_type=$1  param=${1:0:1}$2 name=$2  value=$3
+    local find_type=$1  param=$2  name=$2  value=$3
+    [ "$param" = label ] && param=lab
+    param=${1:0:1}$param
+
     ##warn "$hbar"
     warn
     err "Fatal Error"
