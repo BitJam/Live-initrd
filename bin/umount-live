@@ -178,7 +178,7 @@ do_umountfs() {
     read_cmdline
     set_color
 
-    chvt 1
+    #chvt 1
 
     # err "test error system"
 
@@ -280,7 +280,7 @@ do_sendsigs() {
     PATH=$BUSYBOX_BIN:/bin
     export PATH
 
-    chvt 1
+    #chvt 1
 
     local try all_dead list pid start_t
 
@@ -315,7 +315,7 @@ do_sendsigs() {
     # wait 1/10th second
     usleep 100000
 
-    chvt 1
+    #chvt 1
 
     if list=$(pgrep "$TARDY_LIST"); then
         msg "Killing tardy processes$white $list"
