@@ -51,14 +51,9 @@ do_start() {
 
 do_stop() {
 
-    echo_script "Possibly save persistent information" $0
-
-    persist_save
-}
-
-persist_save() {
     # bail early
     [ -e /live/config/save-persist ] || return
+    echo_script "Possibly save persistent information" $0
 
     # Don't auto-save twice in a row
     local last_save_file=/live/config/last-auto-save
