@@ -55,8 +55,6 @@ do_stop() {
 
     echo_script "Possibly save persistent information" $0
 
-    save_desktop
-
     persist_save
 }
 
