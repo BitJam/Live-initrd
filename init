@@ -89,8 +89,8 @@ MKFS_FREE_MARGIN=20
   rootfs_SIZE_PARAM="min_size=250 mid_size=100 max_size=4000 factor=50"
   homefs_SIZE_PARAM="min_size=250 mid_size=100 max_size=3000 factor=25"
 
+    VFAT_MKFS_SIZES="250 375 500 750 1000 1500 2000 2500 3000 4000"
          MKFS_SIZES="250 375 500 750 1000 1500 2000 2500 3000 4000 5000 6000"
-      MAX_MKFS_SIZE=${MKFS_SIZES##* }
 
       LIVE_SCRIPTS="live-L10n live-init live-usb-save"
 
@@ -3325,9 +3325,18 @@ _persist_makefs() {
 
     : ${default_size:=-1}
 
+
+    # Make sure we don't exceed max size of 4G - 1 on vfat file systems
+    local par_fstype=$(mntpnt_fstype $full_file) mkfs_sizes vfat
+    case $par_fstype in
+        vfat) mkfs_size=$MKFS_SIZES                   ;;
+           *) mkfs_sizes=$VFAT_MKFS_SIZES ; vfat=true ;;
+    esac
+    local max_mkfs_size=${mkfs_sizes##* }
+
     # Create a menu of sizes.  Include the default size
     local size sizes default_cnt cnt=1
-    for size in $MKFS_SIZES; do
+    for size in $mkfs_sizes; do
         if [ -z "$default_cnt" -a $default_size -gt 0 -a $size -ge $default_size ]; then
             sizes="$sizes $default_size"
             default_cnt=$cnt
@@ -3355,14 +3364,14 @@ _persist_makefs() {
 
    # Include all available in menu if it is appropriate
     local max=$(echo "$sizes" | sed 's/.* //')
-    [ $max -lt $avail -a $avail -lt $MAX_MKFS_SIZE ] && sizes="$sizes $avail"
+    [ $max -lt $avail -a $avail -lt $max_mkfs_size ] && sizes="$sizes $avail"
 
     local fs_type fs_size auto_mode create_mode quit=$(printf "quit")
     #[ "$needed" ] && quit=
 
     heading "create %s persistence file" "$(fq $file)"
     vmsg 1 "Default size: %s Meg.  Filesystem type: %s" $(nq $default_size) $(pq ext4)
-    warn "Warning: this operation can take a few minutes"
+    [ "$vfat" ] &&  warn "Warning: this operation can take a few minutes on a % file system" $(pqw $par_fstype)
 
     if [ "$AUTO_MAKE_FS" ]; then
         auto_mode=true
