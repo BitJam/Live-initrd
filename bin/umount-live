@@ -85,13 +85,17 @@ main() {
     local NO_PROMPT DO_PROMPT LANG TO_EJECT VERBOSE MSG_CO ME_CO FROM_FILE
     local NO_CO HI_CO LO_CO ME VERBOSE_MODE SHOW ERROR_CNT=0
 
-    [ "$me" = "shutdown" ] && do_shutdown
+    read_cmdline
+    set_color
+    read_xlat $me $LANG
+
+    [ "$me" = 'shutdown' ] && do_shutdown
 
     case $1 in
      --sendsigs) do_sendsigs   ;;
      --umountfs) do_umountfs   ;;
  --final-umount) final_umount  ;;
-              *) err "Expected --umountfs or --sendsigs"
+              *) err 'Expected --umountfs or --sendsigs'
     esac
 }
 
@@ -139,9 +143,6 @@ do_shutdown() {
     mount -t devtmpfs devtmpfs  /dev
     exec < /dev/console > /dev/console
 
-    read_cmdline
-    set_color
-
     breakpoint 7 "Start shutdown mode"
 
     shutdown_or_reboot 6
@@ -175,9 +176,6 @@ do_init() {
 do_umountfs() {
     PATH=/sbin:/usr/sbin:/bin:/usr/bin:/usr/local/bin:$BUSYBOX_BIN
 
-    read_cmdline
-    set_color
-
     #chvt 1
 
     # err "test error system"
@@ -187,7 +185,7 @@ do_umountfs() {
 
     [ -n "$FROM_FILE" ] && vmsg 5 "Read parameters from$white $CMDLINE_FILE"
 
-    vmsg 8 "Current bootcodes:"
+    vmsg 8 'Current bootcodes:'
     vmsg 8 "    $white$CMDLINE"
 
     cd $NEW_ROOT
@@ -242,9 +240,6 @@ do_umountfs() {
 
 final_umount() {
 
-    read_cmdline
-    set_color
-
     breakpoint 3 "Start final umount"
 
     find_mounted_cd $BOOT_DEV_FILE 
@@ -287,9 +282,6 @@ do_sendsigs() {
     local pppid=$(grep ^PPid: /proc/$PPID/status | cut -f2)
 
     BREAK_POINTS=
-
-    read_cmdline
-    set_color
 
     # Make sure we have a fresh line to print out on
     echo
@@ -378,7 +370,7 @@ wait_for_init() {
     usleep 10000
     [ -e $HIJACKED_INIT ] && return
 
-    vmsg 8 -n "Wait for init "
+    vmsg 8 -n 'Wait for init '
     for i in $(seq 1 30); do
         usleep 100000
         vmsg 8 -n ". "
@@ -387,7 +379,7 @@ wait_for_init() {
         return
     done
     vmsg 8
-    err "Unable to restart init"
+    err 'Unable to restart init'
 }
 
 #------------------------------------------------------------------------------
@@ -545,7 +537,7 @@ umount_most() {
 
     # This seems to be required to umount some loop devices
     if [ $V_LEVEL -ge 9 ]; then
-        echo "losetup >"
+        echo 'losetup >'
         losetup
     else
         losetup > /dev/null
@@ -636,7 +628,6 @@ shutdown_or_reboot() {
     vmsg 5 "Ready to$white $command"
 
     if [ -n "$TO_EJECT" ]; then
-        read_xlat ejectcd $LANG
         eject_cd $TO_EJECT
         wait_for_user
 
@@ -682,10 +673,17 @@ run_scripts() {
 # These contain the translations used in wait_for_user()
 #------------------------------------------------------------------------------
 read_xlat() {
-    local prog=$1 lang=$2 xdir=$LOCALE_DIR/xlat fdir=$LOCALE_DIR/fonts
+    local prog=$1 lang=$2 locale_dir=$LOCALE_DIR
+    [ -d $locale_dir ] || locale_dir=/live$locale_dir
+    local xdir=$locale_dir/xlat fdir=$locale_dir/fonts
 
     local xlat=$xdir/en/$prog.xlat
-    [ -r $xlat ] && . $xlat
+    if [ -r $xlat ]; then
+        vmsg 4 "Could not find:$white $xlat"
+        . $xlat
+    else
+        vmsg 9 "Found:$white $xlat"
+    fi
 
     [ "$lang" ] || return
 
