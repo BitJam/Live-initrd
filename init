@@ -790,7 +790,7 @@ mem_info() {
 
 clean_xlat() {
     find $LOCALE_DIR/xlat -name init.xlat -delete
-    rm -rf $LOCALE_DIR/fonts
+    #rm -rf $LOCALE_DIR/fonts
 }
 
 read_xlat() {
