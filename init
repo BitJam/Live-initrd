@@ -3430,7 +3430,7 @@ makefs() {
     local file=$1  type=$2  size=$3
     mkdir -p $(dirname $file)                                     || return 1
     dd if=/dev/zero of=$file bs=1M count=0 seek=$size &>/dev/null || return 2
-    ld_path /sbin/mkfs.$type -q -F $file                          || return 3
+    ld_path /sbin/mkfs.$type -q -F $file              &>/dev/null || return 3
 }
 
 default_makefs_size() {
