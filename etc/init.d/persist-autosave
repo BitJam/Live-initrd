@@ -16,6 +16,7 @@
 
 start_init_logging
 load_translation
+PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/live/bin
 
 main() {
     case $1 in
@@ -28,8 +29,6 @@ main() {
 
 
 do_start() {
-    PATH=$PATH:/usr/local/bin
-
     local persist_conf=/etc/live/config/persist-config.conf
     local new_passwd=/live/config/new-passwords
 
