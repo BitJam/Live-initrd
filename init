@@ -216,7 +216,7 @@ main_wrapper() {
     [ -e /live/config/save-persist ] && LIVE_SCRIPTS="$LIVE_SCRIPTS persist-autosave"
 
     # Do this last so the changes aren't saved until a "real" persist-save
-    [ "$SYSTEM_D" ] || LIVE_SCRIPTS="$LIVE_SCRIPTS live-disable-services"
+    [ -e /live/config/systemd ] || LIVE_SCRIPTS="$LIVE_SCRIPTS live-disable-services"
 
     PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin
     run_init_scripts $NEW_ROOT $LIVE_SCRIPTS
@@ -363,8 +363,11 @@ main_core() {
 
     SYSTEM_D=
     local sbin_init=$(readlink $NEW_ROOT/sbin/init)
-    [ -n "$sbin_init" -a -z "${sbin_init##*systemd}" ] && SYSTEM_D=true
-    [ "$SYSTEM_D" ] && msg "Detected systemd init system"
+    if [ -n "$sbin_init" -a -z "${sbin_init##*systemd}" ]; then
+        SYSTEM_D=true
+        touch /live/config/systemd
+        msg "Detected systemd init system"
+    fi
 
     breakpoint 6 "after mounting aufs"
 
