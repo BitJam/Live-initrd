@@ -36,7 +36,7 @@ save_desktop() {
         get_init_param BOOT_UUID
         if [ -z "$BOOT_UUID" ; then
             echo_live "Could not find UUID of boot device for remounting"
-            echo_live "Will not save defaults desktops"
+            echo_live "Will not save default desktops"
             return
         fi
 

@@ -143,7 +143,7 @@ get_init_lang() {
         return 1
     fi
 
-    echo_live "Setting language via: %s" $(pquote lang=$lang)
+    echo_live 'Setting language via: %s' $(pquote lang=$lang)
     . $lang_file
     return 0
 }
@@ -153,12 +153,12 @@ init_lang_error() {
 
     load_translation live-init-utils
 
-    error "Unknown language code: %s" $(pquote $lang)
+    error 'Unknown language code: %s' $(pquote $lang)
     local vlangs
     for vlang in $(ls $INIT_LANG_DIR | sed 's/\.sh//g'); do
         vlangs="$vlangs $vlang"
     done
-    echo_live "Valid languages codes: %s" "$NO_COLOR$vlangs";
+    echo_live 'Valid languages codes: %s' "$NO_COLOR$vlangs";
 }
 
 #------------------------------------------------------------------------------

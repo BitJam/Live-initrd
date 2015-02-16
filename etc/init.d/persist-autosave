@@ -11,7 +11,7 @@
 # Description:       Run persist-config on startup if needed.  Run persist-save if needed
 ### END INIT INFO
 
-#. /usr/share/antiX/lib/live-init-utils.sh
+# . /usr/share/antiX/lib/live-init-utils.sh
 . /live/lib/live-init-utils.sh
 
 start_init_logging

@@ -178,7 +178,7 @@ disable_services() {
         esac
         unused="$unused $name"
     done
-    [ "$unused" ] && echo_live "  Unused: %s" "$AMBER$unused"
+    [ "$unused" ] && echo_live '  Unused: %s' "$AMBER$unused"
 
 }
 
