@@ -76,10 +76,10 @@ persist_save() {
         fi
     fi
 
+    echo "PATH=$PATH"
     local p_config=/usr/local/bin/persist-config
     test -x $p_config && $p_config --cli --shutdown
 }
 
 main "$@" 2>&1 | tee -a $INIT_LOG_FILE
 
-exit 0
