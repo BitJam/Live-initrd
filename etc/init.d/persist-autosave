@@ -62,7 +62,7 @@ do_stop() {
 
 persist_save() {
     # bail early
-    test -e /live/config/persist-save.conf || return
+    [ -e /live/config/save-persist ] || return
 
     # Don't auto-save twice in a row
     local last_save_file=/live/config/last-auto-save
