@@ -186,6 +186,11 @@ main_wrapper() {
 
 #--    # FIXME remove after squashfs gets updated
 #--    #----------------------------------------------------------------
+
+    for d in init-lang init-xlat lib; do
+        rm -rf $NEW_ROOT/usr/share/antiX/d
+    done
+
 #--    local f
 #--    for f in halt reboot; do
 #--        rm -f $NEW_ROOT/usr/local/bin/$f
