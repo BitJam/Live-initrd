@@ -22,7 +22,8 @@ main() {
     case $1 in
         start) do_start                      ;;
          stop) do_stop                       ;;
-            *) echo "Usage: $0 {start|stop}" ;;
+            *) echo "Usage: $0 {start|stop}"
+               exit 1                        ;;
     esac
     exit 0
 }
