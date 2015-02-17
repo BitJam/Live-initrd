@@ -1604,6 +1604,8 @@ find_linuxfs_file() {
     DEFAULT_DIR=$SQFILE_DIR
 }
 
+# FIXME: mention failsafe option or load=all.
+
 linuxfs_error() {
     local msg=$(printf "$@")  device_list=$(echo $DEVICE_LIST)
     local all_devices=$(echo $(most_block_devices));
