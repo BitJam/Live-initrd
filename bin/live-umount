@@ -650,21 +650,31 @@ shutdown_or_reboot() {
 #------------------------------------------------------------------------------
 wait_for_user() {
 
-    stty sane < /dev/console
+    stty sane
     printf "$rev_cyan%s: %s$nc" "Please remove the disc, close the tray" \
-        "and press ENTER to continue" > /dev/console
-    read x < /dev/console
+        "and press ENTER to continue"
+    read x
 }
 
 run_scripts() {
-    local script full
+    local script full now last_time=$(get_time)
     for script; do
         full=/live/etc/init.d/$script
         test -x $full || continue
         $full stop
+        [ "$DB_PLUS" ] || continue
+        now=$(get_time)
+        vmsg 6 "$ME$white %25s$cyan @$magenta %s$cyan seconds" $script $(get_seconds $((now - last_time)))
+        last_time=$now
     done
 }
 
+get_time() { cut -d" " -f22 /proc/self/stat ;}
+
+get_seconds() {
+    local dt=${1:-$(get_time)}
+    printf "%03d" $dt | sed -r 's/(..)$/.\1/'
+}
 #------------------------------------------------------------------------------
 # Function: read_xlat <program-name> <language>
 #
