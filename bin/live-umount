@@ -11,7 +11,7 @@
 # Instructions: exec this script from inside the last /etc/init.d script and
 # use --umount:
 #
-#   targ=/live/bin/umount-live [ -x $targ ] \
+#   targ=/live/bin/live-umount [ -x $targ ] \
 #       && exec $targ --umount </dev/console >/dev/console 2>&1
 #
 # The script grabs the runlevel Then we umount /live/aufs since this was a
@@ -234,7 +234,7 @@ do_umountfs() {
 
     breakpoint 2 "After pivot"
    
-    exec /bin/umount-live --final-umount
+    exec /bin/$me --final-umount
     final_umount
 }
 
