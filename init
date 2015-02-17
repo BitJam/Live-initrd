@@ -187,21 +187,18 @@ main_wrapper() {
 #--    # FIXME remove after squashfs gets updated
 #--    #----------------------------------------------------------------
 
+    local d
     for d in init-lang init-xlat lib; do
-        rm -rf $NEW_ROOT/usr/share/antiX/d
+        rm -rf $NEW_ROOT/usr/share/antiX/$d
     done
 
-#--    local f
-#--    for f in halt reboot; do
-#--        rm -f $NEW_ROOT/usr/local/bin/$f
-#--    done
-#--
+    local f
+    for f in halt reboot; do
+        rm -f $NEW_ROOT/usr/local/bin/$f
+    done
+
 #--    rm -f  $NEW_ROOT/etc/rc2.d/S01slim
-#--    rm -f  $NEW_ROOT/sbin/make-fstab
 #--    rm -f  $NEW_ROOT/usr/sbin/buildxconfig
-#--    #rm -rf $NEW_ROOT/usr/share/antiX/lib
-#--
-#--    rm -rf /usr/share/antiX/init-xlat
 #--
 #--    for f in $LIVE_SCRIPTS live-restore-services; do
 #--        rm -f $NEW_ROOT/etc/init.d/$f
