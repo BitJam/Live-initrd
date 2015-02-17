@@ -141,7 +141,7 @@ do_shutdown() {
     mount -t proc   proc        /proc
     mount -t sysfs  sys         /sys
     mount -t devtmpfs devtmpfs  /dev
-    exec < /dev/console > /dev/console
+    #exec < /dev/console > /dev/console
 
     breakpoint 7 "Start shutdown mode"
 
@@ -633,7 +633,8 @@ shutdown_or_reboot() {
 
     elif [ -n "$DO_PROMPT" ]; then
         printf "${cyan}======== Press$magenta ENTER$cyan key to $command ========"
-        read x </dev/console
+        #read x </dev/console
+        read x
     fi
 
     # Disable kernel messages
