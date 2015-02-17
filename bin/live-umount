@@ -580,7 +580,7 @@ find_mounted_cd() {
 
     dev=$(cat $file 2>/dev/null)
 
-    vmsg 6 "boot_dev:$white $dev"
+    vmsg 7 "boot_dev:$white $dev"
  
     [ -n "$dev" ] || return
 
@@ -784,11 +784,17 @@ Ps_No_Kthreads
 # if the 2nd parameter is -n then we don't echo a newline.
 #------------------------------------------------------------------------------
 vmsg() {
-    local flag level=$1
-    shift
+    local level=$1 fmt=$2
+    shift 2
     [ "$level" -le "$V_LEVEL" ] || return
-    [ "$1" = "-n" ] && flag=$1 && shift
-    echo -e $flag "$MSG_CO$@$nc"
+    printf "$MSG_CO$fmt$nc\n" "$@"
+}
+
+vmsgN() {
+    local level=$1 fmt=$2
+    shift 2
+    [ "$level" -le "$V_LEVEL" ] || return
+    printf "$MSG_CO$fmt$nc" "$@"
 }
 
 pmsg() { msg "$(plural "$@")"; }
