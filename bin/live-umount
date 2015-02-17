@@ -691,10 +691,10 @@ read_xlat() {
 
     local xlat=$xdir/en/$prog.xlat
     if [ -r $xlat ]; then
-        vmsg 4 "Could not find:$white $xlat"
+        vmsg 9 "Found:$white $xlat"
         . $xlat
     else
-        vmsg 9 "Found:$white $xlat"
+        vmsg 4 "Could not find:$white $xlat"
     fi
 
     [ "$lang" ] || return
