@@ -4048,7 +4048,7 @@ run_init_scripts() {
 
     mkdir -p $new_root/etc/live/protect $new_root/run/lock
 
-    local script full last_time=$(get_time)
+    local script full now last_time=$(get_time)
     for script; do
         full=/live/etc/init.d/$script
         test -x $new_root/$full || continue
