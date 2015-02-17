@@ -110,6 +110,7 @@ read_cmdline() {
     for param in $CMDLINE; do
         case $param in
              uverb=*)      VERBOSE=${param#*=} ;;
+                 db+)      DB_PLUS=true        ;;
              ushow=*)         SHOW=${param#*=} ;;
                ubp=*) BREAK_POINTS=${param#*=} ;;
               lang=*)         LANG=${param#*=} ;;
