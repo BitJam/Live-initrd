@@ -68,7 +68,6 @@ do_stop() {
         fi
     fi
 
-    echo "PATH=$PATH"
     local p_config=/usr/local/bin/persist-config
     test -x $p_config && $p_config --cli --shutdown
 }
