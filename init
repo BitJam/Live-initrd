@@ -3920,14 +3920,14 @@ VID_ERROR="$VID_ERROR"
 VID_FILE="$VID_FILE"
 Bootstrap_Out
 
-    echo "$FINAL_DIR" > $dir/live-dir
+    echo "$FINAL_DIR"  > $dir/live-dir
+    echo "$SQFILE_DEV" > $dir/boot-device
 
     [ "$DID_TORAM"    ]                      && touch $dir/did-toram
     [ "$REMASTERABLE" ]                      && touch $dir/remasterable
     [ "$PERSIST_ROOT" ]                      && touch $dir/persist-root
     [ "$PERSIST_ROOT" -a -z "$STATIC_ROOT" ] && touch $dir/save-persist
-
-    echo "$SQFILE_DEV" > $dir/boot-device
+    [ "$PERSIST_ROOT" -a    "$STATIC_ROOT" ] && touch $dir/static-root
 }
 
 old_write_output_files() {
