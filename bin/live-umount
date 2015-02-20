@@ -287,7 +287,7 @@ do_sendsigs() {
     # Make sure we have a fresh line to print out on
     echo
 
-    run_scripts persist-autosave live-usb-save
+    run_scripts persist-autosave live-usb-save live-static-delete
 
     safe_get_start_t $pppid || return
     start_t=$START_T
