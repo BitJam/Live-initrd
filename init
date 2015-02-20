@@ -2010,6 +2010,65 @@ pqw()    { echo "$hi_co$*$warn_co"        ;}
 pqh()    { echo "$m_co$*$hi_co"           ;}
 hq()     { echo "$hi_co$*$m_co"           ;}
 
+vmsg() {
+    local level=$1  fmt=$2
+    shift 2
+
+    msg=$(printf "$m_co$fmt$nc_co" "$@")
+
+    [ "$level" -le "$VERBOSE" ] && printf "$msg\n"
+    echo -e "$msg" >> $MY_LOG
+    return 0
+}
+
+vmsgN() {
+    local level=$1  fmt=$2
+    shift 2
+
+    msg=$(printf "$m_co$fmt$nc_co" "$@")
+
+    [ "$level" -le "$VERBOSE" ] && printf "$msg"
+    echo -ne "$msg" >> $MY_LOG
+    return 0
+}
+
+vmsg_if() {
+    local level=$1; shift
+    [ "$VERBOSE" -ge "$level" ] || return
+    vmsg $level "$@"
+}
+
+vmsg_nc() {
+    local level=$1; shift
+    vmsg $level "$nc_co$@"
+}
+
+set_colors() {
+    local noco=$1  loco=$2
+
+    [ "$noco" ] && return
+
+    local e=$(printf "\e")
+     black="$e[0;30m";    blue="$e[0;34m";    green="$e[0;32m";    cyan="$e[0;36m";
+       red="$e[0;31m";  purple="$e[0;35m";    brown="$e[0;33m"; lt_gray="$e[0;37m";
+   dk_gray="$e[1;30m"; lt_blue="$e[1;34m"; lt_green="$e[1;32m"; lt_cyan="$e[1;36m";
+    lt_red="$e[1;31m"; magenta="$e[1;35m";   yellow="$e[1;33m";   white="$e[1;37m";
+     nc_co="$e[0m";
+
+    cheat_co=$white;      err_co=$red;       hi_co=$white;
+      cmd_co=$white;     from_co=$lt_green;  mp_co=$magenta;   num_co=$magenta;
+      dev_co=$magenta;   head_co=$yellow;     m_co=$lt_cyan;    ok_co=$lt_green;
+       to_co=$lt_green;  warn_co=$yellow;  bold_co=$yellow;
+
+    [ "$loco" ] || return
+
+    from_co=$brown
+      hi_co=$white
+       m_co=$nc_co
+     num_co=$white
+}
+
+
 get_time() { cut -d" " -f22 /proc/self/stat ;}
 
 show_time() {
@@ -2064,39 +2123,6 @@ vmsg_old() {
     echo -ne "$msg" >> $MY_LOG
 
     return 0
-}
-
-vmsg() {
-    local level=$1  fmt=$2
-    shift 2
-
-    msg=$(printf "$m_co$fmt$nc_co" "$@")
-
-    [ "$level" -le "$VERBOSE" ] && printf "$msg\n"
-    echo -e "$msg" >> $MY_LOG
-    return 0
-}
-
-vmsgN() {
-    local level=$1  fmt=$2
-    shift 2
-
-    msg=$(printf "$m_co$fmt$nc_co" "$@")
-
-    [ "$level" -le "$VERBOSE" ] && printf "$msg"
-    echo -ne "$msg" >> $MY_LOG
-    return 0
-}
-
-vmsg_if() {
-    local level=$1; shift
-    [ "$VERBOSE" -ge "$level" ] || return
-    vmsg $level "$@"
-}
-
-vmsg_nc() {
-    local level=$1; shift
-    vmsg $level "$nc_co$@"
 }
 
 heading() {
@@ -2860,31 +2886,6 @@ do_delay() {
         sleep 1
     done
     msg
-}
-
-set_colors() {
-    local noco=$1  loco=$2
-
-    [ "$noco" ] && return
-
-    local e=$(printf "\e")
-     black="$e[0;30m";    blue="$e[0;34m";    green="$e[0;32m";    cyan="$e[0;36m";
-       red="$e[0;31m";  purple="$e[0;35m";    brown="$e[0;33m"; lt_gray="$e[0;37m";
-   dk_gray="$e[1;30m"; lt_blue="$e[1;34m"; lt_green="$e[1;32m"; lt_cyan="$e[1;36m";
-    lt_red="$e[1;31m"; magenta="$e[1;35m";   yellow="$e[1;33m";   white="$e[1;37m";
-     nc_co="$e[0m";
-
-    cheat_co=$white;      err_co=$red;       hi_co=$white;
-      cmd_co=$white;     from_co=$lt_green;  mp_co=$magenta;   num_co=$magenta;
-      dev_co=$magenta;   head_co=$yellow;     m_co=$lt_cyan;    ok_co=$lt_green;
-       to_co=$lt_green;  warn_co=$yellow;  bold_co=$yellow;
-
-    [ "$loco" ] || return
-
-    from_co=$brown
-      hi_co=$white
-       m_co=$nc_co
-     num_co=$white
 }
 
 next_device() {
