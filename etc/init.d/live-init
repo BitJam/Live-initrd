@@ -105,16 +105,16 @@ localize_skel() {
         return
     fi
 
-    echo_live "Localizing menus to %s in %s" $(pquote $1) $(pquote $dest)
+    echo_live "Localizing menus to %s in %s" $(pquote $0) $(pquote $dest)
 
     # Basically a cp -a but make all top level files and directories hidden
     for file in $(ls $from); do
        if [ -d $from/$file ]; then
            mkdir -p /$dest/.$file
-           cp -a $from/$file/* $dest/.$file
+           cp -a mode $from/$file/* $dest/.$file
        else
            rm -rf $dest/.$file
-           cp $from/$file $dest/.$file
+           cp -a $from/$file $dest/.$file
        fi
     done
 }
