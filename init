@@ -3760,10 +3760,11 @@ copy_xtra() {
         cp -a $xtra_dir/$dir $NEW_ROOT/
     done
     msg
-    test -e $bdir/to-delete || return
-    msg "Deleting files listed in $bdir/to-delete"
-    grep -v "^\s*#" $bdir/to-delete | sed "s=^\s*/=$NEW_ROOT/=" | grep "/[a-z]"
-    rm -rf $(grep -v "^\s*#" $bdir/to-delete | sed "s=^\s*/=$NEW_ROOT/=" | grep "/[a-z]")
+    local dfile=$bdir/delete.list
+    test -e $dfile || return
+    msg "Deleting files listed in %s" $(pq $dfile)
+    grep -v "^\s*#" $dfile | sed "s=^\s*/=$NEW_ROOT/=" | grep "/[a-z]" >> $MY_LOG
+    rm -rf $(grep -v "^\s*#" $dfile | sed "s=^\s*/=$NEW_ROOT/=" | grep "/[a-z]")
 }
 
 ld_path_which() {
