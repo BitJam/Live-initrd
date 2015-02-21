@@ -2364,7 +2364,8 @@ select_device() {
 
         local name=${line%%:*}
         name=${name##*/}
-        [ ${#name} -eq 0 -o ${#name} -gt 6 ] && continue
+        [ ${#name} -eq 0 -o ${#name} -gt 8 ] && continue
+        #case $name in sd?[0-9]*) ;; *) continue ;; esac
 
         local type=$(echo "$line" | sed -n -r 's/.* TYPE="([^"]*)"$/\1/p' | tail -n 1)
         #uuid=$(echo "$line" | sed -n -r -e 's/" (UUID=|TYPE=)".*//' -e 's/[^:]*: LABEL="//p')
