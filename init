@@ -2337,6 +2337,7 @@ _size_label() {
     done
     echo "$size$unit"
 }
+
 select_device() {
     local title_type=$1  var=$2  min_size=${3:-0} not_mounted=$4
     local title=$(printf "Please select %s device:" "$title_type")
@@ -2363,6 +2364,7 @@ select_device() {
 
         local name=${line%%:*}
         name=${name##*/}
+        [ ${#name} -eq 0 -o ${#name} -gt 6 ] && continue
 
         local type=$(echo "$line" | sed -n -r 's/.* TYPE="([^"]*)"$/\1/p' | tail -n 1)
         #uuid=$(echo "$line" | sed -n -r -e 's/" (UUID=|TYPE=)".*//' -e 's/[^:]*: LABEL="//p')
