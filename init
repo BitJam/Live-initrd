@@ -2337,43 +2337,45 @@ _size_label() {
     done
     echo "$size$unit"
 }
-
 select_device() {
     local title_type=$1  var=$2  min_size=${3:-0} not_mounted=$4
     local title=$(printf "Please select %s device:" "$title_type")
 
-    local cnt=1 cnt_lab rtype mp=/tmp/mnt  skip
-    local size size_lab free free_lab
-    local name bytes type label line model last_model data display title
-    local size_rev free_rev type_rev name_rev
+    local cnt=1 cnt_lab rtype mp=/tmp/mnt
+    local size_lab free free_lab
+    local line pretty skip data display
+    local free_rev type_rev name_rev
     #local format="$green%3s $lt_cyan%-5s $magenta%8s $yellow%8s $lt_blue%10s $lt_gray%9s $white%-16s $lt_gray%s\n"
     local format="$green%3s $lt_cyan%s%-5s$nc_co $magenta%s%8s$nc_co $yellow%s%8s$nc_co $lt_blue%s%10s$nc_co $lt_gray%10s  $white%-16s $lt_gray%s\n"
     local head_fmt="${hi_co}%3s %-5s %8s %8s %10s %10s  %-16s %s\n"
-    local header=$(printf "$head_fmt" "" name size free fstype removable label model)
-    title="$title\n$header"
+    local header=$(printf "$head_fmt" "" Name Size Free FS-type Removable Label Model)
+    local title="$title\n$header"
 
     mkdir -p $mp
     local rev=$(printf "\e[0;4;7;31m")
     #local rev=$(printf "\e[5;7;31m")
     #local rev=$(printf "\e[1;7m")
+
     (bogo_meter)&
     local pid=$!
 
     while read -r line ; do
 
-        bytes=0
+        local name=${line%%:*}
+        name=${name##*/}
 
-        name=$(  echo "$line" | cut -d" " -f1)
-        bytes=$( echo "$line" | cut -d" " -f2)
-        type=$(  echo "$line" | cut -d" " -f3)
-        remove=$(echo "$line" | cut -d" " -f4)
-        reado=$( echo "$line" | cut -d" " -f5)
-        label=$( echo "$line" | cut -d" " -f6 | sed 's/\\x20/ /g')
-        model=$( echo "$line" | cut -d" " -f7 | sed 's/\\x20/ /g')
+        local type=$(echo "$line" | sed -n -r 's/.* TYPE="([^"]*)"$/\1/p' | tail -n 1)
+        #uuid=$(echo "$line" | sed -n -r -e 's/" (UUID=|TYPE=)".*//' -e 's/[^:]*: LABEL="//p')
+        local label=$(echo "$line" | sed -n -r -e 's/" (UUID=|TYPE=)".*//' -e 's/[^:]*: LABEL="//p')
+
+        local drive_name=${name%%[0-9]*}/
+        local model=$(cat  /sys/block/$drive_name/device/model 2>/dev/null)
+        local remove=$(cat /sys/block/$drive_name/removable    2>/dev/null)
+        local reado=$(cat  /sys/block/$drive_name/$name/ro     2>/dev/null)
+        local size=$(cat   /sys/block/$drive_name/$name/size   2>/dev/null)
+        size=$((size / 2 / 1024))
 
         local dev=/dev/$name
-
-        [ "$model" ] && last_model=$model
 
         [ "$reado" = 1 ] && continue
 
@@ -2387,9 +2389,8 @@ select_device() {
         esac
 
         skip=
-        size_rev=
+        local size_rev=
 
-        size=$((bytes / 1024 / 1024))
         cnt_lab="$cnt)"
         size_lab=$(size_label_m $size)
 
@@ -2435,25 +2436,21 @@ select_device() {
         fi
 
         rtype="no"
-        [ "$remove" = 1 ] && rtype=${yellow}"yes"
+        [ "$remove" = 1 ] && rtype="yes"
 
-        local this_model=$last_model
-        #[ "${#label}" -gt 16 ] && this_model=
+        pretty=$(printf "$format" "$cnt_lab" "$name_rev" "$name" "$size_rev" "$size_lab" \
+            "$free_rev" "$free_lab" "$type_rev" "$type" "$rtype" "$label" "$model")
 
-        line=$(printf "$format" "$cnt_lab" "$name_rev" "$name" "$size_rev" "$size_lab" \
-            "$free_rev" "$free_lab" "$type_rev" "$type" "$rtype" "$label" "$this_model")
-
-        display="${display}$line\n"
+        local display="${display}$pretty\n"
 
         [ -z "$cnt_lab" ] && continue
 
         data="${data}$cnt:$dev\n"
         cnt=$((cnt + 1))
 
-    done <<Data
-$(ld_path /bin/lsblk -rnbo name,size,fstype,rm,ro,label,model)
-Data
-
+    done <<Blkid
+$(blkid | sed -r -e 's=^(/dev/sd.[0-9][0-9]):=\1+\1:=' -e 's=^(/dev/sd.)([0-9]):=\10\2+\1\2:=' | sort)
+Blkid
     kill -9 $pid
     echo
 
@@ -2464,9 +2461,9 @@ Data
         return 1
     fi
 
-    line=$(printf "$format" "0)" "${bold_co}quit" "$m_co($(cq default))")
+    pretty=$(printf "$format" "0)" "${bold_co}quit " "$m_co($(cq default))")
 
-    display="${display}$line\n"
+    display="${display}$pretty\n"
     data="${data}0:quit\n"
     if [ "$skip" ]; then
         local rev_video=$(printf "$rev%s$nc_co" "reverse video")
