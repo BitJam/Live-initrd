@@ -184,29 +184,6 @@ main_wrapper() {
 
     # Need to run persist-password outside of our error catching
 
-#--    # FIXME remove after squashfs gets updated
-#--    #----------------------------------------------------------------
-
-    local d
-    for d in init-lang init-xlat lib; do
-        rm -rf $NEW_ROOT/usr/share/antiX/$d
-    done
-
-    local f
-    for f in halt reboot; do
-        rm -f $NEW_ROOT/usr/local/bin/$f
-    done
-
-#--    rm -f  $NEW_ROOT/etc/rc2.d/S01slim
-#--    rm -f  $NEW_ROOT/usr/sbin/buildxconfig
-#--
-#--    for f in $LIVE_SCRIPTS live-restore-services; do
-#--        rm -f $NEW_ROOT/etc/init.d/$f
-#--        rm -f $NEW_ROOT/etc/rc?.d/S*[0-9]$f
-#--    done
-#--
-#--    #----------------------------------------------------------------
-
     breakpoint 8 "before running init.d scripts"
 
     [ -e /live/config/persist-root ] && LIVE_SCRIPTS="$LIVE_SCRIPTS persist-password"
@@ -3765,7 +3742,7 @@ fancy_prompt() {
 }
 
 copy_xtra() {
-    local dir xtra_dir=$1/xtra tarball=$1/xtra.tgz
+    local dir bdir=$1 xtra_dir=$1/xtra tarball=$1/xtra.tgz
 
     if [ -e $tarball ]; then
         msg "Unpack xtra tarball"
@@ -3783,6 +3760,10 @@ copy_xtra() {
         cp -a $xtra_dir/$dir $NEW_ROOT/
     done
     msg
+    test -e $bdir/to-delete || return
+    msg "Deleting files listed in $bdir/to-delete"
+    grep -v "^\s*#" $bdir/to-delete | sed "s=^\s*/=$NEW_ROOT/=" | grep "/[a-z]"
+    rm -rf $(grep -v "^\s*#" $bdir/to-delete | sed "s=^\s*/=$NEW_ROOT/=" | grep "/[a-z]")
 }
 
 ld_path_which() {
