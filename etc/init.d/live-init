@@ -111,7 +111,7 @@ localize_skel() {
     for file in $(ls $from); do
        if [ -d $from/$file ]; then
            mkdir -p /$dest/.$file
-           cp -a mode $from/$file/* $dest/.$file
+           cp -a $from/$file/* $dest/.$file
        else
            rm -rf $dest/.$file
            cp -a $from/$file $dest/.$file
