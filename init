@@ -25,7 +25,7 @@
 # that you don't want users to be able to adjust.
 
                      ME="initrd init"
-                VERSION="7.14.01"
+                VERSION="7.14.02"
            VERSION_DATE="Fri Feb 20 23:38:30 MST 2015"
               DEVELOPER="BitJam"
   DISTRO_BUG_REPORT_URL="http://antix.freeforums.org"
@@ -370,8 +370,8 @@ main_core() {
     [ "$DO_AUTO_LOGIN" ] && auto_login   "$AUTO_LOGIN_PROG" "$AUTO_LOGIN_TERMS" "$NEW_ROOT"
     [ "$DO_FANCY"      ] && fancy_prompt "$FANCY_PROMPT" "$NEW_ROOT"
 
-    write_output_files     $OUTPUT_DIR
-    old_write_output_files $OUTPUT_DIR
+    [ "$NO_NEW_OUTPUT" ] || write_output_files     $OUTPUT_DIR
+    [ "$NO_OLD_OUTPUT" ] || old_write_output_files $OUTPUT_DIR
 
     # FIXME: since we are using the real persist-save we can do these either
     # before or after we run the init scripts!
@@ -440,6 +440,8 @@ read_cmdline_params()
         value=${param#*=}
 
         case $param in
+                         old-ai) NO_NEW_OUTPUT=true                              ;;
+                         new-ai) NO_OLD_OUTPUT=true                              ;;
                        poweroff) poweroff -f -n                                  ;;
                          reboot) reboot -f -n                                    ;;
                bootdir=*|bdir=*) BOOT_DIR=$value                                 ;;
