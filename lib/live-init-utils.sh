@@ -20,6 +20,8 @@ REMASTER_PROTECT_FILE=$PROTECT_DIR/remaster
 _INIT_LOG_FILE=/var/log/live/live-init.log
 INIT_LOG_FILE=/dev/null
 
+INITRD_OUT=/live/config/initrd.out
+
 export TEXTDOMAIN=$(basename $0)
 export TEXTDOMAINDIR=/usr/share/locale
 
@@ -71,6 +73,8 @@ else
     SCRIPT_PARAM_COLOR="$CYAN"
     ERROR_PARAM_COLOR="$RED"
 fi
+
+get_init_param() { eval $(grep ^$1= $INITRD_OUT) ;}
 
 # alias pf=printf  (**sigh**)
 pf() {
