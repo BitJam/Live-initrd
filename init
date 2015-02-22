@@ -3388,7 +3388,8 @@ _persist_makefs() {
 
     heading "create %s persistence file" "$(fq $file)"
     vmsg 1 "Default size: %s Meg.  Filesystem type: %s" $(nq $default_size) $(pq ext4)
-    [ "$vfat" ] &&  warn "Warning: this operation can take a few minutes on a %s file system" $(pqw $par_fstype)
+    vmsg 1 "This default size will leave %s Meg free" $(nq $((avail - default_size)))
+    [ "$vfat" ] &&  warn "Warning: this can take several minutes per Gig on a %s file system" $(pqw $par_fstype)
 
     if [ "$AUTO_MAKE_FS" ]; then
         auto_mode=true
@@ -3429,6 +3430,7 @@ _persist_makefs() {
 
     breakpoint m "before makefs"
 
+    [ "$vfat" ] &&  warn "Warning: this can take several minutes per Gig on a %s file system" $(pqw $par_fstype)
     if ! time_cmd makefs $full_file $fs_type $fs_size; then
         err "Failed to create filesystem.  Deleting %s file" $(pqe $file)
         rm -f $full_file
