@@ -11,6 +11,8 @@
 # Description:       save/restore some information on raw liveusb w/o persistence
 ### END INIT INFO
 
+INITRD_OUT=/live/config/initrd.out
+
 . /live/lib/live-init-utils.sh
 
 start_init_logging
@@ -25,6 +27,7 @@ main() {
     exit 0
 }
 
+get_init_param() { eval $(grep ^$1= $INITRD_OUT) ;}
 
 save_desktop() {
     get_init_param REMASTERABLE
@@ -107,4 +110,5 @@ should_copy() {
     return 0
 }
 
+main "$@"
 
