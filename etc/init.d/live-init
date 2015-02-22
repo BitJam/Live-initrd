@@ -175,13 +175,15 @@ set_mirror() {
 
 set_utc_local() {
     local new=$1 file=/etc/adjtime
-    grep -i -q $new $FILE && return
+    #grep -i -q $new $file && return
 
     echo_live "Assuming %s is set to %s time" hwclock $(pquote $new)
 
     case $new in
-        local) sed -i 's/^UTC\s*$/LOCAL/' $file ;;
-          utc) sed -i 's/^LOCAL\s*$/UTC/' $file ;;
+        local) sed -i 's/^UTC\s*$/LOCAL/' $file
+               hwclock --hctosys --localtime      ;;
+          utc) sed -i 's/^LOCAL\s*$/UTC/' $file
+               hwclock --hctosys --utc            ;;
     esac
 }
 
