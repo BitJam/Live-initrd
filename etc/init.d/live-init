@@ -31,7 +31,8 @@ for param in $CMDLINE; do
                kbvar=*)   XKBVARIANT=$value ;          DO_XKBD=true ;;
                 lang=*)     CMD_LANG=$value ;          DO_XKBD=true ;;
               mirror=*)   CMD_MIRROR=$value                         ;;
-
+         hwclock=local)   CMD_CLOCK=$value                          ;;
+           hwclock=utc)   CMD_CLOCK=$value                          ;;
               xorgconf)                              MAKE_XORG=true ;;
                 xres=*)                              MAKE_XORG=true ;;
                 drvr=*)                              MAKE_XORG=true ;;
@@ -170,6 +171,18 @@ set_mirror() {
 
     echo_live "Localizing %s to %s mirror" $(pquote $source_list) $(pquote $MIRROR)
     sed -i "s=/ftp\.\(..\.\)\\?debian\.org/=/ftp.$mirror.debian.org/=" $source_list
+}
+
+set_utc_local() {
+    local new=$1 file=/etc/adjtime
+    grep -i -q $new $FILE && return
+
+    echo_live "Assuming %s is set to %s time" hwclock $(pquote $new)
+
+    case $new in
+        local) sed -i 's/^UTC\s*$/LOCAL/' $file ;;
+          utc) sed -i 's/^LOCAL\s*$/UTC/' $file ;;
+    esac
 }
 
 set_default_desktop() {
@@ -329,6 +342,7 @@ Keyboard_Out
     create_home
 
     [ "$CMD_DESKTOP" ] && set_default_desktop $CMD_DESKTOP
+    [ "$CMD_CLOCK"   ] && set_utc_local $CMD_CLOCK
 
     #localize_firefox $LANG
 
