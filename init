@@ -1992,6 +1992,7 @@ breakpoint() {
     echo "$green$tbar$nc_co"
     echo "$green==>$cyan limited shell @ breakpoint [$num_co$bp$cyan]$white $desc"
     echo "$green    Use the$white exit$green command or press$white Ctrl-d$green to continue"
+    echo "$green    Use$white safe-poweroff$green and$white safe-reboot$green to poweroff and reboot"
 
     local bp_time_1=$(get_time)
     env PS1="${green}bp $red$bp$cyan>$nc_co " BP=$bp PATH=$LIVE_BIN:$PATH \
