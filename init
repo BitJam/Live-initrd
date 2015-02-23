@@ -374,13 +374,6 @@ main_core() {
         [ "$NEED_HOMEFS" ] && non_fatal "Could not enable required %s persistence" "$(pqh home!)"
     fi
 
-#--    # FIXME: remove Dave's stuff before adding xtra files
-#--    if [ -x $DEFAULT_DIR/xtra/usr/local/bin/desktop-session ]; then
-#--        rm -f $AUFS_MP/usr/local/bin/desktop-session*
-#--        rm -f $AUFS_MP/usr/local/bin/antiX-FileManager.sh
-#--        rm -f $AUFS_MP/usr/local/bin/desktop-menu-apt-update
-#--    fi
-
     [ "$DO_XTRA"       ] && copy_xtra    $DEFAULT_DIR
     [ "$DO_AUTO_LOGIN" ] && auto_login   "$AUTO_LOGIN_PROG" "$AUTO_LOGIN_TERMS" "$NEW_ROOT"
     [ "$DO_FANCY"      ] && fancy_prompt "$FANCY_PROMPT" "$NEW_ROOT"
