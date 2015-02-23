@@ -576,9 +576,13 @@ find_mounted_cd() {
 
     [ -n "$NO_PROMPT" ] && return
 
-    local dev file=$1
-
-    dev=$(cat $file 2>/dev/null)
+    local dev BOOT_DEV file=$1
+    if test -r $file; then
+        dev=$(cat $file 2>/dev/null)
+    else
+        eval $(grep ^BOOT_DEV= /live/config/linuxrc.out)
+        dev=$BOOT_DEV
+    fi
 
     vmsg 7 "boot_dev:$white $dev"
  
