@@ -4,6 +4,10 @@ GFX_CONFIG_FILE="/live/config/gfxsave.conf"
      GFX_SUFFIX=".def"
     GFX_SAVE_ON="gfxsave.on"
 
+NEW_CONFIG_FILE=/live/boot-dev/boot/syslinux/gfxsave.cfg 
+
+test -e $NEW_CONFIG_FILE && GFX_CONFIG_FILE=$NEW_CONFIG_FILE
+
 hbar="======================================================================"
 tab="----------------------------------------------------------------------"
 
@@ -583,6 +587,10 @@ add_custom_entry() {
     local title_text="Custom ($date)"
     local title="$title_tag $title_text\n"
     local state=1 kernel append initrd
+
+    case $type in
+        *Linux) title="LABEL custom\n    MENU LABEL $title_text\n" ;;
+    esac
 
     [ -n "$append_tag" ] && append="$append_tag $params\n"
 
