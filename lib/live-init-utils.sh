@@ -20,7 +20,11 @@ REMASTER_PROTECT_FILE=$PROTECT_DIR/remaster
 _INIT_LOG_FILE=/var/log/live/live-init.log
 INIT_LOG_FILE=/dev/null
 
-INITRD_OUT=/live/config/initrd.out
+for live_config in /live/config/initrd.out /live/config/linuxrc.out; do
+    test -r $live_config || continue
+    INITRD_OUT=$live_config
+    break
+done
 
 export TEXTDOMAIN=$(basename $0)
 export TEXTDOMAINDIR=/usr/share/locale
