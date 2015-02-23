@@ -13,11 +13,9 @@
 ### END INIT INFO
 
 XSESSION_DIR=/usr/share/xsessions
-
-      MENU_WMs="fluxbox icewm jwm"
-      FF_PREFS="/etc/skel/.mozilla/firefox/*/prefs.js"
-    INITRD_OUT=/live/config/initrd.out
-AUTOMOUNT=
+    MENU_WMs="fluxbox icewm jwm"
+    FF_PREFS="/etc/skel/.mozilla/firefox/*/prefs.js"
+   AUTOMOUNT=
 
 #-jbb For debugging
 CMDLINE=${CMDLINE:-$(cat /proc/cmdline)}
@@ -277,12 +275,8 @@ automount_and_fstab() {
 do_start() {
     echo_script "Localizing/configuring X-Windows" $0
 
-    DISTRO="unknown"
-    for live_config in /live/config/initrd.out /live/config/linuxrc.out; do
-        [ -r "$live_config" ] || continue
-        eval $(grep ^DISTRO= $live_config)
-        break
-    done
+    local DISTRO="unknown"
+    get_init_param DISTRO
 
     case $DISTRO in
         antiX) automount_and_fstab;;
