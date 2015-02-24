@@ -2740,19 +2740,6 @@ cp_dir() {
 }
 
 # FIXME: should use ld_path and --apparent-size se we aren't fooled by sparseness
-file_usage_k() {
-    local f file dir=$1
-    shift
-
-    [ "$dir" -a "${dir##*/}" ] && dir=$dir/
-    for f; do
-        file=$dir$f
-        [ -e $file ] && list="$list $file"
-    done
-    du -scxk $list >> $MY_LOG
-    du -scxk $list | tail -n 1 | cut -f1
-}
-
 file_usage_m() {
     local f file dir=$1
     shift
@@ -2764,12 +2751,6 @@ file_usage_m() {
     done
     du -scxm $list >> $MY_LOG
     du -scxm $list | tail -n 1 | cut -f1
-}
-
-
-xxxfile_usage_m() {
-    local k=$(file_usage_k "$@")
-    echo $(( k / 1024))
 }
 
 copy_files() {
