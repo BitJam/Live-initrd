@@ -2767,8 +2767,23 @@ copy_files() {
 
 all_space()      { $LIVE_BIN/df -m "$1" | awk '{size=$2}END{print size}' ;}
 used_space()     { $LIVE_BIN/df -m "$1" | awk '{size=$3}END{print size}' ;}
-free_space()     { $LIVE_BIN/df -m "$1" | awk '{size=$4}END{print size}' ;}
+#free_space()     { $LIVE_BIN/df -m "$1" | awk '{size=$4}END{print size}' ;}
 get_mountpoint() { grep "^$1 " /proc/mounts | cut -d" " -f2              ;}
+
+# This compensates for sparse rootfs and homefs files one directory down from
+# the mountpoint.  This is far from perfect but I hope it is a reasonable
+# compromise that will work well for most people in most situations.
+free_space() {
+    local mp=$1
+    local free=$($LIVE_BIN/df -m $mp | awk '{size=$4}END{print size}')
+    local sparse
+    for sparse in $mp/*/rootfs $mp/*/homefs; do
+        real=$(( $( stat -c %s $sparse) / 1024 / 1024))
+        orig=$(du -m $sparse | cut -f1)
+        free=$((free - $real + $orig))
+    done
+    echo $free
+}
 
 dir_has_param() {
     local dir=$1  want_param=$2
