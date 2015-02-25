@@ -2776,11 +2776,14 @@ get_mountpoint() { grep "^$1 " /proc/mounts | cut -d" " -f2              ;}
 free_space() {
     local mp=$1
     local free=$($LIVE_BIN/df -m $mp | awk '{size=$4}END{print size}')
-    local sparse
+    local sparse new_free
     for sparse in $mp/*/rootfs $mp/*/homefs; do
+        test -e $sparse || continue
         real=$(( $( stat -c %s $sparse) / 1024 / 1024))
         orig=$(du -m $sparse | cut -f1)
-        free=$((free - $real + $orig))
+        new_free=$((free - $real + $orig))
+        printf "sparse: r=%4s o=%4s of=%5s nf=%5s %s\n" $real $orig $free $new_free $sparse >> $MY_LOG
+        free=$new_free
     done
     echo $free
 }
