@@ -198,7 +198,7 @@ main_wrapper() {
 
     free -m >> $MY_LOG
     echo 3 > /proc/sys/vm/drop_caches
-    vmsg 6 "drop caches"
+    vmsg 6 'drop caches'
     free -m >> $MY_LOG
 
     breakpoint 9 "right before starting init"
@@ -218,7 +218,7 @@ main_wrapper() {
     if find_init_prog INIT_PROG $NEW_ROOT; then
 
         vmsg 4 'Run %s instead of %s' $white$INIT_PROG$m_co $white/sbin/init$m_co
-        vmsg 5 "${hi_co}%s" "Please exit shells normally to allow for a clean unmount"
+        vmsg 5 "${hi_co}%s" 'Please exit shells normally to allow for a clean unmount'
 
         CHROOT_BIN=$FINAL_DIR/bin
         chroot $NEW_ROOT $CHROOT_BIN/setsid $CHROOT_BIN/cttyhack $INIT_PROG
@@ -355,7 +355,7 @@ main_core() {
     if [ -n "$sbin_init" -a -z "${sbin_init##*systemd}" ]; then
         SYSTEM_D=true
         touch /live/config/systemd
-        msg "Detected systemd init system"
+        msg "Detected %s init system" $(cq systemd)
     fi
 
     breakpoint 6 "after mounting aufs"
@@ -818,23 +818,23 @@ do_welcome() {
 
     [ -x /bin/ntfs-3g ] && vmsg 6 "$white  $(ntfs-3g --version 2>&1)"
 
-    vmsg 6 "%25s: $white%s"  "initrd version" "$version"
-    vmsg 6 "%25s: $white%s"  "initrd built"   "$v_date"
+    vmsg 6 "%25s: $white%s"  'initrd version' "$version"
+    vmsg 6 "%25s: $white%s"  'initrd built'   "$v_date"
 
     # Print meminfo.
     local mem_format="${m_co}%s: $num_co%5d${m_co} M"
-    vmsg 6 "$mem_format"  "             Total Memory" $total_mem
-    # vmsg 6 "$mem_format"  "              Free Memory"  $FREE_MEM
-    vmsg 6 "$mem_format"  "              Used Memory"  $used_mem
+    vmsg 6 "$mem_format"  '             Total Memory' $total_mem
+    # vmsg 6 "$mem_format"  '              Free Memory'  $FREE_MEM
+    vmsg 6 "$mem_format"  '              Used Memory'  $used_mem
 
     local cpu_format="%s:$white %s"
-    vmsg 6 "$cpu_format"  "             Linux kernel" "$(uname -r)"
-    vmsg 6 "$cpu_format"  "             Screen width" "$SCREEN_WIDTH"
-    vmsg 6 "$cpu_format"  "              Kernel arch" "$(uname -m)"
+    vmsg 6 "$cpu_format"  '             Linux kernel' "$(uname -r)"
+    vmsg 6 "$cpu_format"  '             Screen width' "$SCREEN_WIDTH"
+    vmsg 6 "$cpu_format"  '              Kernel arch' "$(uname -m)"
 
-    # vmsg 6  "$cpu_format" "                      CPU" "$(cpu_param 'model name' unknown)"
-    # vmsg 6  "$cpu_format" "                    Cores" "$num_co$(cpu_param 'cpu cores'  1)"
-    # vmsg 6  "$cpu_format" "                    Cache" "$(cpu_param 'cache size' unknown)"
+    # vmsg 6  "$cpu_format" '                      CPU' "$(cpu_param 'model name' unknown)"
+    # vmsg 6  "$cpu_format" '                    Cores' "$num_co$(cpu_param 'cpu cores'  1)"
+    # vmsg 6  "$cpu_format" '                    Cache' "$(cpu_param 'cache size' unknown)"
 }
 
 show_bootcodes() {
@@ -952,7 +952,7 @@ load_kernel_modules() {
 
 load_all_modules() {
     local subdir=$1
-    msg "Loading all live modules"
+    msg "Loading all modules"
     debug_cmd lsmod
     debug_cmd lspci
     LOAD_ALL_MODULES=true
@@ -1455,7 +1455,7 @@ find_frugal_file() {
         warn
 
     elif [ "$FORCE_FRUGAL" ]; then
-        msg "Force frugal install"
+        msg 'Force frugal install'
         if [ $ret -eq 0  ]; then
             device=$FOUND_DEV
             umount $FOUND_DEV
@@ -1496,7 +1496,7 @@ find_frugal_file() {
 
         msg "Looking for partitions with at least %s free.  Please wait ..." "$(nq $(size_label_m $needed))"
 
-        select_device "frugal" device $needed not_mounted || return 2
+        select_device 'frugal' device $needed not_mounted || return 2
 
         local ret=$?
 
@@ -1987,9 +1987,9 @@ breakpoint() {
     if ! should_break_at $bp; then
 
         if [ "$TEST_ERRORS" ]; then
-            msg "normal message one"
-            echo "test error" >&2
-            msg "normal message two"
+            msg 'normal message one'
+            echo 'test error' >&2
+            msg 'normal message two'
         fi
 
         return
@@ -3811,9 +3811,9 @@ fancy_prompt() {
     [ -r $dir/$fp_prog -a -n "$prompt" ] || return
 
     if grep -q $cmd $bashrc; then
-        db_msg "fancy prompts were already enabled"
+        db_msg 'fancy prompts were already enabled'
     else
-        db_msg "Enable fancy prompts"
+        db_msg 'Enable fancy prompts'
         echo "[ -r $fp_prog ] && source $fp_prog" >> $bashrc
         echo "[ -n \"\$(alias $cmd)\" ] && $prompt" >> $bashrc
     fi
@@ -3829,7 +3829,7 @@ copy_xtra() {
     local dir bdir=$1 xtra_dir=$1/xtra tarball=$1/xtra.tgz
 
     if [ -e $tarball ]; then
-        msg "Unpack xtra tarball"
+        msg 'Unpack xtra tarball'
         gunzip -c $tarball | tar x -C $NEW_ROOT/
     fi
 
@@ -3846,7 +3846,7 @@ copy_xtra() {
     msg
     local dfile=$bdir/delete.list
     test -e $dfile || return
-    msg "Deleting files listed in %s" $(pq $dfile)
+    msg 'Deleting files listed in %s' $(pq $dfile)
     grep -v "^\s*#" $dfile | sed "s=^\s*/=$NEW_ROOT/=" | grep "/[a-z]" >> $MY_LOG
     rm -rf $(grep -v "^\s*#" $dfile | sed "s=^\s*/=$NEW_ROOT/=" | grep "/[a-z]")
 }
