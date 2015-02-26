@@ -524,6 +524,7 @@ read_cmdline_params()
                         checkfs) FORCE_FSCK=true                                 ;;
                       nocheckfs) DO_FSCK=                                        ;;
 
+                       failsafe) MODULE_LIST=all                                 ;;
                          load=*) MODULE_LIST=$MODULE_LIST,$value                 ;;
 #                           load) DO_LOAD=true                                    ;;
                           noload) DISABLE_LOAD=true                              ;;
