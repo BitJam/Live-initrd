@@ -451,7 +451,8 @@ read_cmdline_params()
         value=${param#*=}
 
         case $param in
-                          menus) DO_MENUS=true                                   ;;
+                          menus) DO_MENUS=ltopd                                  ;;
+                        menus=*) DO_MENUS=$DO_MENUS$value                        ;;
                        old-conf) NO_NEW_OUTPUT=true                              ;;
                        new-conf) NO_OLD_OUTPUT=true                              ;;
                          splash) SPLASH_PARAM=v                                  ;;
@@ -2369,8 +2370,13 @@ my_select_2() {
 }
 
 my_select_menu() {
-    local dir=$BOOT_MENU_DIR
-    local title=$1 blurb=$2 default=$3 name=$4 dfile=$dir/$4.data mfile=$dir/$4.menu
+    local dir=$BOOT_MENU_DIR menu=$DO_MENUS
+    [ "$menu" ] || return
+
+    local title=$1 blurb=$2 cheat=$3  name=$4 dfile=$dir/$4.data mfile=$dir/$4.menu default=${5:-0}
+
+    [ -z "${menu##*$cheat*}" ] || return
+
     if [ ! -e $dfile -o  ! -e $mfile ]; then
         [ "$BOOT_MENU_WARN" ] && warn "Missing $dfile or $mfile"
         return
@@ -2394,12 +2400,12 @@ do_menus() {
     local BOOT_MENU_WARN=true
     local lang time_zone option persist desktop
     local cmdline
-    my_select_menu 'Select Language' 'Languages are listed alphabetically'          0 lang
+    my_select_menu 'Select Language' 'Languages are listed alphabetically'          l lang
     [ "$lang" ] && read_xlat init ${lang##*=}
     msg "lang: ${lang##*=}"
-    my_select_menu "Select Timezone"           "Timezone are listed geographically" 0 timezone
-    my_select_menu "Select Option"             "Only one option can be selected"    0 options
-    my_select_menu "Select Persistence Option" ""                                   0 persist
+    my_select_menu "Select Timezone"           "Timezone are listed geographically" t timezone
+    my_select_menu "Select Option"             "Only one option can be selected"    o options
+    my_select_menu "Select Persistence Option" ""                                   p persist
     vmsg 6 "cmdline:$white $cmdline"
     echo "$cmdline" > /live/config/cmdline
     read_cmdline_params "$cmdline"
@@ -2410,7 +2416,7 @@ do_late_menus() {
     local BOOT_MENU_WARN=
     local lang time_zone option persist desktop
     local cmdline
-    my_select_menu "Select Desktop" "" 0 desktop
+    my_select_menu "Select Desktop" "" d desktop
     vmsg 6 "cmdline:$white $cmdline"
     echo "$cmdline" >> /live/config/cmdline
 }
