@@ -96,6 +96,8 @@ MKFS_FREE_MARGIN=20
 
       LAST_BP_TIME=0
 
+   GFX_SAVE_SCRIPT="/bin/gfxsave.sh"
+
 set_live_dirs() {
     local dir=$1
 
@@ -113,7 +115,6 @@ set_live_dirs() {
         OUTPUT_DIR="$dir/config"
         LOCALE_DIR="$dir/locale"
         CUSTOM_DIR="$dir/custom"
-   GFX_SAVE_SCRIPT="$dir/bin/gfxsave.sh"
  DISABLED_USB_FILE="$OUTPUT_DIR/usb-disabled"
 }
 
