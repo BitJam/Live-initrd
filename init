@@ -1437,7 +1437,8 @@ find_frugal_file() {
     local ret=$?
 
     if [ $ret -eq 0  -a -z "$FORCE_FRUGAL" ]; then
-        msg "Found existing frugal install"
+        #. Found existing <frugal> install
+        msg "Found existing %s install" frugal
         SQFILE_MP=$BOOT_MP
         SQFILE_DEV=$FOUND_DEV
 
@@ -1528,7 +1529,7 @@ find_frugal_file() {
     breakpoint f "in frugal install"
 
     if [ -e $sqfile_full ]; then
-        msg "Found existing frugal install"
+        msg "Found existing %s install" frugal
     else
 
         local free=$(free_space $FRUGAL_MP)
@@ -1541,10 +1542,12 @@ find_frugal_file() {
         fi
 
         if [ "$need_to_ask" ]; then
-            YES_no "Do you want to do a frugal on the %s device?" $(pq $device) || return 2
+            #. Do you want to do a <frugal>  install on the <name> device?
+            YES_no "Do you want to do a %s install on the %s device?" frugal $(pq $device) || return 2
         fi
 
-        heading "Frugal install, please be patient ..."
+        #. Doing <frugal> install, please be patient ...
+        heading "Doing %s install, please be patient ..." frugal
         log_cmd mkdir -p $sqfile_dir || return 30
 
         msg "copy %s to %s" $(pq $(size_label_m $actual)) $(pq $sqfile_dir/)
@@ -1554,8 +1557,8 @@ find_frugal_file() {
             log_cmd rm -f $sqfile_full
             return 40
         fi
-
-        warn "The frugal install succeeded"
+        #. The <frugal> install succeeded
+        warn "The % install succeeded" frugal
         DID_FRUGAL=true
     fi
 
@@ -2909,7 +2912,8 @@ check_md5()
     local fcnt=0
 
     vmsg 2 $tbar
-    vmsg_nc 1 "Check md5 of files in %s directory. Please be patient ..." "$(fq $dir)"
+    #. Check <md5> of files in <some> directory
+    vmsg_nc 1 "Check %s of files in %s directory. Please be patient ..." md5 "$(fq $dir)"
 
     local file fname md5_file file_md5 true_md5 error
     for fname in $(ls $dir); do
@@ -2943,9 +2947,10 @@ check_md5()
 
     vmsg 1
     if [ "$fcnt" = 0 ]; then
-        err "No md5 checksums were found in %s. Can't do any md5 checks." "$(fqe $dir)"
+        #. No <md5> checksums were found in <directory>.  Can't do any <md5> checks.
+        err "No %s checksums were found in %s. Can't do any %s checks." md5 "$(fqe $dir)" md5
     elif [ "$error" ]; then
-        non_fatal "At least one md5 checksum did not match"
+        non_fatal "At least one %s checksum did not match" md5
     elif [ "$fcnt" = 1 ]; then
         vmsg 1 "Success!  The file passed"
     else
