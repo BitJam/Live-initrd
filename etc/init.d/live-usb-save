@@ -18,11 +18,23 @@ load_translation
 
 main() {
     case $1 in
-        start) restore_desktop               ;;
+        start)  read_cmdline
+                restore_desktop              ;;
+
          stop) save_desktop                  ;;
             *) echo "Usage: $0 {start|stop}" ;;
     esac
     exit 0
+}
+
+read_cmdline() {
+    : ${CMDLINE:=$(cat /proc/cmdline /live/config/cmdline)}
+    for param in $CMDLINE; do
+        value=${param#*=}
+        case "$param" in
+                 desktop=*)  CMD_DESKTOP=$value ;;
+        esac
+    done
 }
 
 save_desktop() {
