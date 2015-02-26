@@ -85,7 +85,7 @@ case "$1" in
         ;;
 esac
 
-CMDLINE=${CMDLINE:-$(cat /proc/cmdline)}
+: ${CMDLINE:=$(cat /proc/cmdline)}
 for param in $CMDLINE; do
     case "$param" in
         antiX=*|aX=*) antiX_param=${param#*=}; MUST_RUN=true ;;
