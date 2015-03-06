@@ -3635,7 +3635,7 @@ copy_persist_to_ram() {
          err "Copy persistent root to RAM failed!  Will erase partial copy ..."
          rm -rf $AUFS_RAM_MP/*
          return 2
-     fi
+    fi
     local ram_used=$(used_space $AUFS_RAM_MP)
     #. AUFS uses [this much RAM]
     vmsg 7 "$format" '                     AUFS uses' $ram_used
