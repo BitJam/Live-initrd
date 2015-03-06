@@ -2050,7 +2050,7 @@ vmsg() {
 
     msg=$(printf "$m_co$fmt$nc_co" "$@")
 
-    [ "$level" -le "$VERBOSE" ] && printf "$msg\n"
+    [ "$level" -le "$VERBOSE" ] && echo -e "$msg"
     echo -e "$msg" >> $MY_LOG
     return 0
 }
