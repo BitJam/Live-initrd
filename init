@@ -4027,6 +4027,10 @@ Bootstrap_Out
     [ "$PERSIST_ROOT" ]                      && touch $dir/persist-root
     [ "$PERSIST_ROOT" -a -z "$STATIC_ROOT" ] && touch $dir/save-persist
     [ "$PERSIST_ROOT" -a    "$STATIC_ROOT" ] && touch $dir/static-root
+
+    [ -d /sys/class/power_supply ] \
+        && grep -q Battery /sys/class/power_supply/*/type 2>/dev/null \
+        && touch $dir/laptop
 }
 
 old_write_output_files() {
