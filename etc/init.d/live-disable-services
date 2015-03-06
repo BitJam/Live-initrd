@@ -11,13 +11,9 @@
 # Description:       Temporarily disable services for LiveCD/USB
 ### END INIT INFO
 
-# GETTEXT_KEYWORD="echo_live"
-# GETTEXT_KEYWORD="echo_script"
-
 LEAN_SERVICES="
     acpi-fakekey
     acpi-support
-    acpid
     bootlogs
     bluetooth
     #cherokee
@@ -38,6 +34,10 @@ LEAN_SERVICES="
     stop-bootlogd
     sudo
     transmission-daemon
+"
+
+LAPTOP_SERVICES="
+    acpid
     wicd
 "
 
@@ -73,42 +73,79 @@ MEAN_SERVICES="
 NO_DBUS_SERVICES="
     dbus
 "
-case "$1" in
-    start)
-        ;;
-    stop)
-        exit 0;
-        ;;
-    *)
-        echo "Usage: $0 {start|stop}"
-        exit 1
-        ;;
-esac
 
-: ${CMDLINE:=$(cat /proc/cmdline)}
-for param in $CMDLINE; do
-    case "$param" in
-        antiX=*|aX=*) antiX_param=${param#*=}; MUST_RUN=true ;;
-       disable_srv=*) antiX_param=${param#*=}; MUST_RUN=true ;;
-   disable_service=*) antiX_param=${param#*=}; MUST_RUN=true ;;
-                lean)        LEAN=true;        MUST_RUN=true ;;
-                mean)        MEAN=true;        MUST_RUN=true ;;
-            Xtralean)   XTRA_LEAN=true;        MUST_RUN=true ;;
-              nodbus)     NO_DBUS=true;        MUST_RUN=true ;;
-                db++)   DEBUGGING=true                       ;;
+prep_main() {
+
+    case $1 in
+        start)          ;;
+         stop) exit 0   ;;
+            *) echo "Usage: $0 {start|stop}"
+               exit 1   ;;
     esac
-done
 
-if [ "$antiX_param" ]; then
+    : ${CMDLINE:=$(cat /proc/cmdline)}
+    for param in $CMDLINE; do
+        case "$param" in
+            antiX=*|aX=*) antiX_param=${param#*=}; must_run=true ;;
+           disable_srv=*) antiX_param=${param#*=}; must_run=true ;;
+       disable_service=*) antiX_param=${param#*=}; must_run=true ;;
+                    lean)        LEAN=true;        must_run=true ;;
+                    mean)        MEAN=true;        must_run=true ;;
+                Xtralean)   XTRA_LEAN=true;        must_run=true ;;
+                  nodbus)     NO_DBUS=true;        must_run=true ;;
+                    db++)   DEBUGGING=true                       ;;
+        esac
+    done
 
-    # If the ## expression matches then the resulting string length is zero
-    [ "${antiX_param##*[lL]*}" ] ||      LEAN=true
-    [ "${antiX_param##*[mM]*}" ] ||      MEAN=true
-    [ "${antiX_param##*[xX]*}" ] || XTRA_LEAN=true
-    [ "${antiX_param##*[dD]*}" ] ||   NO_DBUS=true
-fi
+    if [ "$antiX_param" ]; then
 
-[ "$MUST_RUN" ] || exit 0
+        # If the ## expression matches then the resulting string length is zero
+        [ "${antiX_param##*[lL]*}" ] ||      LEAN=true
+        [ "${antiX_param##*[mM]*}" ] ||      MEAN=true
+        [ "${antiX_param##*[xX]*}" ] || XTRA_LEAN=true
+        [ "${antiX_param##*[dD]*}" ] ||   NO_DBUS=true
+    fi
+
+    [ "$must_run" ] || exit 0
+    . /live/lib/live-init-utils.sh
+
+    start_init_logging
+    load_translation
+}
+
+main() {
+    # Prevent other messages stepping on ours
+    # sleep 2
+    echo_script "Customizing services" $0
+
+    if [ "$LEAN" ]; then
+
+        if test -e /live/config/laptop; then
+            echo_live "Detected laptop/mobile device"
+        else
+            LEAN_SERVICES="$LEAN_SERVICES $LAPTOP_SERVICES"
+        fi
+
+        echo_live "Disabling services %s" "$(paren L, lean)"
+        disable_services "$LEAN_SERVICES" "rc3.d rc5.d"
+    fi
+
+    if [ "$MEAN" ]; then
+        echo_live "Disabling network auto start %s" "$(paren M, mean)"
+        disable_services "$MEAN_SERVICES" "rcS.d"
+    fi
+
+    if [ "$XTRA_LEAN" ]; then
+        echo_live "Disabling more services %s" "$(paren X, Xtralean)"
+        disable_services "$XTRA_LEAN_SERVICES" "rcS.d"
+    fi
+
+    if [ "$NO_DBUS" ]; then
+        echo_live "Disabling dbus %s" "$(paren D, nodbus)"
+        disable_services "$NO_DBUS_SERVICES" "rc3.d rc5.d"
+    fi
+} 
+
 
 #----------------------------------------------------------------------------
 # function disable_services "$names" [ "$rc_dirs" ]
@@ -125,16 +162,17 @@ fi
 
 disable_services() {
 
-    local NAMES="$1" RC_DIRS="${2:-rc?.d}"
+    local names="$1" rc_dirs="${2:-rc?.d}"
 
     local rc_dir dest name slink moved length
 
-    for rc_dir in $RC_DIRS; do
+    for rc_dir in $rc_dirs; do
 
+        # DISABLED_RC_DIR is defined in the library
         dest=$DISABLED_RC_DIR/$rc_dir
         mkdir -p $dest
 
-        for name in $NAMES; do
+        for name in $names; do
 
             for slink in /etc/$rc_dir/S*$name; do
                 [ -e "$slink" ] || continue
@@ -170,7 +208,7 @@ disable_services() {
     [ "$DEBUGGING" ] || return
 
     local unused
-    for name in $NAMES; do
+    for name in $names; do
         case ",$moved," in
             *,$name,*)
                 continue
@@ -182,37 +220,8 @@ disable_services() {
 
 }
 
-. /live/lib/live-init-utils.sh
-
-start_init_logging
-load_translation
-
-{
-    # Prevent other messages stepping on ours
-    # sleep 2
-    echo_script "Customizing services" $0
-
-    if [ "$LEAN" ]; then
-        echo_live "Disabling services %s" "$(paren L, lean)"
-        disable_services "$LEAN_SERVICES" "rc3.d rc5.d"
-    fi
-
-    if [ "$MEAN" ]; then
-        echo_live "Disabling network auto start %s" "$(paren M, mean)"
-        disable_services "$MEAN_SERVICES" "rcS.d"
-    fi
-
-    if [ "$XTRA_LEAN" ]; then
-        echo_live "Disabling more services %s" "$(paren X, Xtralean)"
-        disable_services "$XTRA_LEAN_SERVICES" "rcS.d"
-    fi
-
-    if [ "$NO_DBUS" ]; then
-        echo_live "Disabling dbus %s" "$(paren D, nodbus)"
-        disable_services "$NO_DBUS_SERVICES" "rc3.d rc5.d"
-    fi
-
-} 2>&1 | tee -a $INIT_LOG_FILE
+prep_main "$@"
+main  2>&1 | tee -a $INIT_LOG_FILE
 
 exit 0
 
