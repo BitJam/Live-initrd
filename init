@@ -68,7 +68,7 @@
            VERBOSE=5
 
         DO_HOTPLUG=true
-        LOAD_FIRST="usb-common usbcore ehci-hcd fusbh200-hcd fotg210-hcd"
+        LOAD_FIRST="usb-common usbcore ehci-hcd fusbh200-hcd fotg210-hcd battery"
 
           VID_NAME=VID
       LINUXFS_NAME=linuxfs
@@ -240,6 +240,11 @@ main_core() {
     vmsg 6 '%s started at %s seconds' "$ME" $(nq $(get_seconds $time_0))
 
     start_hotplug "$DO_HOTPLUG" "$TRACE_LOAD"
+
+    mkdir -p $MOD_DIR
+    depmod &>/dev/null
+   # These ones must be loaded before the others
+    echo $LOAD_FIRST | xargs modprobe -q -a $BLACKLIST_OPT 2>/dev/null
 
     #breakpoint 1 "before welcome"
     do_welcome "$DISTRO_PRETTY_NAME" "$VERSION" "$VERSION_DATE"
@@ -934,12 +939,6 @@ load_kernel_modules() {
     fi
 
     [ "$DISABLE_LOAD" ] && return
-
-    mkdir -p $MOD_DIR
-    depmod &>/dev/null
-
-    # These ones must be loaded before the others
-    echo $LOAD_FIRST | xargs modprobe -q -a $BLACKLIST_OPT 2>/dev/null
 
     if [ -r $file -a -n "$do_load" ]; then
         vmsg 7 'Load modules from file %s' "$(fq $file)"
