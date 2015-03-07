@@ -1565,7 +1565,7 @@ find_frugal_file() {
             return 40
         fi
         #. The <frugal> install succeeded
-        warn "The % install succeeded" frugal
+        warn "The %s install succeeded" frugal
         DID_FRUGAL=true
     fi
 
