@@ -821,7 +821,7 @@ do_welcome() {
 
     vmsg 2 "Welcome to %s" "$(pq $(uname -m) $pretty_name)!"
 
-    local bat_stat=$(battery-status)
+    local bat_stat=$(battery-status | sed "s/:/:$hi_co/" )
     [ "$bat_stat" ] && msg %s "$bat_stat"
 
     # Get total ramsize, and available real ram in MB. We need this later.
