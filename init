@@ -1421,8 +1421,11 @@ mntpnt_fstype() {
 }
 
 frugal_error() {
-    local mp
 
+    # Disable persistence if frugal fails or is aborted
+    PERSIST=
+
+    local mp
     for mp in $FRUGAL_MP $SQFS_MP; do
         mountpoint -q $mp && umount $mp
         [ -d $mp ] && rmdir $mp
