@@ -2459,7 +2459,7 @@ select_device() {
     local cnt=1 cnt_lab rtype mp=/tmp/mnt
     local size_lab free free_lab
     local line pretty skip data display
-    local free_rev type_rev name_rev
+    local free_rev type_rev name_rev size_rev
     #local format="$green%3s $lt_cyan%-5s $magenta%8s $yellow%8s $lt_blue%10s $lt_gray%9s $white%-16s $lt_gray%s\n"
     local format="$green%3s $lt_cyan%s%-5s$nc_co $magenta%s%8s$nc_co $yellow%s%8s$nc_co $lt_blue%s%10s$nc_co $lt_gray%10s  $white%-16s $lt_gray%s\n"
     local head_fmt="${hi_co}%3s %-5s %8s %8s %10s %10s  %-16s %s\n"
@@ -2505,8 +2505,11 @@ select_device() {
                *) continue ;;
         esac
 
-        skip=
-        local size_rev=
+        size_rev=
+        name_rev=
+        free_rev=
+        type_rev=
+        free=
 
         cnt_lab="$cnt)"
         size_lab=$(size_label_m $size)
@@ -2516,11 +2519,6 @@ select_device() {
             cnt_lab=
             skip=true
         fi
-
-        name_rev=
-        free_rev=
-        type_rev=
-        free=
 
         local exist_mp=$(get_mountpoint $dev)
         if [ "$exist_mp" ]; then
