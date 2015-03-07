@@ -1052,7 +1052,7 @@ from_filter() {
     done
 
     local type
-    for type in $(echo $from_type | sed 's/,\+/ /g'); do
+    for type in ${from_type//,/ }; do
         case $type in
 
             cd) FILTERED_LIST="$FILTERED_LIST$cd_devs"
@@ -3225,7 +3225,7 @@ prepare_persistence() {
 
     #----- Parse persist= ---------------------------------------------------------
 
-    for param in $(echo "$PERSIST" | sed 's/,/ /g'); do
+    for param in ${PERSIST//,/ }; do
 
         case $param in
             s|static) STATIC_ROOT=true;;
