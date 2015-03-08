@@ -2814,6 +2814,7 @@ free_space() {
         printf "sparse: r=%4s o=%4s of=%5s nf=%5s %s\n" $real $orig $free $new_free $sparse >> $MY_LOG
         free=$new_free
     done
+    [ $free -lt 0 ] && free=0
     echo $free
 }
 
