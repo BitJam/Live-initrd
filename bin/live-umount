@@ -510,10 +510,10 @@ mountpoint_list() {
     while read dev mp type opts other; do
 
         case $type in 
-            *tmpfs) case $mp in
-                        /aufs*)          ;;
-                             *) continue ;;
-                    esac ;;
+            tmpfs|devtmpfs) case $mp in
+                                /aufs*)          ;;
+                                     *) continue ;;
+                            esac ;;
         esac
 
         case $mp in
