@@ -32,7 +32,7 @@ live_param_filter() {
         desktop=*|dpi=*|drvr=*|fstab=*|hostname=*|kbd=*|kbopt=*|kbvar=*);;
         lang=*|mirror=*|mount=*|noloadkeys|noprompt);;
         nosplash|password|password=*|prompt|pw|pw=*|tz=*|ubp=*|ushow=*);;
-        uverb=*|xdrvr=*|xorgconf|xres=*);;
+        uverb=*|xdrvr=*|xorgconf|xres=*|noxorg);;
 
         *) printf "$param " ;;
         esac
