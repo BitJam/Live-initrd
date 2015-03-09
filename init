@@ -3523,8 +3523,8 @@ makefs() {
     local file=$1  type=$2  size=$3
     mkdir -p $(dirname $file)                                                 || return 1
     dd if=/dev/zero of=$file bs=1M count=0 seek=$size 1>> $MY_LOG 2>> $MY_LOG || return 2
-    ld_path /sbin/mkfs.$type -q -F $file              1>> $MY_LOG 2>> $MY_LOG || return 3
     sync
+    ld_path /sbin/mkfs.$type -q -F $file              1>> $MY_LOG 2>> $MY_LOG || return 3
 }
 
 default_makefs_size() {
