@@ -16,6 +16,7 @@ XSESSION_DIR=/usr/share/xsessions
     MENU_WMs="fluxbox icewm jwm"
     FF_PREFS="/etc/skel/.mozilla/firefox/*/prefs.js"
    AUTOMOUNT=
+  VID_DRIVER="nouveau|nvidia|i915|radeon"
 
 #-jbb For debugging
 : ${CMDLINE:=$(cat /proc/cmdline /live/config/cmdline)}
@@ -31,10 +32,11 @@ for param in $CMDLINE; do
               mirror=*)   CMD_MIRROR=$value                         ;;
          hwclock=local)   CMD_CLOCK=$value                          ;;
            hwclock=utc)   CMD_CLOCK=$value                          ;;
-              xorgconf)                              MAKE_XORG=true ;;
-                xres=*)                              MAKE_XORG=true ;;
-                drvr=*)                              MAKE_XORG=true ;;
-               xdrvr=*)                              MAKE_XORG=true ;;
+              xorgconf)                             FORCE_XORG=true ;;
+                noxorg)                                NO_XORG=true ;;
+                xres=*)                             FORCE_XORG=true ;;
+                drvr=*)  CMD_DRVR=$value ;          FORCE_XORG=true ;;
+               xdrvr=*)  CMD_DRVR=$value ;          FORCE_XORG=true ;;
 
 automount=off|amnt=off)                          AUTOMOUNT_OFF=true ;;
         automount|amnt)                              AUTOMOUNT=true ;;
@@ -328,11 +330,22 @@ Keyboard_Out
 
     xorg_conf=/etc/X11/xorg.conf
 
-    if [ "$MAKE_XORG" ]; then
+    # Force X video driver to be vesa if the framebuffer is enabled but we
+    # don't have a video driver loaded.  Only force creation of xorg.conf if it
+    # does not already exist.
+    local vesa_opt
+    if  test -e /sys/class/graphics/fb0/virtual_size \
+        && [ -z "$CMD_DRVR" -a -z "$NO_XORG" ] \
+        && ! lsmod | egrep -q "^($VID_DRIVER)$"; then
+        echo_live "Force X-windows to use %s driver" $(pquote vesa)
+        vesa_opt=xdrvr=vesa
+        test -e $xorg_conf || FORCE_XORG=true
+    fi
+
+    if [ "$FORCE_XORG" -a -z "$NO_XORG" ]; then
         echo_live "Configuring %s file" $(pquote $xorg_conf)
         [ -f "$xorg_conf" ] && mv -f $xorg_conf $xorg_conf.bak
-        /usr/sbin/buildxconfig $xorg_conf
-        sed -i "s/XkbLayout.*/XkbLayout \"$XKBLAYOUT\"/g" $xorg_conf
+        /sbin/make-xorg-conf --file=$xorg_conf $vesa_opt $(cat /proc/cmdline)
     fi
 
     create_home
