@@ -197,10 +197,10 @@ main_wrapper() {
     run_init_scripts $NEW_ROOT $LIVE_SCRIPTS
     PATH=$LIVE_BIN
 
-    free -m >> $MY_LOG
+    #free -m >> $MY_LOG
     echo 3 > /proc/sys/vm/drop_caches
     vmsg 6 'drop caches'
-    free -m >> $MY_LOG
+    #free -m >> $MY_LOG
 
     breakpoint 9 "right before starting init"
 
