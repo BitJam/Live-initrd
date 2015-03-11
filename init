@@ -821,6 +821,11 @@ do_welcome() {
 
     vmsg 2 "Welcome to %s" "$(pq $(uname -m) $pretty_name)!"
 
+    if lspci -n | grep -q " 80ee:beef"; then
+        msg 'VirtualBox detected'
+        touch /live/config/virtualbox
+    fi
+
     local bat_stat=$(battery-status | sed "s/:/:$hi_co/" )
     [ "$bat_stat" ] && msg %s "$bat_stat"
 
