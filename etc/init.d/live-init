@@ -335,10 +335,10 @@ Keyboard_Out
     # does not already exist.
     local vesa_opt
     if  test -e /sys/class/graphics/fb0/virtual_size \
-        && [ -z "$CMD_DRVR" -a -z "$NO_XORG" ] \
-        && ! lsmod | egrep -q "^($VID_DRIVER)$"; then
+        && [ -z "$NO_XORG" ] \
+        && ! lsmod | egrep -q "^($VID_DRIVER) "; then
         echo_live "Force X-windows to use %s driver" $(pquote vesa)
-        vesa_opt=xdrvr=vesa
+        vesa_opt=xres=safe
         test -e $xorg_conf || FORCE_XORG=true
     fi
 
