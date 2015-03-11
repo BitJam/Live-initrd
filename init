@@ -971,7 +971,7 @@ load_all_modules() {
     debug_cmd lspci
     LOAD_ALL_MODULES=true
     find $MOD_DIR/$subdir -name "*.ko" | sed -e 's=.*/==' -e 's/\.ko$//' \
-        | xargs modprobe -q -a $BLACKLIST_OPT
+        | xargs modprobe -q -a $BLACKLIST_OPT 2>/dev/null
 }
 
 debug_cmd() {
