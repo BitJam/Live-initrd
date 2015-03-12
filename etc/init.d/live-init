@@ -72,23 +72,27 @@ main() {
 }
 
 create_home() {
-    local demo=/home/demo hfile
-    rmdir $demo 2>/dev/null
+    local user=demo
+    local home=/home/$user
 
-    if grep -q "^demo:[^:]*:[^:]*:[^:]*:[^:]*:/home/demo:" /etc/passwd; then
-        for hfile in .config .local .bashrc .zshrc; do
-            test -e $demo/$hfile || continue
-            echo_live "Files already exist under %s" $(pquote $demo)
-            echo_live "Not creating or populating %s" $(pquote $demo)
-            return
-        done
+    # Find $user user with home at $home
+    if ! grep -q "^$user:[^:]*:[^:]*:[^:]*:[^:]*:$home:" /etc/passwd; then
+        echo_live "No % user found.  Not populating %s." $(pquote $user) $(pquote $home)
+        return
     fi
 
-    echo_live "Populating %s directory" $(pquote $demo)
+    rmdir $demo 2>/dev/null
+    if test -d $home; then
+        echo_live "Files already exist under %s" $(pquote $home)
+        echo_live "Not creating or populating %s" $(pquote $home)
+        return
+    fi
 
-    mkdir -p $demo
-    cp -r -P -p mode /etc/skel/* /etc/skel/.[a-zA-Z]* $demo 2>/dev/null
-    chown -R demo:users $demo 2>/dev/null
+    echo_live "Populating %s directory" $(pquote $home)
+
+    mkdir -p $home
+    cp -r -P -p mode /etc/skel/* /etc/skel/.[a-zA-Z]* $home 2>/dev/null
+    chown -R $user:users $home 2>/dev/null
 }
 
 localize_skel() {
