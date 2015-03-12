@@ -161,18 +161,16 @@ set_dpi() {
 set_mirror() {
     local mirror=$1
 
-    case "$mirror" in
-        [a-zA-Z][a-zA-Z]) ;;
-        *)
-            error "Bad mirror code %s (expected two letters)" $(pquote $mirror)
-            return;;
-    esac
+    if [ -z "$mirror" -o -n "${mirror##[a-zA-Za-zA-Z]}" ]; then
+        error "Bad mirror code %s (expected two letters)" $(pquote $mirror)
+        return
+    fi
 
     source_list=/etc/apt/sources.list.d/debian.list
 
     first_write $source_list || [ "$CMD_MIRROR" ] || return
 
-    echo_live "Localizing %s to %s mirror" $(pquote $source_list) $(pquote $MIRROR)
+    echo_live "Localizing %s to %s mirror" $(pquote $source_list) $(pquote $mirror)
     sed -i "s=/ftp\.\(..\.\)\\?debian\.org/=/ftp.$mirror.debian.org/=" $source_list
 }
 
