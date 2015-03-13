@@ -33,8 +33,8 @@ for param in $CMDLINE; do
          hwclock=local)   CMD_CLOCK=$value                          ;;
            hwclock=utc)   CMD_CLOCK=$value                          ;;
 
-              failsafe)   XORG_ARGS=$XORG_ARGS,safe                 ;;
-                xorg=*)   XORG_ARGS=$XORG_ARGS,$value               ;;
+              failsafe)   XORG_ARGS=$XORG_ARGS${XORG_ARGS:+,}safe   ;;
+                xorg=*)   XORG_ARGS=$XORG_ARGS${XORG_ARGS:+,}$value ;;
                 noxorg)   NO_XORG=true                              ;;
 
 automount=off|amnt=off)                          AUTOMOUNT_OFF=true ;;
