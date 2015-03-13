@@ -71,6 +71,87 @@ main() {
     esac
 }
 
+#----- Main code starts here --------------------------------------------------
+
+do_start() {
+    echo_script "Localizing/configuring X-Windows" $0
+
+    local DISTRO="unknown"
+    get_init_param DISTRO
+
+    case $DISTRO in
+        antiX) automount_and_fstab;;
+      MX|MX-*) add_fstab_swap     ;;
+            *) error 'Unknown_distro %s' "$(pquote $DISTRO)"
+    esac
+
+    #-jbb: for debugging
+    unset COUNTRY WM_LANG KEYBOARDS KEYTABLE LANG MIRROR TZ XKBLAYOUT CONSOLE_FONT
+    [ "$CMD_LANG" ] && get_init_lang $CMD_LANG error
+
+    usb_rules=/etc/udev/rules.d/99-usbstorage.rules
+    usb_unused=$usb_rules.unused
+
+
+    MIRROR=${CMD_MIRROR:-$MIRROR}
+    [ "$MIRROR" ] && set_mirror $MIRROR
+
+    [ "$WM_LANG" ] && localize_skel $WM_LANG
+
+    # Always create keyboard file in non-perisistent system even with no X
+    kb_file=/etc/default/keyboard
+    default_xkb_opts="grp:alt_shift_toggle,terminate:ctrl_alt_bksp,grp_led:scroll"
+
+    if first_write $kb_file || [ "$DO_XKBD" ]; then
+        XKBLAYOUT=${CMD_KBD:-$XKBLAYOUT}
+        [ "$XKBLAYOUT"  ] && echo_live "Setting %s to %s" $(pquote xkb-layout)  $(pquote $XKBLAYOUT)
+        [ "$XKBMODEL"   ] && echo_live "Setting %s to %s" $(pquote xkb-model)   $(pquote $XKBMODEL)
+        [ "$XKBVARIANT" ] && echo_live "Setting %s to %s" $(pquote xkb-variant) $(pquote $XKBVARIANT)
+        [ "$XKBOPTIONS" ] && echo_live "Setting %s to %s" $(pquote xkb-options) $(pquote $XKBOPTIONS)
+
+        cat > $kb_file <<Keyboard_Out
+XKBMODEL="${XKBMODEL:=pc105}"
+XKBLAYOUT="${XKBLAYOUT:=us}"
+XKBVARIANT="${XKBVARIANT}"
+XKBOPTIONS="${XKBOPTIONS:=$default_xkb_opts}"
+Keyboard_Out
+    fi
+
+    # Don't bother with X stuff on systems without X
+    #--------------------------------------------------------------------------
+    if [ ! -d "$XSESSION_DIR" ]; then
+        create_home
+        exit 0
+    fi
+    #--------------------------------------------------------------------------
+
+    [ "$CMD_DPI" ] && set_dpi $CMD_DPI
+
+    [ "$NO_XORG" ] || make_xorg_conf
+
+    create_home
+
+    [ "$CMD_DESKTOP" ] && set_default_desktop $CMD_DESKTOP
+    [ "$CMD_CLOCK"   ] && set_utc_local $CMD_CLOCK
+
+    #localize_firefox $LANG
+
+    enable_xkb="s/^#\?setxkbmap.*/setxkbmap -layout \"$XKBLAYOUT\" -option \"$XKBOPTIONS\" -variant \"$XKBVARIANT\"/"
+
+    for wm in $MENU_WMs;  do
+        f1=/home/demo/.$wm/startup
+        f2=/etc/skel/.$wm/menu
+        f3=/etc/skel/.config/rox.sourceforge.net/ROX-Filer/pb_antiX-$wm
+        f4=/etc/skel/.$wm/startup
+        [ -e $f1 ] && sed -i -e "$enable_xkb"             $f1
+        [ -e $f2 ] && sed -i -e "/gksu antixsources.sh/d" $f2
+        [ -e $f3 ] && sed -i -e "/antixsources.desktop/d" $f3
+        [ -e $f4 ] && sed -i -e "/toram-eject/d"          $f4
+        [ -e $f4 ] && sed -i -e "/persist-config/d"       $f4
+        rm -f /etc/skel/Desktop/Install.desktop
+    done
+}
+
 create_home() {
     local user=demo
     local home=/home/$user
@@ -161,7 +242,7 @@ set_dpi() {
 set_mirror() {
     local mirror=$1
 
-    if [ -z "$mirror" -o -n "${mirror##[a-zA-Za-zA-Z]}" ]; then
+    if [ -z "$mirror" -o -n "${mirror##[a-zA-Z][a-zA-Z]}" ]; then
         error "Bad mirror code %s (expected two letters)" $(pquote $mirror)
         return
     fi
@@ -296,88 +377,6 @@ make_xorg_conf() {
     echo_live "Configuring %s file" $(pquote $xorg_conf)
     [ -e "$xorg_conf" -a ! -e $xorg_conf.bak ] && mv -f $xorg_conf $xorg_conf.bak
     /sbin/make-xorg-conf --file=$xorg_conf $XORG_ARGS
-}
-
-#----- Main code starts here --------------------------------------------------
-
-do_start() {
-    echo_script "Localizing/configuring X-Windows" $0
-
-    local DISTRO="unknown"
-    get_init_param DISTRO
-
-    case $DISTRO in
-        antiX) automount_and_fstab;;
-      MX|MX-*) add_fstab_swap     ;;
-            *) error 'Unknown_distro %s' "$(pquote $DISTRO)"
-    esac
-
-    #-jbb: for debugging
-    unset COUNTRY WM_LANG KEYBOARDS KEYTABLE LANG MIRROR TZ XKBLAYOUT CONSOLE_FONT
-    [ "$CMD_LANG" ] && get_init_lang $CMD_LANG error
-
-    usb_rules=/etc/udev/rules.d/99-usbstorage.rules
-    usb_unused=$usb_rules.unused
-
-
-    MIRROR=${CMD_MIRROR:-$MIRROR}
-    [ "$MIRROR" ] && set_mirror $MIRROR
-
-    [ "$WM_LANG" ] && localize_skel $WM_LANG
-
-    # Always create keyboard file in non-perisistent system even with no X
-    kb_file=/etc/default/keyboard
-    default_xkb_opts="grp:alt_shift_toggle,terminate:ctrl_alt_bksp,grp_led:scroll"
-
-    if first_write $kb_file || [ "$DO_XKBD" ]; then
-        XKBLAYOUT=${CMD_KBD:-$XKBLAYOUT}
-        [ "$XKBLAYOUT"  ] && echo_live "Setting %s to %s" $(pquote xkb-layout)  $(pquote $XKBLAYOUT)
-        [ "$XKBMODEL"   ] && echo_live "Setting %s to %s" $(pquote xkb-model)   $(pquote $XKBMODEL)
-        [ "$XKBVARIANT" ] && echo_live "Setting %s to %s" $(pquote xkb-variant) $(pquote $XKBVARIANT)
-        [ "$XKBOPTIONS" ] && echo_live "Setting %s to %s" $(pquote xkb-options) $(pquote $XKBOPTIONS)
-
-        cat > $kb_file <<Keyboard_Out
-XKBMODEL="${XKBMODEL:=pc105}"
-XKBLAYOUT="${XKBLAYOUT:=us}"
-XKBVARIANT="${XKBVARIANT}"
-XKBOPTIONS="${XKBOPTIONS:=$default_xkb_opts}"
-Keyboard_Out
-    fi
-
-    # Don't bother with X stuff on systems without X
-    #--------------------------------------------------------------------------
-    if [ ! -d "$XSESSION_DIR" ]; then
-        create_home
-        exit 0
-    fi
-    #--------------------------------------------------------------------------
-
-    [ "$CMD_DPI" ] && set_dpi $CMD_DPI
-
-    [ "$NO_XORG" ] || make_xorg_conf
-
-    create_home
-
-    [ "$CMD_DESKTOP" ] && set_default_desktop $CMD_DESKTOP
-    [ "$CMD_CLOCK"   ] && set_utc_local $CMD_CLOCK
-
-    #localize_firefox $LANG
-
-    enable_xkb="s/^#\?setxkbmap.*/setxkbmap -layout \"$XKBLAYOUT\" -option \"$XKBOPTIONS\" -variant \"$XKBVARIANT\"/"
-
-    for wm in $MENU_WMs;  do
-        f1=/home/demo/.$wm/startup
-        f2=/etc/skel/.$wm/menu
-        f3=/etc/skel/.config/rox.sourceforge.net/ROX-Filer/pb_antiX-$wm
-        f4=/etc/skel/.$wm/startup
-        [ -e $f1 ] && sed -i -e "$enable_xkb"             $f1
-        [ -e $f2 ] && sed -i -e "/gksu antixsources.sh/d" $f2
-        [ -e $f3 ] && sed -i -e "/antixsources.desktop/d" $f3
-        [ -e $f4 ] && sed -i -e "/toram-eject/d"          $f4
-        [ -e $f4 ] && sed -i -e "/persist-config/d"       $f4
-        rm -f /etc/skel/Desktop/Install.desktop
-    done
-
 }
 
 main "$@" 2>&1 | tee -a $INIT_LOG_FILE
