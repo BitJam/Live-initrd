@@ -156,7 +156,6 @@ main_wrapper() {
     set_colors "$NO_COLOR" "$LOW_COLOR"
 
     read_xlat init $LANG
-    #clean_xlat
 
     # disable console screen blanking
     printf "\e[9;0]\e[14;0]"
@@ -187,7 +186,7 @@ main_wrapper() {
     [ -e /live/config/persist-root ] && LIVE_SCRIPTS="$LIVE_SCRIPTS persist-password"
     [ -e /live/config/save-persist ] && LIVE_SCRIPTS="$LIVE_SCRIPTS persist-autosave"
 
-    # Do this last so the changes aren't saved until a "real" persist-save
+    # Do this last so the changes aren't saved until after a "real" persist-save
     [ -e /live/config/systemd ] || LIVE_SCRIPTS="$LIVE_SCRIPTS live-disable-services"
 
     PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin
