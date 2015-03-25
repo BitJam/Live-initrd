@@ -14,6 +14,8 @@
 # . /usr/share/antiX/lib/live-init-utils.sh
 . /live/lib/live-init-utils.sh
 
+LOCKOUT_TIME=15
+
 start_init_logging
 load_translation
 PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/live/bin
@@ -61,7 +63,7 @@ do_stop() {
     if test -r $last_save_file; then
         local prev=$(cat $last_save_file)
         local diff=$(( $(date +%s) - $(cat $last_save_file)))
-        if [ $diff -le 10 ]; then
+        if [ $diff -le $LOCKOUT_TIME ]; then
             echo_live "Already autosaved %s seconds ago" $diff
             echo_live "Won't autosave again"
             return
