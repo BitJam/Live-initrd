@@ -58,8 +58,6 @@
 
          FROM_TYPE="usb,cd"
      FROM_TYPE_ALL="usb,cd,hd"
-          TOP_DIRS="bin boot etc lib lib64 opt root run sbin tmp usr var"
-      TOP_BIN_DIRS="bin lib lib64 sbin usr"
 
       FRUGAL_FILES="linuxfs linuxfs.md5 vmlinuz vmlinuz.md5 initrd.gz initrd.gz.md5 xtra xtra.tgz ../boot"
 
