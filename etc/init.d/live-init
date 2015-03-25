@@ -16,7 +16,6 @@ XSESSION_DIR=/usr/share/xsessions
     MENU_WMs="fluxbox icewm jwm"
     FF_PREFS="/etc/skel/.mozilla/firefox/*/prefs.js"
    AUTOMOUNT=
-  VID_DRIVER="nouveau|nvidia|i915|radeon"
 
 #-jbb For debugging
 : ${CMDLINE:=$(cat /proc/cmdline /live/config/cmdline)}
