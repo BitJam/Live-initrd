@@ -30,7 +30,6 @@ main() {
     exit 0
 }
 
-
 do_start() {
     local persist_conf=/etc/live/config/persist-config.conf
     local new_passwd=/live/config/new-passwords
