@@ -65,7 +65,9 @@
        RETRY_DELAY=50               # in hundredths of a second
            VERBOSE=5
 
-        DO_HOTPLUG=true
+        DO_HOTPLUG=
+       DO_COLDPLUG=true
+
         LOAD_FIRST="usb-common usbcore ehci-hcd fusbh200-hcd fotg210-hcd battery"
 
           VID_NAME=VID
@@ -73,9 +75,6 @@
 
         BLACK_LIST=
    BLACK_LIST_FILE=/etc/modprobe.d/initrd.conf
-
-           DO_LOAD=
-      DISABLE_LOAD=
 
     DEFAULT_SQFILE=/antiX/linuxfs
   DEFAULT_ISO_FILE=/antiX/antiX.iso
@@ -237,23 +236,25 @@ main_core() {
 
     vmsg 6 '%s started at %s seconds' "$ME" $(nq $(get_seconds $time_0))
 
-    start_hotplug "$DO_HOTPLUG" "$TRACE_LOAD"
-
     mkdir -p $MOD_DIR
     depmod &>/dev/null
-   # These ones must be loaded before the others
-    echo $LOAD_FIRST | xargs modprobe -q -a $BLACKLIST_OPT 2>/dev/null
+    blacklist_modules $BLACK_LIST
 
-    #breakpoint 1 "before welcome"
+    breakpoint 1 "before welcome"
+
+    # These ones must be loaded before the others
+    echo $LOAD_FIRST | xargs modprobe -q -a 2>/dev/null
+
+    [ "$DO_HOTPLUG" ] && start_hotplug  $TRACE_LOAD
+
     do_welcome "$DISTRO_PRETTY_NAME" "$VERSION" "$VERSION_DATE"
     show_bootcodes "$(live_param_filter $UNKNOWN_BOOTCODES)"
     show_integer_errors "$INTEGER_ERRORS"
 
-    breakpoint 1 "before loading modules"
+    breakpoint 2 "before coldplug"
 
     local orig_fb_name=$(cat /sys/class/graphics/fb0/name 2> /dev/null)
-    load_kernel_modules "$BLACK_LIST" "$DO_LOAD" "$MODULE_LIST"
-
+    load_kernel_modules "$MODULE_LIST"
     set_fbcondecor $SPLASH_PARAM "$orig_fb_name"
 
     touch /live/config/cmdline
@@ -275,7 +276,7 @@ main_core() {
     # will always work
     #[ "$NO_EHCI" ] && disable_hcd ehci
 
-    breakpoint 2 "before looking for linuxfs file"
+    breakpoint 3 "before looking for linuxfs file"
 
     RW_MODE=ro
 
@@ -291,7 +292,7 @@ main_core() {
 
     BOOT_UUID=$(device_uuid $SQFILE_DEV)
     [ "$BOOT_UUID" ] && vmsg 6 "boot device uuid: $BOOT_UUID"
-    breakpoint 3 "after mounting boot device"
+    breakpoint 4 "after mounting boot device"
 
     mount -o remount,rw $SQFILE_DEV 2>/dev/null
     dir_has_param "$SQFILE_MP" rw || REMASTERABLE=
@@ -311,7 +312,7 @@ main_core() {
     #[ "$PERSIST_FILES" ] && mount -o remount,rw $SQFILE_DEV
     mount -o remount,rw $SQFILE_DEV
 
-    breakpoint 4 "after mounting linuxfs file"
+    #breakpoint 4 "after mounting linuxfs file"
 
     prepare_persistence
 
@@ -532,11 +533,10 @@ read_cmdline_params()
 
                        failsafe) MODULE_LIST=all                                 ;;
                          load=*) MODULE_LIST=$MODULE_LIST,$value                 ;;
-#                           load) DO_LOAD=true                                    ;;
-                          noload) DISABLE_LOAD=true                              ;;
-                bl=*|blacklist=*) BLACK_LIST=$BLACK_LIST,$value                  ;;
+               bl=*|blacklist=*) BLACK_LIST=$BLACK_LIST,$value                   ;;
 
-                      nohotplug) DO_HOTPLUG=                                     ;;
+                       coldplug) DO_HOTPLUG=   ; DO_COLDPLUG=true                ;;
+                        hotplug) DO_COLDPLUG=  ; DO_HOTPLUG=true                 ;;
                       traceload) TRACE_LOAD=true                                 ;;
                  autoload|aload) FULL_AUTOLOAD=true                              ;;
 
@@ -724,15 +724,13 @@ valid_int() {
 }
 
 start_hotplug() {
-    local do_hotplug=$1  trace_load=$2
-
-    [ "$DISABLE_LOAD" ] && return
+    local trace_load=$1
 
     # Set up file for recording sequence of kernel events sent to mdev
     echo > /dev/mdev.seq
     if [ "$trace_load" ]; then
         echo $LIVE_BIN/mdev-trace > /proc/sys/kernel/hotplug
-    elif [ -n "$do_hotplug" ]; then
+    else
         echo $LIVE_BIN/mdev-hotplug > /proc/sys/kernel/hotplug
     fi
 }
@@ -934,25 +932,24 @@ set_fbcondecor() {
     $prog -c on 2>/dev/null
 }
 
+blacklist_modules() {
+    local black_list=$1
+    [ "$black_list" ] || return
+
+    black_list=$(echo $black_list | sed 's/VIDEO/nouveau,nvidia,i915,radeon/');
+    mkdir -p /etc/modprobe.d/
+    echo $black_list | sed 's/,/\n/g' | sed -r 's/^([a-z])/blacklist \1/' >> $BLACK_LIST_FILE
+}
 
 load_kernel_modules() {
-    local black_list=$1 do_load=$2  list=$3 file=$CUSTOM_DIR/$DISTRO_NAME/modules.load
+    local list=$1 file=$2
 
-    if [ "$black_list" ]; then
-        black_list=$(echo $black_list | sed 's/VIDEO/nouveau,nvidia,i915,radeon/');
-        mkdir -p /etc/modprobe.d/
-        echo $black_list | sed 's/,/\n/g' | sed -r 's/^([a-z])/blacklist \1/' >> $BLACK_LIST_FILE
-        BLACKLIST_OPT=-b
-    fi
+    # if [ -r $file ]; then
+    #     vmsg 7 'Load modules from file %s' "$(fq $file)"
+    #     grep -v "^\s*#" $file | sed 's/\s*#.*//' | xargs modprobe -a -q -b
+    # fi
 
-    [ "$DISABLE_LOAD" ] && return
-
-    if [ -r $file -a -n "$do_load" ]; then
-        vmsg 7 'Load modules from file %s' "$(fq $file)"
-        grep -v "^\s*#" $file | sed 's/\s*#.*//' | xargs modprobe -a -q $BLACKLIST_OPT
-    fi
-
-    autoload_modules 5
+    coldplug_modules 5
 
     for module in ${list//,/ }; do
         case $module in
@@ -969,7 +966,7 @@ load_all_modules() {
     debug_cmd lspci
     LOAD_ALL_MODULES=true
     find $MOD_DIR/$subdir -name "*.ko" | sed -e 's=.*/==' -e 's/\.ko$//' \
-        | xargs modprobe -q -a $BLACKLIST_OPT 2>/dev/null
+        | xargs modprobe -q -a -b 2>/dev/null
 }
 
 debug_cmd() {
@@ -978,25 +975,23 @@ debug_cmd() {
     echo "==============================" >> $MY_LOG
 }
 
-autoload_modules() {
+coldplug_modules() {
     local verb=$1
-
-    [ "$DISABLE_LOAD" ] && return
 
     [ "$verb" ] && vmsg $verb "Loading hardware specific modules ..."
 
     #find /sys/devices -name uevent -exec sed -n 's/^MODALIAS=//p' '{}' + 2>/dev/null \
-    #    | sort -u | xargs modprobe -a -q $BLACKLIST_OPT
+    #    | sort -u | xargs modprobe -a -q -b
     #return
 
     find /sys/devices -name modalias -exec cat '{}' + 2>/dev/null | sort -u \
-        | xargs modprobe -a -q $BLACKLIST_OPT 2>/dev/null
+        | xargs modprobe -a -q -b 2>/dev/null
     return
 
     # local alias_file alias
     # find /sys/devices -name modalias | while read alias_file; do
     #     alias=$(cat $alias_file 2>/dev/null)
-    #     modprobe -q $BLACKLIST_OPT $alias 2>/dev/null
+    #     modprobe -q -b $alias 2>/dev/null
     # done
 }
 
@@ -1175,7 +1170,7 @@ _find_files() {
                 said_retry=true
             fi
 
-            [ "$FULL_AUTOLOAD" ] && autoload_modules
+            [ "$DO_COLDPLUG" ] && coldplug_modules
 
             # Normally just print out a dot for each iteration
             [ "$be_verbose" ] || msgN $dot
