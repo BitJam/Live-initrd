@@ -254,7 +254,7 @@ main_core() {
 
     local orig_fb_name=$(cat /sys/class/graphics/fb0/name 2> /dev/null)
     load_kernel_modules "$MODULE_LIST"
-    set_fbcondecor $SPLASH_PARAM "$orig_fb_name"
+    set_fbcondecor "$SPLASH_PARAM" "$orig_fb_name"
 
     touch /live/config/cmdline
 
