@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/live/bin/sh
 
 ### BEGIN INIT INFO
 # Provides:          live-init
@@ -11,6 +11,8 @@
 # Short-Description: live-init
 # Description: localize /etc/skel, create /home/demo, customize X, mirrors, set default desktop
 ### END INIT INFO
+
+PATH=/live/bin:$PATH
 
 XSESSION_DIR=/usr/share/xsessions
     MENU_WMs="fluxbox icewm jwm"
