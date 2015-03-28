@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/live/bin/sh
 
 ### BEGIN INIT INFO
 # Provides:          live-disable-services
@@ -73,6 +73,8 @@ MEAN_SERVICES="
 NO_DBUS_SERVICES="
     dbus
 "
+
+PATH=/live/bin:$PATH
 
 prep_main() {
 

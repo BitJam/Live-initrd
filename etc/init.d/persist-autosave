@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/live/bin/sh
 
 ### BEGIN INIT INFO
 # Provides:          persist-autosave
@@ -11,6 +11,7 @@
 # Description:       Run persist-config on startup if needed.  Run persist-save if needed
 ### END INIT INFO
 
+PATH=/live/bin:$PATH
 # . /usr/share/antiX/lib/live-init-utils.sh
 . /live/lib/live-init-utils.sh
 

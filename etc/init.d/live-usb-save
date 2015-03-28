@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/live/bin/sh
 
 ### BEGIN INIT INFO
 # Provides:          live-usb-save
@@ -10,6 +10,9 @@
 # Short-Description:
 # Description:       save/restore some information on raw liveusb w/o persistence
 ### END INIT INFO
+
+
+PATH=/live/bin:$PATH
 
 . /live/lib/live-init-utils.sh
 

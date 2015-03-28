@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/live/bin/sh
 
 ### BEGIN INIT INFO
 # Provides:          live-L10n
@@ -11,6 +11,8 @@
 # Short-Description: live-L10n
 # Description: Sets timezone, hostname, and console fonts.  Runs update-menus and update-locale
 ### END INIT INFO
+
+PATH=/live/bin:$PATH
 
 case "$1" in
     start) 
@@ -28,7 +30,7 @@ esac
 : ${CMDLINE:=$(cat /proc/cmdline /live/config/cmdline)}
 
 for param in $CMDLINE; do
-    case "$param" in
+    case $param in
             lang=*)    CMD_LANG=${param#*=}; MUST_RUN=true ;;
         hostname=*)    CMD_HOST=${param#*=}; MUST_RUN=true ;;
               tz=*)      CMD_TZ=${param#*=}; MUST_RUN=true ;;

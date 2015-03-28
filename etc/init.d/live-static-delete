@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/live/bin/sh
 
 ### BEGIN INIT INFO
 # Provides:          live-static-persist
@@ -12,6 +12,7 @@
 ### END INIT INFO
 
 
+PATH=/live/bin:$PATH
 LIST_FILE=/usr/local/share/excludes/static-root-delete.list
 
 main() {

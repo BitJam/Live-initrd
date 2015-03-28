@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/live/bin/sh
 
 ### BEGIN INIT INFO
 # Provides:         live-restore-services 
@@ -20,6 +20,8 @@
 
 # GETTEXT_KEYWORD="echo_live"
 # GETTEXT_KEYWORD="echo_script"
+
+PATH=/live/bin:$PATH
 
 case "$1" in
     start)
