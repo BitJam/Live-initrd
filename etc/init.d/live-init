@@ -96,10 +96,6 @@ do_start() {
     unset COUNTRY WM_LANG KEYBOARDS KEYTABLE LANG MIRROR TZ XKBLAYOUT CONSOLE_FONT
     [ "$CMD_LANG" ] && get_init_lang $CMD_LANG error
 
-    usb_rules=/etc/udev/rules.d/99-usbstorage.rules
-    usb_unused=$usb_rules.unused
-
-
     MIRROR=${CMD_MIRROR:-$MIRROR}
     [ "$MIRROR" ] && set_mirror $MIRROR
 
