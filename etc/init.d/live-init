@@ -120,6 +120,8 @@ XKBOPTIONS="${XKBOPTIONS:=$default_xkb_opts}"
 Keyboard_Out
     fi
 
+    [ "$CMD_CLOCK"   ] && set_utc_local $CMD_CLOCK
+
     # Don't bother with X stuff on systems without X
     #--------------------------------------------------------------------------
     if [ ! -d "$XSESSION_DIR" ]; then
@@ -135,7 +137,6 @@ Keyboard_Out
     create_home
 
     [ "$CMD_DESKTOP" ] && set_default_desktop $CMD_DESKTOP
-    [ "$CMD_CLOCK"   ] && set_utc_local $CMD_CLOCK
 
     #localize_firefox $LANG
 
