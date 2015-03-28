@@ -27,12 +27,12 @@ live_param_filter() {
         nodbus)                      CMD_NO_DBUS=true ;;
 
         # Our Live params
-        hwclock=utc|hwclock=local) ;;
+        hwclock=utc|hwclock=local|xorg|xorg=*|noearlyvid|earlyvid) ;;
         amnt|amnt=*|automount|automount=*|confont=*|conkeys=*);;
-        desktop=*|dpi=*|drvr=*|fstab=*|hostname=*|kbd=*|kbopt=*|kbvar=*);;
+        desktop=*|dpi=*|fstab=*|hostname=*|kbd=*|kbopt=*|kbvar=*);;
         lang=*|mirror=*|mount=*|noloadkeys|noprompt);;
         nosplash|password|password=*|prompt|pw|pw=*|tz=*|ubp=*|ushow=*);;
-        uverb=*|xdrvr=*|xorgconf|xres=*|noxorg);;
+        uverb=*|xres=*|noxorg);;
 
         *) printf "$param " ;;
         esac
