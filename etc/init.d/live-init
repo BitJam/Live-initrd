@@ -362,7 +362,7 @@ make_xorg_conf() {
     local xorg_conf=/etc/X11/xorg.conf
     local orig_fb_name fb_name=none
     read orig_fb_name 2</dev/null < /sys/class/graphics/fb0/name
-    echo_live "Scanning for video modules ..."
+    echo_live "Scanning for hardware specific video modules ..."
     local video_modules="$(find_video_modules)"
     local kms_modules="$(echo "$video_modules" | egrep "^($KMS_VIDEO_MODULES)$")"
 
