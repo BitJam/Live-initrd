@@ -370,7 +370,7 @@ load_video_driver() {
     if [ "$kms_modules" ]; then
         echo_live "Found %s video module(s) %s" KMS "$(pquote $(echo $kms_modules))"
         echo_live "Load module(s) %s" "$(pquote $(echo $kms_modules))"
-        modprobe -a -q "$kms_modules"
+        modprobe -b -a -q "$kms_modules"
         set_fbcondecor "$SPLASH_PARAM" "$orig_fb_name"
     elif [ "$video_modules" ]; then
         echo_live "Found video module(s) %s" "$(pquote $(echo $video_modules))"
