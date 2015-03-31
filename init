@@ -4208,7 +4208,9 @@ prepare_switch_root() {
     mount_tmpfs $new_live       10 $live_dir mode=755
     ln -s . $new_live/live
 
+    test -e /live/README && cp /live/README $new_live/
     cp -a /bin/shutdown $new_live/
+
     mkdir -p $new_live/oldroot
 
     local mp new
