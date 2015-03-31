@@ -142,7 +142,10 @@ Keyboard_Out
 
     #localize_firefox $LANG
 
-    enable_xkb="s/^#\?setxkbmap.*/setxkbmap -layout \"$XKBLAYOUT\" -option \"$XKBOPTIONS\" -variant \"$XKBVARIANT\"/"
+    #enable_xkb="s/^#\?setxkbmap.*/setxkbmap -layout \"$XKBLAYOUT\" -option \"$XKBOPTIONS\" -variant \"$XKBVARIANT\"/"
+    enable_xkb="s/^#\?setxkbmap.*/setxkbmap -layout \"$XKBLAYOUT\" -option \"*$default_xkb_opts*\" -variant \"$XKBVARIANT\"/"
+
+    return
 
     for wm in $MENU_WMs;  do
         f1=/home/demo/.$wm/startup
