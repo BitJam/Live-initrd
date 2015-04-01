@@ -322,12 +322,16 @@ automount_and_fstab() {
     # Mount partitions while building fstab file
     local fstab_opt=
     case ",$CMD_MOUNT" in
-        ,all|,usb)
+        ,all)
+            echo_live "Mounting all devices"
             fstab_opt="$fstab_opt --mount=$CMD_MOUNT" ;;
-        ,)
-            ;;
-        *)
-            error "Invalid %s option %s" 'mount/automount' $(pquote $CMD_MOUNT)
+        ,usb)
+
+            echo_live "Mounting usb devices"
+            fstab_opt="$fstab_opt --mount=$CMD_MOUNT" ;;
+
+        ,)  ;;
+        *)  error "Invalid %s option %s" 'mount/automount' $(pquote $CMD_MOUNT) ;;
     esac
 
     if [ -e /etc/fstab  ]; then
