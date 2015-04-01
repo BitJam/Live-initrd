@@ -296,6 +296,9 @@ automount_and_fstab() {
    local        hp_file=/etc/fstab.hotplug
    local  hp_state_file=$hp_file.state
 
+    # Delay start of auto-stuff until after udev has started
+    rm -f /etc/udev/rules.d/90-fstab-automount.rules
+
     # "off" means "off"
     if [ "$CMD_MOUNT" = 'off' -o -n "$AUTOMOUNT_OFF" ]; then
         echo_live "Turning all boot mount options off"
