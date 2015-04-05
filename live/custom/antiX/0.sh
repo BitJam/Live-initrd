@@ -33,6 +33,7 @@ live_param_filter() {
         lang=*|mirror=*|mount=*|noloadkeys|noprompt);;
         nosplash|password|password=*|prompt|pw|pw=*|tz=*|ubp=*|ushow=*);;
         uverb=*|xres=*|noxorg);;
+        desktheme=*) ;;
 
         *) printf "$param " ;;
         esac
