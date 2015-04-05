@@ -87,7 +87,8 @@ main() {
 
     read_cmdline
     set_color
-    read_xlat $me $LANG
+    # Best if the xlat name is hard coded
+    read_xlat live-umount $LANG
 
     [ "$me" = 'shutdown' ] && do_shutdown
 
