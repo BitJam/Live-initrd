@@ -52,7 +52,7 @@ automount=off|amnt=off)                          AUTOMOUNT_OFF=true ;;
                fstab=*)    CMD_FSTAB=$value                         ;;
                 splash) SPLASH_PARAM=v                              ;;
               splash=*) SPLASH_PARAM=$value                         ;;
-
+           desktheme=*) DESK_THEME=$value                           ;;
     esac
 done
 
@@ -140,6 +140,11 @@ Keyboard_Out
 
     [ "$CMD_DESKTOP" ] && set_default_desktop $CMD_DESKTOP
 
+    if [ "$DESK_THEME" ]; then
+        echo_live "Setting desktop theme to %s" $(pquote $DESK_THEME)
+        set-desktop-theme --dir /home/demo $DESK_THEME
+        chown -R $user:users $home 2>/dev/null
+    fi
     #localize_firefox $LANG
 
     #enable_xkb="s/^#\?setxkbmap.*/setxkbmap -layout \"$XKBLAYOUT\" -option \"$XKBOPTIONS\" -variant \"$XKBVARIANT\"/"
