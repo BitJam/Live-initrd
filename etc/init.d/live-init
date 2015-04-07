@@ -146,24 +146,6 @@ Keyboard_Out
         chown -R $user:users $home 2>/dev/null
     fi
     #localize_firefox $LANG
-
-    #enable_xkb="s/^#\?setxkbmap.*/setxkbmap -layout \"$XKBLAYOUT\" -option \"$XKBOPTIONS\" -variant \"$XKBVARIANT\"/"
-    enable_xkb="s/^#\?setxkbmap.*/setxkbmap -layout \"$XKBLAYOUT\" -option \"*$default_xkb_opts*\" -variant \"$XKBVARIANT\"/"
-
-    return
-
-    for wm in $MENU_WMs;  do
-        f1=/home/demo/.$wm/startup
-        f2=/etc/skel/.$wm/menu
-        f3=/etc/skel/.config/rox.sourceforge.net/ROX-Filer/pb_antiX-$wm
-        f4=/etc/skel/.$wm/startup
-        [ -e $f1 ] && sed -i -e "$enable_xkb"             $f1
-        [ -e $f2 ] && sed -i -e "/gksu antixsources.sh/d" $f2
-        [ -e $f3 ] && sed -i -e "/antixsources.desktop/d" $f3
-        [ -e $f4 ] && sed -i -e "/toram-eject/d"          $f4
-        [ -e $f4 ] && sed -i -e "/persist-config/d"       $f4
-        rm -f /etc/skel/Desktop/Install.desktop
-    done
 }
 
 create_home() {
