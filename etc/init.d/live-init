@@ -56,11 +56,8 @@ automount=off|amnt=off)                          AUTOMOUNT_OFF=true ;;
     esac
 done
 
-PATH="/bin:/sbin:/usr/bin:/usr/sbin:/usr/X11R6/bin:/live/bin"; export PATH
-
 umask 022
 
-# . /usr/share/antiX/lib/live-init-utils.sh
 . /live/lib/live-init-utils.sh
 
 start_init_logging
@@ -142,9 +139,10 @@ Keyboard_Out
 
     if [ "$DESK_THEME" ]; then
         echo_live "Setting desktop theme to %s" $(pquote $DESK_THEME)
-        set-desktop-theme --dir /home/demo $DESK_THEME
-        chown -R $user:users $home 2>/dev/null
+        /usr/local/bin/set-desktop-theme --dir /home/demo $DESK_THEME
+        chown -R $user:users /home/demo 2>/dev/null
     fi
+
     #localize_firefox $LANG
 }
 
