@@ -93,7 +93,7 @@ MKFS_FREE_MARGIN=20
 
       LAST_BP_TIME=0
 
-   GFX_SAVE_SCRIPT="/bin/gfxsave.sh"
+   GFX_SAVE_SCRIPT="/bin/gfxsave"
 
 set_live_dirs() {
     local dir=$1
@@ -3738,7 +3738,7 @@ update_gfx_menu() {
     fi
 
     env VERBOSE=$VERBOSE NO_COLOR=$NO_COLOR LOW_COLOR=$LOW_COLOR \
-        GFX_LOG_FILE=$LOG_DIR/gfxsave.log $script $dir $param
+        GFX_LOG_FILE=$LOG_DIR/gfxsave.log /bin/sh $script $dir $param
 
     vmsg_nc 6 $tbar
 }
