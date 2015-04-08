@@ -4,13 +4,86 @@ GFX_CONFIG_FILE="/live/config/gfxsave.conf"
      GFX_SUFFIX=".def"
     GFX_SAVE_ON="gfxsave.on"
 
-NEW_CONFIG_FILE=/live/boot-dev/boot/syslinux/gfxsave.cfg 
-
-test -e $NEW_CONFIG_FILE && GFX_CONFIG_FILE=$NEW_CONFIG_FILE
-
 hbar="======================================================================"
 tab="----------------------------------------------------------------------"
 
+dispatch_gfxsave() {
+    local GFX_BOOT_DIR=$1
+    local gfx_cmd=$2
+    local GFX_MESSAGE_FILE
+    local GRUB_MESSAGE_DIR=/live/tmp/grub.message
+    local GFX_OUTPUT_DIRS GRUB_DIR GRUB_CFG
+    local GFX_REPACK_GRUB CMDLINE
+    local SYSLINUX_DIR SYSLINUX_CFG
+    local EXTLINUX_DIR EXTLINUX_CFG
+
+    # We luck out because cpio only depends on libc
+    local GFX_CPIO=/live/linux/bin/cpio
+
+    case $VERBOSE in
+        [0-9]|[0-9][0-9]) ;;
+                       *) VERBOSE=5 ;;
+    esac
+
+    # Width of some printfs with no color codes
+    MSG8_W=30
+    set_colors "$NO_COLOR" "$LO_COLOR"
+
+    NEW_CONFIG_FILE=$GFX_BOOT_DIR/syslinux/gfxsave.cfg
+    if [ -r $NEW_CONFIG_FILE ]; then
+        msg "Using $NEW_CONFIG_FILE"
+        GFX_CONFIG_FILE=$NEW_CONFIG_FILE
+    fi
+
+    case "$gfx_cmd" in
+        menus|custom|both|reset) ;;
+        *)  err "Bad gfxsave parameter $cheat_co$gfx_cmd$CO_ERR. \
+Expected$cheat_co menus custom both$err_co or$cheat_co reset"
+            return ;;
+    esac
+
+    if ! [ -r "$GFX_CONFIG_FILE" ]; then
+        err "Could not find gfxsave config file: $GFX_CONFIG_FILE"
+        return
+    fi
+
+    [ -n "$CMDLINE" ] || CMDLINE="$(cat /proc/cmdline)"
+    vmsg 6 "Current bootcodes:"
+    vmsg 6 "$cheat_co$CMDLINE"
+
+    GFX_MESSAGE_FILE=$GFX_BOOT_DIR/grub/message
+
+    find_cfg_files
+
+    case "$gfx_cmd" in
+        menus|both|custom) prep_gfxmenus ;;
+    esac
+
+    vmsg 8 "    popup params: $ALL_MENU_PARAMS"
+    vmsg 8 "main menu params:" $(extra_cmdline_params)
+
+
+    case "$gfx_cmd" in
+        custom|both) create_custom_main_entry
+                     update_main_menu_default ;;
+    esac
+
+    case "$gfx_cmd" in
+        reset|menus|both) reset_gfxmenus  ;;
+    esac
+
+    case "$gfx_cmd" in
+        menus|both) update_gfxmenus ;;
+    esac
+
+   #repack_grub_cpio
+
+    if [ -n "$GFX_LOG_FILE" -a -z "$NO_LOG" ]; then
+        mkdir -p $(dirname $GFX_LOG_FILE)
+        echo -e "$LOG" | /bin/sed -r "s:\x1B\[[0-9;]*[mK]::g" > $GFX_LOG_FILE
+        [ -n "$NO_COLOR" ] || echo -e "$LOG" > $GFX_LOG_FILE.color
+    fi
+}
 
 set_colors() {
     local noco=$1 loco=$2
@@ -105,84 +178,11 @@ vpmsg() {
     vmsg $v "$(plural "$@")"
 }
 
-
-#============================================================
-
-dispatch_gfxsave() {
-    local GFX_BOOT_DIR=$1
-    local gfx_cmd=$2
-    local GFX_MESSAGE_FILE
-    local GRUB_MESSAGE_DIR=/live/tmp/grub.message
-    local GFX_OUTPUT_DIRS GRUB_DIR GRUB_CFG
-    local GFX_REPACK_GRUB CMDLINE
-    local SYSLINUX_DIR SYSLINUX_CFG
-    local EXTLINUX_DIR EXTLINUX_CFG
-
-    # We luck out because cpio only depends on libc
-    local GFX_CPIO=/live/linux/bin/cpio
-
-    case $VERBOSE in
-        [0-9]|[0-9][0-9]) ;;
-                       *) VERBOSE=5 ;;
-    esac
-
-    # Width of some printfs with no color codes
-    MSG8_W=30
-    set_colors "$NO_COLOR" "$LO_COLOR"
-
-
-    case "$gfx_cmd" in
-        menus|custom|both|reset) ;;
-        *)  err "Bad gfxsave parameter $cheat_co$gfx_cmd$CO_ERR. \
-Expected$cheat_co menus custom both$err_co or$cheat_co reset"
-            return ;;
-    esac
-
-    if ! [ -r "$GFX_CONFIG_FILE" ]; then
-        err "Could not find gfxsave config file: $GFX_CONFIG_FILE"
-        return
-    fi
-
-    [ -n "$CMDLINE" ] || CMDLINE="$(cat /proc/cmdline)"
-    vmsg 6 "Current bootcodes:"
-    vmsg 6 "$cheat_co$CMDLINE"
-
-    GFX_MESSAGE_FILE=$GFX_BOOT_DIR/grub/message
-
-    case "$gfx_cmd" in
-        custom|both) create_custom_main_entry ;;
-    esac
-
-    case "$gfx_cmd" in
-        reset|menus|both) reset_gfxmenus  ;;
-    esac
-
-    case "$gfx_cmd" in
-        menus|both) update_gfxmenus ;;
-    esac
-
-    case "$gfx_cmd" in
-        custom|menus|both) update_main_menu_default ;;
-    esac
-
-   repack_grub_cpio
-
-    if [ -n "$GFX_LOG_FILE" -a -z "$NO_LOG" ]; then
-        mkdir -p $(dirname $GFX_LOG_FILE)
-        echo -e "$LOG" | /bin/sed -r "s:\x1B\[[0-9;]*[mK]::g" > $GFX_LOG_FILE
-        [ -n "$NO_COLOR" ] || echo -e "$LOG" > $GFX_LOG_FILE.color
-    fi
-
-}
-
 #==============================================================================
 # Update Panel menus defaults
 #==============================================================================
 
-update_gfxmenus() {
-    msg
-    warn "Update bootloader menu defaults"
-
+prep_gfxmenus() {
     for param in $CMDLINE; do
         param=$(echo $param | sed -r -e 's/^(nouveau|video)\./\1_/')
         # only let through parameter names made of word chars
@@ -195,14 +195,19 @@ update_gfxmenus() {
             *=*)
                 nam=${param%%=*}
                 val=${param#*=}
-                eval local GFX_P_$nam="$val";;
+                eval GFX_P_$nam="$val";;
               *)
-                eval local GFX_F_$param=true;;
+                eval GFX_F_$param=true;;
         esac
     done
 
     # No output dirs, just check if anything needs to be done
-    write_gfx_menu_defaults
+    write_gfx_menu_defaults prep $GFX_BOOT_DIR/syslinux ""
+}
+
+update_gfxmenus() {
+    msg
+    warn "Update bootloader menu defaults"
 
     if [ $GFX_MENU_CNT -eq 0 ]; then
         msg "No defaults were found to update"
@@ -214,12 +219,19 @@ update_gfxmenus() {
     find_gfx_output_dirs || return
 
     # This time it's for real
-    write_gfx_menu_defaults "$GFX_OUTPUT_DIRS"
+    write_gfx_menu_defaults write $GFX_BOOT_DIR/syslinux "$GFX_OUTPUT_DIRS"
 }
 
 write_gfx_menu_defaults() {
     GFX_MENU_CNT=0
-    local output_dirs="$1"
+    local type=$1 menu_dir=$2  output_dirs="$3"
+
+    local quiet write save
+    case $type in
+        write) write=true;;
+         prep) quiet=true ; save=true;;
+            *) exit 3;;
+    esac
 
     for m_config in $(grep '^[A-Za-z]' $GFX_CONFIG_FILE); do
         local title=$(echo $m_config | cut -d"|" -f1)
@@ -232,7 +244,7 @@ write_gfx_menu_defaults() {
             eval local cmd="\$GFX_F_$field"
             [ -n "$cmd" ] && out="$out $field"
         done
-        out=$(echo "$out" | sed -r          \
+        local entry=$(echo "$out" | sed -r  \
             -e 's/^ //'                     \
             -e 's/\<(nouveau|video)_/\1./g' \
             -e 's/\<lang=//'                \
@@ -240,14 +252,23 @@ write_gfx_menu_defaults() {
             -e 's/\<tz=//')
 
         [ -n "$out" ] || continue
+        local menu_file=$menu_dir/$fname.men
+        if [ -r $menu_file ]; then
+            [ "$quiet" ] || vmsg 6 "Found menu file:$cheat_co $(basename $menu_file)"
+            if ! grep -q "\`$entry$" $menu_file; then
+                [ "$quiet" ] || msg "Menu file $fname.men does not contain "$cheat_co$entry$m_co".  Skipping."
+                continue
+            fi
+        fi
         GFX_MENU_CNT=$(($GFX_MENU_CNT + 1))
+        [ "$save" ] && ALL_MENU_PARAMS="$ALL_MENU_PARAMS $out"
         [ -n "$output_dirs" ] || continue
 
-        msg "$(printf " %10s:$from_co %-18s $cheat_co%s\n" \
-            "$title" "$fname$GFX_SUFFIX" "$out")"
+        msg "$(printf " %12s:$from_co %-14s $cheat_co%s\n" \
+            "$title" "$fname$GFX_SUFFIX" "$entry")"
 
         for dir in $output_dirs; do
-            echo "$out" > $dir/$fname$GFX_SUFFIX
+            echo "$entry" > $dir/$fname$GFX_SUFFIX
         done
     done
 }
@@ -257,9 +278,9 @@ reset_gfxmenus() {
     warn "Reset bootloader menu defaults"
     find_gfx_output_dirs || return
 
-    reset_one_dir Grub     $GRUB_DIR
+    #- reset_one_dir Grub     $GRUB_DIR
     reset_one_dir sysLinux $SYSLINUX_DIR
-    reset_one_dir extLinux $EXTLINUX_DIR
+    #- reset_one_dir extLinux $EXTLINUX_DIR
 }
 
 reset_one_dir() {
@@ -285,8 +306,8 @@ find_gfx_output_dirs() {
 
     GFX_OUTPUT_DIRS=
     find_any_linux_dir sys SYSLINUX_DIR
-    find_any_linux_dir ext EXTLINUX_DIR
-    find_grub_dir
+    #- find_any_linux_dir ext EXTLINUX_DIR
+    #- find_grub_dir
 
     if ! [ -n "$GFX_OUTPUT_DIRS" ]; then
         err "No valid output directories found"
@@ -302,20 +323,20 @@ find_cfg_files() {
 
     FOUND_CFG_FILES=true
 
-    if [ -n "$GRUB_DIR" ]; then
-        local grub_cfg=$GFX_BOOT_DIR/grub/menu.lst
-        is_writable $grub_cfg "file" Grub && GRUB_CFG=$grub_cfg
-    fi
+    #- if [ -n "$GRUB_DIR" ]; then
+    #-     local grub_cfg=$GFX_BOOT_DIR/grub/menu.lst
+    #-     is_writable $grub_cfg "file" Grub && GRUB_CFG=$grub_cfg
+    #- fi
 
     if [ -n "$SYSLINUX_DIR" ] ;then
         local syslinux_cfg=$GFX_BOOT_DIR/syslinux/syslinux.cfg
         is_writable $syslinux_cfg "file" sysLinux && SYSLINUX_CFG=$syslinux_cfg
     fi
 
-    if [ -n "$EXTLINUX_DIR" ] ;then
-        local extlinux_cfg=$GFX_BOOT_DIR/extlinux/extlinux.cfg
-        is_writable $extlinux_cfg "file" extLinux && EXTLINUX_CFG=$extlinux_cfg
-    fi
+    #- if [ -n "$EXTLINUX_DIR" ] ;then
+    #-     local extlinux_cfg=$GFX_BOOT_DIR/extlinux/extlinux.cfg
+    #-     is_writable $extlinux_cfg "file" extLinux && EXTLINUX_CFG=$extlinux_cfg
+    #- fi
 }
 
 find_any_linux_dir() {
@@ -332,6 +353,7 @@ find_any_linux_dir() {
 }
 
 find_grub_dir() {
+    return
 
     is_writable $GFX_MESSAGE_FILE "file" Grub || return
 
@@ -400,14 +422,24 @@ msg7() {
 #==============================================================================
 
 update_main_menu_default() {
+    [ "$DEFAULT_LABEL" ] || return
+
     warn
-    warn "Update main menu default"
+    warn "Update main menu default to$cheat_co $DEFAULT_LABEL"
+    if grep -q "^default\>" "$SYSLINUX_CFG"; then
+        sed -r -i "s/^default\>.*/default $DEFAULT_LABEL/" "$SYSLINUX_CFG"
+    elif [ "$FIRST_LABEL_LINE" ]; then
+        sed -i "$FIRST_LABEL_LINE i\
+default $DEFAULT_LABEL" "$SYSLINUX_CFG"
 
-    find_cfg_files
+        sed -i "$FIRST_LABEL_LINE G" "$SYSLINUX_CFG"
+    fi
+    return
+    #find_cfg_files
 
-    set_main_menu_default sysLinux "$SYSLINUX_CFG" LABEL APPEND 2
-    set_main_menu_default extLinux "$EXTLINUX_CFG" LABEL APPEND 2
-    set_main_menu_default Grub     "$GRUB_CFG"     title kernel 3
+    #set_main_menu_default sysLinux "$SYSLINUX_CFG" LABEL APPEND 2
+    #set_main_menu_default extLinux "$EXTLINUX_CFG" LABEL APPEND 2
+    #set_main_menu_default Grub     "$GRUB_CFG"     title kernel 3
 }
 
 set_main_menu_default() {
@@ -478,10 +510,12 @@ find_main_entry() {
 
     [ -n "$file" ] || return
 
-    local count=-1
+    local count=-1  line=0
     while read a1 a2 a3 a4 a5 a6 a7 a8 a9; do
+        line=$((line + 1))
         if [ "$a1" = "$counter" ]; then
-            count=$(($count + 1))
+            count=$((count + 1))
+            : ${FIRST_LABEL_LINE:=$line}
             local title=
             for i in $(seq 2 9); do
                 eval val=\$a$i
@@ -503,8 +537,9 @@ find_main_entry() {
         [ -n "$params" ] || continue
 
         params=$(echo $params)
-        #echo "params: $params"
-        #continue
+        #-- echo " params: $params"
+        #-- echo "cmdline: $cmdline"
+        #-- continue
         [ "$params" = "$cmdline" ] || continue
         #vmsg 8 "Found entry $count: $title"
         FOUND_TITLE=$title
@@ -519,58 +554,48 @@ Config_File
 # Create custom main menu entry
 #==============================================================================
 create_custom_main_entry() {
-    warn
-    warn "Create Custom bootloader entry"
-    find_cfg_files
 
-    local mparam
-    local menu_params=$(get_all_menu_params | sort -u)
-    menu_params=$(echo $menu_params)
-
-    vmsg 9 "Menu params:$cheat_co $menu_params"
-
-    # Always skip gfxsave=
-    menu_params="$menu_params gfxsave"
-
-    local alpha_params=$(extra_cmdline_params "$menu_params" | sort -u)
+    local alpha_params=$(extra_cmdline_params | tr ' ' '\n' | sort -u)
+    alpha_params=$(echo $alpha_params)
+    vmsg 9 "Main menu params:$cheat_co $alpha_params"
 
     if ! [ -n "$alpha_params" ]; then
         msg "No non-menu parameters found"
         return
     fi
-    alpha_params=$(echo $alpha_params)
-    vmsg 9 "Alpha params:$cheat_co $alpha_params"
 
-    local ordered_params=$(cmdline_order "$alpha_params")
+    local ordered_params=$(extra_cmdline_params)
     ordered_params=$(echo $ordered_params)
 
     find_main_entry "$alpha_params" "$SYSLINUX_CFG" LABEL APPEND 2
     if ! [ -n "$FOUND_ENTRY" ]; then
-        add_custom_entry sysLinux "$SYSLINUX_CFG" LABEL KERNEL "" "\tAPPEND" INITRD "$ordered_params"
+        warn
+        warn "Create Custom bootloader entry"
+        add_custom_entry sysLinux "$SYSLINUX_CFG" LABEL KERNEL "" "APPEND" INITRD "$ordered_params"
     else
         pre="${from_co}sysLinux$m_co entry already exists"
         msg "$(printf %${MSG8_W}s "$pre") ($num_co$FOUND_ENTRY$m_co)$high_co $FOUND_TITLE"
+        DEFAULT_LABEL=$FOUND_TITLE
     fi
 
-    find_main_entry "$alpha_params" "$EXTLINUX_CFG" LABEL APPEND 2
-    if ! [ -n "$FOUND_ENTRY" ]; then
-        add_custom_entry extLinux "$EXTLINUX_CFG" LABEL KERNEL "" "\tAPPEND" INITRD "$ordered_params"
-    else
-        pre="${from_co}extLinux$m_co entry already exists"
-        msg "$(printf %${MSG8_W}s "$pre") ($num_co$FOUND_ENTRY$m_co)$high_co $FOUND_TITLE"
-    fi
+    #- find_main_entry "$alpha_params" "$EXTLINUX_CFG" LABEL APPEND 2
+    #- if ! [ -n "$FOUND_ENTRY" ]; then
+    #-     add_custom_entry extLinux "$EXTLINUX_CFG" LABEL KERNEL "" "\tAPPEND" INITRD "$ordered_params"
+    #- else
+    #-     pre="${from_co}extLinux$m_co entry already exists"
+    #-     msg "$(printf %${MSG8_W}s "$pre") ($num_co$FOUND_ENTRY$m_co)$high_co $FOUND_TITLE"
+    #- fi
 
-    find_main_entry "$alpha_params" "$GRUB_CFG" title kernel 3
-    if ! [ -n "$FOUND_ENTRY" ]; then
-        add_custom_entry Grub "$GRUB_CFG" title kernel "(kernel\s+[^ ]+)\s.*" "" initrd "$ordered_params"
-    else
-        pre="${from_co}Grub$m_co entry already exists"
-        msg "$(printf %${MSG8_W}s "$pre") ($num_co$FOUND_ENTRY$m_co)$high_co $FOUND_TITLE"
-    fi
+    #- find_main_entry "$alpha_params" "$GRUB_CFG" title kernel 3
+    #- if ! [ -n "$FOUND_ENTRY" ]; then
+    #-     add_custom_entry Grub "$GRUB_CFG" title kernel "(kernel\s+[^ ]+)\s.*" "" initrd "$ordered_params"
+    #- else
+    #-     pre="${from_co}Grub$m_co entry already exists"
+    #-     msg "$(printf %${MSG8_W}s "$pre") ($num_co$FOUND_ENTRY$m_co)$high_co $FOUND_TITLE"
+    #- fi
 }
 
 add_custom_entry() {
-
     local       type=$1
     local       file=$2
 
@@ -592,19 +617,19 @@ add_custom_entry() {
         *Linux) title="LABEL custom\n    MENU LABEL $title_text\n" ;;
     esac
 
-    [ -n "$append_tag" ] && append="$append_tag $params\n"
+    [ -n "$append_tag" ] && append="    $append_tag $params\n"
 
     local replace target pre="$from_co $type$m_co entry with"
-    if grep -q "^\s*$title_tag\s\+Custom" $file; then
+    if grep -q "^\s*$title_tag\s\+custom" $file; then
         replace=true
-        target="$title_tag\s\+Custom"
+        target="$title_tag\s\+custom"
         msg "$(printf %${MSG8_W}s "Replace$pre")$high_co $title_text"
     else
         target="$title_tag"
         msg "$(printf %${MSG8_W}s "Create$pre")$high_co $title_text"
     fi
 
-    msg "$(printf %30s "Params")$cheat_co $params"
+    msg "$(printf %30s "Params:")$cheat_co $params"
     local backup=${file%.*}.bak
     local file2=${file%.*}.tmp
     [ -e "$backup" ] || cp $file $backup
@@ -612,15 +637,16 @@ add_custom_entry() {
 
     local old_ifs=$IFS
     IFS=''
-    while read line; do
-        case $state in
 
-        1)  if echo $line | grep -q "^\s*$target"; then
+    while read line; do
+        #echo "$state: $line"
+        case $state in
+        1)  if echo $line | grep -q "^\s*$target\>"; then
                 state=2
                 [ -n "$replace" ] && continue
             fi;;
 
-        2)  if echo $line | grep -q "^\s*$kernel_tag"; then
+        2)  if echo $line | grep -q "^\s*$kernel_tag\>"; then
                 if [ -n "$kernel_sed" ]; then
                     kernel="$(echo $line | sed -r "s/$kernel_sed/\1 $params/")\n"
                 else
@@ -657,6 +683,7 @@ Config_File
     fi
 
     mv $file2 $file
+    DEFAULT_LABEL=custom
 }
 
 get_all_menu_params() {
@@ -685,10 +712,12 @@ extra_cmdline_params() {
     for param in $CMDLINE; do
         case $param in
             nouveau.modeset=0) continue ;;
+                     gfxsave*) continue ;;
         esac
-        case " $menu_params " in
+        case " $ALL_MENU_PARAMS " in
             *" ${param%%=*} "*) ;;
-            *) echo $param ;;
+            *" ${param} "*)     ;;
+            *) echo $param      ;;
         esac
     done
 }
