@@ -219,8 +219,9 @@ main_wrapper() {
 
         CHROOT_BIN=$FINAL_DIR/bin
         chroot $NEW_ROOT $CHROOT_BIN/setsid $CHROOT_BIN/cttyhack $INIT_PROG
-
         breakpoint i "after init= chroot"
+
+        MY_LOG=/dev/null
         safe_shutdown poweroff ask
 
     else
