@@ -340,7 +340,7 @@ main_core() {
 
     # Disable always feature even if update_gfx_menu is not called
     local gfx_def_file=$BOOT_MP/boot/syslinux/gfxsave.def
-    [ "$GFX_SAVE" != always ] && test -e $gfx_def_file && rm -f $gfx_def_file
+    [ "$GFX_SAVE" != always ] && test -e $gfx_def_file && rm -f $gfx_def_file 2>/dev/null
 
     [ "$TO_RAM" ] && copy_to_ram "$SQFILE_FULL" $TORAM_MP
 

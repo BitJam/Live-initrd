@@ -37,7 +37,7 @@ dispatch_gfxsave() {
         test -e $gfx_def_file || echo gfxsave=always > $gfx_def_file
         gfx_cmd=both
     else
-        test -e $gfx_def_file && rm -f $gfx_def_file
+        test -e $gfx_def_file && rm -f $gfx_def_file 2>/dev/null
     fi
 
     if [ -r $NEW_CONFIG_FILE ]; then
