@@ -338,6 +338,10 @@ main_core() {
 
     [ "$GFX_SAVE" ] && update_gfx_menu "$GFX_SAVE_SCRIPT" "$GFX_SAVE" "$BOOT_MP/boot"
 
+    # Disable always feature even if update_gfx_menu is not called
+    local gfx_def_file=$BOOT_MP/boot/syslinux/gfxsave.def
+    [ "$GFX_SAVE" != always ] && test -e $gfx_def_file && rm -f $gfx_def_file
+
     [ "$TO_RAM" ] && copy_to_ram "$SQFILE_FULL" $TORAM_MP
 
     check_kernel_version $SQFS_MP
