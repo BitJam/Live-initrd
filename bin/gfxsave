@@ -271,12 +271,22 @@ write_gfx_menu_defaults() {
         if [ -r $menu_file ]; then
             [ "$quiet" ] || vmsg 6 "Found menu file:$cheat_co $(basename $menu_file)"
             if ! grep -q "\`$entry$" $menu_file; then
-                [ "$quiet" ] || msg "Menu file $fname.men does not contain "$cheat_co$entry$m_co".  Skipping."
-                continue
+                local found=
+                while [ -n "$entry" -a -z "${entry##* *}" ]; do
+                    # Strip off params from the end of the string
+                    entry=${entry% *}
+                    grep -q "\`$entry$" $menu_file || continue
+                    found=true
+                    break
+                done
+                if [ -z "$found" ]; then
+                    [ "$quiet" ] || msg "Menu file$cheat_co $fname.men$m_co does not contain "$cheat_co$entry$m_co".  Skipping."
+                    continue
+                fi
             fi
         fi
         GFX_MENU_CNT=$(($GFX_MENU_CNT + 1))
-        [ "$save" ] && ALL_MENU_PARAMS="$ALL_MENU_PARAMS $out"
+        [ "$save" ] && ALL_MENU_PARAMS="$ALL_MENU_PARAMS ${out# }"
         [ -n "$output_dirs" ] || continue
 
         msg "$(printf " %12s:$from_co %-14s $cheat_co%s\n" \
