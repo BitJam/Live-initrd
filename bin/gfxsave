@@ -232,14 +232,19 @@ update_gfxmenus() {
     write_gfx_menu_defaults write $GFX_BOOT_DIR/syslinux "$GFX_OUTPUT_DIRS"
 }
 
+# This routine gets called twice.  First as prep to find the popup params
+# so we can find the parameters that go in the main menu.  Then a second
+# time (if we are updating menus) to actually update the menus.  I'm sure
+# all of this could be greatly improved.
+
 write_gfx_menu_defaults() {
     GFX_MENU_CNT=0
     local type=$1 menu_dir=$2  output_dirs="$3"
 
     local quiet write save
     case $type in
-        write) write=true;;
-         prep) quiet=true ; save=true;;
+        write) write=true ; quiet=true ;;
+         prep) save=true               ;;
             *) exit 3;;
     esac
 
