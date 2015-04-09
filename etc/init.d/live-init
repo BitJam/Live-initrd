@@ -432,7 +432,7 @@ make_xorg_conf() {
 
 find_video_modules() {
     find /sys/devices -name modalias -print0 | xargs -0 sort -u \
-        | xargs modprobe -a -D -q 2>/dev/null | sort -u \
+        | xargs modprobe -a -D -q 2>> $INIT_LOG_FILE | sort -u \
         | sed -n -r "s/^insmod [^ ]*($ALL_VIDEO_MODULES)\.ko.*/\1/p"
 }
 
