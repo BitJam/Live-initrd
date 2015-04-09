@@ -11,8 +11,8 @@
 # Description:       delete files from rootfs when static persist
 ### END INIT INFO
 
+export PATH=/sbin:/usr/sbin:/bin:/usr/bin:/usr/local/bin
 
-PATH=/live/bin:$PATH
 LIST_FILE=/usr/local/share/excludes/static-root-delete.list
 
 main() {

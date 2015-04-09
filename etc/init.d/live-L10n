@@ -12,7 +12,7 @@
 # Description: Sets timezone, hostname, and console fonts.  Runs update-menus and update-locale
 ### END INIT INFO
 
-PATH=/live/bin:$PATH
+export PATH=/sbin:/usr/sbin:/bin:/usr/bin:/usr/local/bin
 
 case "$1" in
     start) 

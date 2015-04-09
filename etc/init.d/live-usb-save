@@ -11,8 +11,7 @@
 # Description:       save/restore some information on raw liveusb w/o persistence
 ### END INIT INFO
 
-
-PATH=/live/bin:$PATH
+export PATH=/sbin:/usr/sbin:/bin:/usr/bin:/usr/local/bin
 
 . /live/lib/live-init-utils.sh
 

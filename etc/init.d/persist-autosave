@@ -11,7 +11,8 @@
 # Description:       Run persist-config on startup if needed.  Run persist-save if needed
 ### END INIT INFO
 
-PATH=/live/bin:$PATH
+export PATH=/sbin:/usr/sbin:/bin:/usr/bin:/usr/local/bin
+
 # . /usr/share/antiX/lib/live-init-utils.sh
 . /live/lib/live-init-utils.sh
 

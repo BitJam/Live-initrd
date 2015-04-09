@@ -18,10 +18,7 @@
 # See live-disable-services for how the symlinks got moved.
 # This undoes all the symlink moving that was done there.
 
-# GETTEXT_KEYWORD="echo_live"
-# GETTEXT_KEYWORD="echo_script"
-
-PATH=/live/bin:$PATH
+export PATH=/sbin:/usr/sbin:/bin:/usr/bin:/usr/local/bin
 
 case "$1" in
     start)

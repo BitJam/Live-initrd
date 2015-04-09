@@ -12,7 +12,7 @@
 # Description: localize /etc/skel, create /home/demo, customize X, mirrors, set default desktop
 ### END INIT INFO
 
-PATH=/live/bin:$PATH
+export PATH=/sbin:/usr/sbin:/bin:/usr/bin:/usr/local/bin
 
 XSESSION_DIR=/usr/share/xsessions
     MENU_WMs="fluxbox icewm jwm"

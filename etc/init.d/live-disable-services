@@ -11,6 +11,8 @@
 # Description:       Temporarily disable services for LiveCD/USB
 ### END INIT INFO
 
+export PATH=/sbin:/usr/sbin:/bin:/usr/bin:/usr/local/bin
+
 LEAN_SERVICES="
     acpi-fakekey
     acpi-support
