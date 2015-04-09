@@ -69,8 +69,8 @@ Expected$cheat_co menus custom both$err_co or$cheat_co reset"
         menus|both|custom) prep_gfxmenus ;;
     esac
 
-    vmsg 8 "    popup params: $ALL_MENU_PARAMS"
-    vmsg 8 "main menu params:" $(extra_cmdline_params)
+    msg  "    popup params:$cheat_co$ALL_MENU_PARAMS"
+    msg  "main menu params:$cheat_co" $(extra_cmdline_params)
 
 
     case "$gfx_cmd" in
