@@ -30,6 +30,16 @@ dispatch_gfxsave() {
     set_colors "$NO_COLOR" "$LO_COLOR"
 
     NEW_CONFIG_FILE=$GFX_BOOT_DIR/syslinux/gfxsave.cfg
+
+    local gfx_def_file=$GFX_BOOT_DIR/syslinux/gfxsave.def
+
+    if [ "$gfx_cmd" = "always" ]; then
+        test -e $gfx_def_file || echo gfxsave=always > $gfx_def_file
+        gfx_cmd=both
+    else
+        test -e $gfx_def_file && rm -f $gfx_def_file
+    fi
+
     if [ -r $NEW_CONFIG_FILE ]; then
         msg "Using $NEW_CONFIG_FILE"
         GFX_CONFIG_FILE=$NEW_CONFIG_FILE
