@@ -362,41 +362,6 @@ automount_and_fstab() {
     esac
 }
 
-load_video_driver() {
-    local orig_fb_name
-    read orig_fb_name 2</dev/null < /sys/class/graphics/fb0/name
-    echo_live "Scanning for hardware specific video modules ..."
-    local video_modules="$(find_video_modules)"
-    local kms_modules="$(echo "$video_modules" | egrep "^($KMS_VIDEO_MODULES)$")"
-
-    if [ "$kms_modules" ]; then
-        echo_live "Found %s video module(s) %s" KMS "$(pquote $(echo $kms_modules))"
-        echo_live "Load module(s) %s" "$(pquote $(echo $kms_modules))"
-        modprobe -b -a -q "$kms_modules"
-        set_fbcondecor "$SPLASH_PARAM" "$orig_fb_name"
-    elif [ "$video_modules" ]; then
-        echo_live "Found video module(s) %s" "$(pquote $(echo $video_modules))"
-    fi
-}
-
-# Note: we will report FOUND_KMS even if "nomodeset" is used because unless the
-# user wants safe mode then they should be allowed to use the KMS driver and
-# "nomodeset" without us forcing vesa.  That's what safe mode is for.
-detect_kms_driver() {
-    #[ "$MODE_SET" ] || return
-    local kms_drivers=$(find_video_modules "$KMS_VIDEO_MODULES|drm_kms_helper")
-    [ "$kms_drivers" ] || return
-    echo_live "Found %s video module(s) %s" KMS ""
-    FOUND_KMS=true
-}
-
-move_if() {
-    local f1=$1  f2=$2
-    test -e $f1 || return
-    mkdir -p $(dirname $f2)
-    mv -f $f1 $f2
-}
-
 # Don't make a default xorg.conf if:
 #    1) a modified xorg.conf is found
 #    2) "noxorg" was specified
@@ -481,10 +446,38 @@ set_fbcondecor() {
     [ "$verbose" ] || return
     /sbin/splash-term $theme
 }
+
+load_video_driver() {
+    local orig_fb_name
+    read orig_fb_name 2</dev/null < /sys/class/graphics/fb0/name
+    echo_live "Scanning for hardware specific video modules ..."
+    local video_modules="$(find_video_modules)"
+    local kms_modules="$(echo "$video_modules" | egrep "^($KMS_VIDEO_MODULES)$")"
+
+    if [ "$kms_modules" ]; then
+        echo_live "Found %s video module(s) %s" KMS "$(pquote $(echo $kms_modules))"
+        echo_live "Load module(s) %s" "$(pquote $(echo $kms_modules))"
+        modprobe -b -a -q "$kms_modules"
+        set_fbcondecor "$SPLASH_PARAM" "$orig_fb_name"
+    elif [ "$video_modules" ]; then
+        echo_live "Found video module(s) %s" "$(pquote $(echo $video_modules))"
+    fi
+}
+
+# Note: we will report FOUND_KMS even if "nomodeset" is used because unless the
+# user wants safe mode then they should be allowed to use the KMS driver and
+# "nomodeset" without us forcing vesa.  That's what safe mode is for.
+detect_kms_driver() {
+    #[ "$MODE_SET" ] || return
+    local kms_drivers=$(find_video_modules "$KMS_VIDEO_MODULES|drm_kms_helper")
+    [ "$kms_drivers" ] || return
+    echo_live "Found %s video module(s) %s" KMS ""
+    FOUND_KMS=true
+}
+
 # Always copy to $file$ext2 so this has the most recent backup.
 # Only move to $file$ext1 if it does not already exist so this will
 # contain the earliest (oldest) backup.
-
 backup_file() {
     local file=$1 ext1=${2:-.old} ext2=${3:-save}
 
@@ -492,6 +485,13 @@ backup_file() {
     cp -f $file $file$ext2
     test -e $file$ext1 && return
     mv -f $file $file$ext1
+}
+
+move_if() {
+    local f1=$1  f2=$2
+    test -e $f1 || return
+    mkdir -p $(dirname $f2)
+    mv -f $f1 $f2
 }
 
 main "$@" 2>&1 | tee -a $INIT_LOG_FILE
