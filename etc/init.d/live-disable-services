@@ -22,7 +22,7 @@ LEAN_SERVICES="
     cpufrequtils
     cron
     cups
-    gpm
+    #gpm
     ifplugd
     irqbalance
     loadcpufreq
@@ -35,7 +35,7 @@ LEAN_SERVICES="
     ssh
     stop-bootlogd
     sudo
-    transmission-daemon
+    #transmission-daemon
 "
 
 LAPTOP_SERVICES="
@@ -48,21 +48,20 @@ XTRA_LEAN_SERVICES="
     cryptdisks
     cryptdisks-early
     dns-clean
-    eeepc-acpi-scripts
+    #eeepc-acpi-scripts
     hdparm
     hwclock.sh
     hwclockfirst.sh
     ifupdown-clean
     lm-sensors
-    lvm2
+    #lvm2
     mountnfs-bootclean.sh
     mountoverflowtmp
     nfs-common
     pcmciautils
     policykit
     pppd-dns
-    rpcbind
-    svgalib-bin
+    #svgalib-bin
     ufw
     urandom
 "
@@ -177,7 +176,7 @@ disable_services() {
         mkdir -p $dest
 
         for name in $names; do
-
+            [ -z "${name###*}" ]  && continue
             for slink in /etc/$rc_dir/S*$name; do
                 [ -e "$slink" ] || continue
                 mv -f $slink $dest
