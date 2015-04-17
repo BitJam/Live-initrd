@@ -426,11 +426,12 @@ find_video_modules() {
 }
 
 set_fbcondecor() {
-    local boot_param=$1 orig_name=$2 param verbose theme=default
-    [ "$orig_name"  ] || return
+    local boot_param=$1 orig_name=$2 param verbose theme=default new_name
+    #[ "$orig_name"  ] || return
     [ "$boot_param" ] || return
 
-    local new_name=$(cat /sys/class/graphics/fb0/name 2>/dev/null)
+    # Don't set the decoration if the framebuffer has not changed
+    read new_name= 2>/dev/null < /sys/class/graphics/fb0/name
     [ "$orig_name" = "$new_name" ] && return
 
     for param in $(echo $boot_param | sed "s/,/ /g"); do
