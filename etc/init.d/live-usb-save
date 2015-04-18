@@ -31,9 +31,11 @@ main() {
 
 read_cmdline() {
     : ${CMDLINE:=$(cat /proc/cmdline /live/config/cmdline)}
+    echo $CMDLINE
+    local param
     for param in $CMDLINE; do
         value=${param#*=}
-        case "$param" in
+        case $param in
                  desktop=*)  CMD_DESKTOP=$value ;;
         esac
     done
