@@ -242,6 +242,8 @@ do_umountfs() {
 
 final_umount() {
 
+    read_cmdline
+
     breakpoint 3 "Start final umount"
 
     find_mounted_cd $BOOT_DEV_FILE 
@@ -637,7 +639,7 @@ shutdown_or_reboot() {
         eject_cd $TO_EJECT
         wait_for_user
 
-    elif [ -n "$DO_PROMPT" ]; then
+    elif [ -n "$DO_PROMPT" -o -n "$DB_PLUS" ]; then
         printf "${cyan}======== Press$magenta ENTER$cyan key to $command ========"
         #read x </dev/console
         read x
