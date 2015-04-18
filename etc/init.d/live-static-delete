@@ -18,21 +18,29 @@ LIST_FILE=/usr/local/share/excludes/static-root-delete.list
 main() {
     case $1 in
         start)                               ;;
-         stop) delete_static_rootfs          ;;
+         stop) do_stop                       ;;
             *) echo "Usage: $0 {start|stop}" ;;
     esac
     exit 0
 }
 
-delete_static_rootfs() {
-    test -e /live/config/static-rootfs || exit 0
+do_stop() {
     . /live/lib/live-init-utils.sh
     #load_translation
-    echo_script "deleting some static rootfs files" $0
+    echo_script "clean up static rootfs" $0
+
+    delete_static_rootfs
+
+    if which auplink 2>/dev/null; then
+        echo_live "Cleaning aufs"
+        auplink /live/aufs flush
+    fi
+}
+
+delete_static_rootfs() {
+    test -e /live/config/static-rootfs || return
+    echo_live "Delete files from static root"
     echo rm -rf $(grep -v "^\s*#" $LIST_FILE | sed -r -e 's/\s+#.*//' | grep "/[a-zA-Z0-9]")
 }
 
 main "$@"
-
-
-
