@@ -65,7 +65,7 @@
        RETRY_DELAY=50               # in hundredths of a second
            VERBOSE=5
 
-        DO_HOTPLUG=
+        DO_HOTPLUG=true
        DO_COLDPLUG=true
 
         LOAD_FIRST="usb-common usbcore ehci-hcd fusbh200-hcd fotg210-hcd battery"
@@ -200,6 +200,8 @@ main_wrapper() {
 
     breakpoint 9 "right before starting init"
 
+    stop_hotplug
+
     local time_1=$(get_time)
     local dt=$((time_1 - time_0))
     vmsg 6
@@ -318,7 +320,6 @@ main_core() {
 
     mount_persist_device "$PERSIST_FILES" "$FROM_PERSIST"
 
-    stop_hotplug
     list_modules
 
     # Check for ehci warning
