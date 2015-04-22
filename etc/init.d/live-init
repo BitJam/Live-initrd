@@ -40,7 +40,8 @@ for param in $CMDLINE; do
          hwclock=local)   CMD_CLOCK=$value                          ;;
            hwclock=utc)   CMD_CLOCK=$value                          ;;
 
-              failsafe)   XORG_ARGS=$XORG_ARGS${XORG_ARGS:+,}safe   ;;
+              failsafe)   XORG_ARGS=safe${XORG_ARGS:+,}$XORG_ARGS   ;;
+             xorg=safe)   XORG_ARGS=safe${XORG_ARGS:+,}$XORG_ARGS   ;;
                 xorg=*)   XORG_ARGS=$XORG_ARGS${XORG_ARGS:+,}$value ;;
                 noxorg)   NO_XORG=true                              ;;
               earlyvid)   EARLY_VID=true                            ;;
