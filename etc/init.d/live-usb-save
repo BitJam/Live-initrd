@@ -31,7 +31,6 @@ main() {
 
 read_cmdline() {
     CMDLINE=$(cat /proc/cmdline /live/config/cmdline)
-    echo $CMDLINE
     local param
     for param in $CMDLINE; do
         value=${param#*=}
