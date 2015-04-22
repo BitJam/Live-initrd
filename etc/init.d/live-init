@@ -404,8 +404,10 @@ make_xorg_conf() {
 
     case $fb_name in
       "VESA VGA") vga_fb=true ;;
-       "EFI VGA") echo_live "Disabling safe mode because of %s" $(pquote EFI)
-                  safe_mode=  ;;
+       "EFI VGA") if [ "$safe_mode" ]; then
+                    echo_live "Disabling safe mode because of %s" $(pquote EFI framebuffer)
+                    safe_mode=
+                fi ;;
     esac
 
     # Force X video driver to be vesa if the vga framebuffer is enabled.
