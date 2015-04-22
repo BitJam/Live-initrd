@@ -290,7 +290,11 @@ do_sendsigs() {
     # Make sure we have a fresh line to print out on
     echo
 
-    run_scripts persist-autosave live-usb-save live-static-shutdown
+    SCRIPTS="live-usb-save"
+    [ -e /live/config/save-persist ] && SCRIPTS="$SCRIPTS persist-autosave"
+    [ -e /live/config/static-root  ] && SCRIPTS="$SCRIPTS live-static-shutdown"
+
+    run_scripts persist-autosave $SCRIPTS
 
     safe_get_start_t $pppid || return
     start_t=$START_T
