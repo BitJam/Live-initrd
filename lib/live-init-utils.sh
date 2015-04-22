@@ -86,11 +86,11 @@ pf() {
 }
 
 pquote() {
-    echo "$START_PARAM$@$END_PARAM"
+    echo "$START_PARAM$*$END_PARAM"
 }
 
 paren() {
-    echo "($SCRIPT_COLOR$@$LIVE_COLOR)"
+    echo "($SCRIPT_COLOR$*$LIVE_COLOR)"
 }
 
 start_init_logging() {
