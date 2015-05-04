@@ -3651,7 +3651,7 @@ copy_persist_to_ram() {
     vmsg 7 "$format" '              Persistence uses' $persist_used
     vmsg 6 "${hi_co}%s" "Copy persistent root to RAM succeeded"
 
-    DF_ROOTFS="$(df -P -m $ROOTFS_MP | tail -n 1)"
+    DF_ROOTFS=$(df -P -m $ROOTFS_MP | tail -n 1 | sed 's/ \+/ /g')
     sync
     log_cmd umount $ROOTFS_MP
     return 0
@@ -4003,8 +4003,8 @@ DISTRO="$DISTRO_NAME"
 DISTRO_CODENAME="$DISTRO_CODENAME"
 DISTRO_VERSION="$DISTRO_VERSION"
 FULL_DISTRO="$DISTRO_NAME-$DISTRO_VERSION"
-LINUXRC_VERSION="$VERSION"
-LINUXRC_DATE="$VERSION_DATE"
+INITRD_VERSION="$VERSION"
+INITRD_DATE="$VERSION_DATE"
 LIVE_DIR="$FINAL_DIR"
 PERSISTENCE="$PERSISTENCE"
 PERSIST_DEV="$PERSIST_DEVICE"
