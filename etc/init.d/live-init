@@ -37,8 +37,8 @@ for param in $CMDLINE; do
                kbvar=*)   XKBVARIANT=$value ;          DO_XKBD=true ;;
                 lang=*)     CMD_LANG=$value ;          DO_XKBD=true ;;
               mirror=*)   CMD_MIRROR=$value                         ;;
-         hwclock=local)   CMD_CLOCK=$value                          ;;
-           hwclock=utc)   CMD_CLOCK=$value                          ;;
+         hwclock=local)    CMD_CLOCK=$value                         ;;
+           hwclock=utc)    CMD_CLOCK=$value                         ;;
 
               failsafe)   XORG_ARGS=safe${XORG_ARGS:+,}$XORG_ARGS   ;;
              xorg=safe)   XORG_ARGS=safe${XORG_ARGS:+,}$XORG_ARGS   ;;
