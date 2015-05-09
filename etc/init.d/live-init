@@ -182,15 +182,16 @@ create_home() {
     # Remove only an *empty* home directory
     rmdir $home 2>/dev/null
     if test -d $home; then
+        return
+        # These don't run but the don't leave the .pot file either
         echo_live "Files already exist under %s" $(pquote $home)
         echo_live "Not creating or populating %s" $(pquote $home)
-        return
     fi
 
     echo_live "Populating %s directory" $(pquote $home)
-
-    # Note: only works if there is no $home directory (see test -d above)
-    su -c "cp -a /etc/skel $home" $user 2>/dev/null
+    # Relies on there being no $home directory (see test above)
+    cp -a /etc/skel $home
+    chown -R $user:users $home
 }
 
 localize_skel() {
