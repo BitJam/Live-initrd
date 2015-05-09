@@ -98,11 +98,11 @@ do_start() {
     #-jbb: for debugging
     unset COUNTRY WM_LANG KEYBOARDS KEYTABLE LANG MIRROR TZ XKBLAYOUT CONSOLE_FONT
 
-    [ "$CMD_LANG" ] && get_init_lang $CMD_LANG error
+    get_init_lang "$CMD_LANG" error
 
     repo_localize "$CMD_MIRROR" "$CMD_TZ" "$MIRROR" "$TZ"
 
-    [ "$WM_LANG" ] && localize_skel $WM_LANG
+    localize_skel $WM_LANG
 
     # Always create keyboard file in non-perisistent system even with no X
     kb_file=/etc/default/keyboard
@@ -194,15 +194,17 @@ create_home() {
 }
 
 localize_skel() {
-    local l10n_dir=/usr/share/antiX/localisation
-    local from=$l10n_dir/$1
+    local lang=$1
+    [ "$lang" ] || return
+    local L10n_dir=/usr/share/antiX/localisation
+    local from=$L10n_dir/$lang
     local dest=/etc/skel
 
     # Silently skip systems which have no localisation directory
-    [ -d "$l10n_dir" ] || return
+    [ -d "$L10n_dir" ] || return
 
     if ! [ -d $from ]; then
-        error "Unknown menu localization language %s" $(pquote $1)
+        error "Unknown menu localization language %s" $(pquote $lang)
         error "Directory not found %s" $from
         return
     fi
