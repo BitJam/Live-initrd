@@ -78,7 +78,11 @@ else
     ERROR_PARAM_COLOR="$RED"
 fi
 
-get_init_param() { eval $(grep ^$1= $INITRD_OUT) ;}
+get_init_param() {
+    local var=$1  val=$2
+    [ "$val" ] && eval $var=\$$val
+    eval $(grep ^$1= $INITRD_OUT)
+}
 
 # alias pf=printf  (**sigh**)
 pf() {
