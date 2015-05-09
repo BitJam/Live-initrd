@@ -301,7 +301,7 @@ set_default_desktop() {
     local file=$home/.desktop-session/default-desktop
     echo_live "Setting %s to %s" desktop $(pquote $desktop)
     su -c "mkdir -p $(dirname $file)" $user
-    echo $desktop | su -c "tee $desktop_file" $user &>/dev/null
+    echo $desktop | su -c "tee $file" $user >/dev/null
 }
 
 add_fstab_swap() {
