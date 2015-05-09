@@ -98,12 +98,10 @@ do_start() {
 
     #-jbb: for debugging
     unset COUNTRY WM_LANG KEYBOARDS KEYTABLE LANG MIRROR TZ XKBLAYOUT CONSOLE_FONT
+
     [ "$CMD_LANG" ] && get_init_lang $CMD_LANG error
 
-    MIRROR=${CMD_MIRROR:-$MIRROR}
-    TZ=${CMD_TZ:-$TZ}
-
-    [ "$MIRROR" -o "$TZ" ] && repo_localize
+    repo_localize "$CMD_MIRROR" "$CMD_TZ" "$MIRROR" "$TZ"
 
     [ "$WM_LANG" ] && localize_skel $WM_LANG
 
@@ -245,22 +243,22 @@ set_dpi() {
 }
 
 repo_localize() {
+    local mirror=$1  tz=$2  lang_mirror=$3  lang_tz=$4
 
-    if [ -n "$CMD_MIRROR" -a -n "${CMD_MIRROR##[a-zA-Z][a-zA-Z]}" ]; then
+    if [ -n "$mirror" -a -n "${mirror##[a-zA-Z][a-zA-Z]}" ]; then
         error "Bad mirror code %s (expected two letters)" $(pquote $mirror)
-        CMD_MIRROR=
+        mirror=
     fi
 
-    sources_dir=/etc/apt/sources.list.d
-
-    first_write $sources_dir || [ "$CMD_MIRROR" -o "$CMD_TZ" ] || return
-
-    local arg=$CMD_MIRROR   # cheat mirror=xx overides all else
-    : ${arg:=$CMD_TZ}       # next come tz=xxx/yyy cheat (or via menu)
-    : ${arg:=$TZ}           # The the lang timezone
-    : ${arg:=$MIRROR}       # This should never be needed
+    local arg=$mirror         # cheat mirror=xx overides all else
+    : ${arg:=$tz}             # next come tz=xxx/yyy cheat (or via tz menu)
+    : ${arg:=$lang_tz}        # The lang based timezone
+    : ${arg:=$lang_mirror}    # The lang based mirror should never be needed
 
     [ "$arg" ] || return
+
+    sources_dir=/etc/apt/sources.list.d
+    first_write $sources_dir || [ "$mirror" -o "$tz" ] || return
 
     local verbose
     [ "$DB_PLUS" ] && verbose=--verbose
