@@ -87,8 +87,7 @@ main() {
 do_start() {
     echo_script "Localizing/configuring X-Windows" $0
 
-    local DISTRO="unknown"
-    get_init_param DISTRO
+    get_init_param DISTRO "unknown"
 
     case $DISTRO in
         antiX) automount_and_fstab;;
