@@ -94,7 +94,7 @@ do_start() {
     unset COUNTRY WM_LANG KEYBOARDS KEYTABLE LANG MIRROR TZ XKBLAYOUT CONSOLE_FONT
 
     get_init_lang "$CMD_LANG" error
-    repo_localize "$CMD_MIRROR" "$CMD_TZ" "$MIRROR" "$TZ"
+    localize_repo "$CMD_MIRROR" "$CMD_TZ" "$MIRROR" "$TZ"
     localize_skel $WM_LANG
 
     # Always create keyboard file in non-perisistent system even with no X
@@ -301,7 +301,7 @@ XKBOPTIONS="${XKBOPTIONS:=$default_xkb_opts}"
 Keyboard_Out
 }
 
-repo_localize() {
+localize_repo() {
     local mirror=$1  tz=$2  lang_mirror=$3  lang_tz=$4
 
     if [ -n "$mirror" -a -n "${mirror##[a-zA-Z][a-zA-Z]}" ]; then
@@ -323,7 +323,7 @@ repo_localize() {
     [ "$DB_PLUS" ] && verbose=--verbose
 
     echo_live "Localizing source repos using %s" $(pquote $arg)
-    repo-localize $verbose $arg
+    localize-repo $verbose $arg
 }
 
 set_utc_local() {
