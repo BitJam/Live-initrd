@@ -122,12 +122,7 @@ do_start() {
 
     DEF_USER=$(find_def_user)
 
-    if [ -z "$DEF_USER" ]; then
-        echo_live "No default user %s found on the system." ""
-        return
-    fi
-
-    USER_HOME=$(getent passwd $DEF_USER | cut -d: -f6)
+    USER_HOME=$(getent passwd "$DEF_USER" | cut -d: -f6)
 
     if [ -z "$USER_HOME" ]; then
         echo_live "No default user %s found on the system." $(pquote $DEF_USER)
