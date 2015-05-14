@@ -394,6 +394,9 @@ main_core() {
     [ "$NO_NEW_OUTPUT" ] || write_output_files     $OUTPUT_DIR
     [ "$NO_OLD_OUTPUT" ] || old_write_output_files $OUTPUT_DIR
 
+    mkdir -p $NEW_ROOT/etc/live
+    echo $FINAL_DIR > $NEW_ROOT/etc/live/live-dir
+
     # FIXME: since we are using the real persist-save we can do these either
     # before or after we run the init scripts!
 
