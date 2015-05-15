@@ -406,7 +406,7 @@ wait_for_init() {
 #------------------------------------------------------------------------------
 proc_list() {
     local pid start_t ret=1 top_start_t=$1
-
+    local pid
     while read pid; do
         [ $pid -eq 1  -o $pid -eq $$ ] && continue
         is_zombie_or_kthread $pid      && continue
@@ -514,6 +514,7 @@ kill_procs_fast() {
 #------------------------------------------------------------------------------
 mountpoint_list() {
     local ret=1
+    local read dev mp type opts other
     while read dev mp type opts other; do
 
         case $type in 
@@ -787,6 +788,7 @@ ps_no_kthreads() {
     local pid user time cmnd start_t
     local format="%6s %12s %s\n"
     printf "$format" PID START_T CMD
+    local pid user time cmnd
     while read pid user time cmnd; do
         is_zombie_or_kthread $pid   && continue
         start_t=$(get_start_t $pid) || continue
