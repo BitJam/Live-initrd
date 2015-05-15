@@ -337,7 +337,7 @@ do_sendsigs() {
     fi
 
     # You have no chance to survive make your time
-    for try in $(seq 1 20); do
+    for try in $(seq 1 10); do
         if list=$(proc_list $start_t); then
             vmsgN 4  "."
             usleep 500000
