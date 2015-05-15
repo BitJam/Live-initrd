@@ -331,7 +331,7 @@ do_sendsigs() {
 
     vmsgN 4 "$ME Waiting for termination "
 
-    if [ $V_LEVEL -ge 7 ]; then
+    if [ $V_LEVEL -ge 6 ]; then
         echo "> ps no (threads)"
         ps_no_kthreads
     fi
