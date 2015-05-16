@@ -384,9 +384,15 @@ main_core() {
         [ "$NEED_HOMEFS" ] && non_fatal "Could not enable required %s persistence" "$(pqh home!)"
     fi
 
+    [ "$DB_PLUS" ] && local plus_t1=$(get_time)
     [ "$DO_XTRA"       ] && copy_xtra    $DEFAULT_DIR
     [ "$DO_AUTO_LOGIN" ] && auto_login   "$AUTO_LOGIN_PROG" "$AUTO_LOGIN_TERMS" "$NEW_ROOT"
     [ "$DO_FANCY"      ] && fancy_prompt "$FANCY_PROMPT" "$NEW_ROOT"
+    if [ "$DB_PLUS" ]; then
+        local plus_t2=$(get_time)
+        local delta=$(get_seconds $((plus_t2 - plus_t1)))
+        msg "$green@${cyan} Extras took$hi_co $delta${cyan} seconds"
+    fi
 
     # FIXME: do this after copy_xtra for easy testing (for now)
     [ "$DO_MENUS" ] && do_late_menus
