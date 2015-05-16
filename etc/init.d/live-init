@@ -497,11 +497,10 @@ find_def_user() {
 create_home() {
     local user=$1 home=$2
 
-    # Remove only an *empty* home directory
-    rmdir $home 2>/dev/null
-    if test -d $home; then
+    #
+    if [ "$(ls -A $home)" ]; then
         return
-        # These don't run but the don't leave the .pot file either
+        # These don't run but they don't leave the .pot file either
         echo_live "Files already exist under %s" $(pquote $home)
         echo_live "Not creating or populating %s" $(pquote $home)
     fi
