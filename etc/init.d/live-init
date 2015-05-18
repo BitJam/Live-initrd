@@ -497,8 +497,7 @@ find_def_user() {
 create_home() {
     local user=$1 home=$2
 
-    #
-    if [ "$(ls -A $home)" ]; then
+    if [ "$(ls -A $home 2>/dev/null)" ]; then
         return
         # These don't run but they don't leave the .pot file either
         echo_live "Files already exist under %s" $(pquote $home)
