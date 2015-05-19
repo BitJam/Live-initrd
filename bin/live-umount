@@ -499,10 +499,12 @@ kill_most() {
 }
 
 kill_procs_fast() {
-    safe_get_start_t $$ || return
+    safe_get_start_t $$ || return 1
     local list start_t=$START_T
     #local list start_t=5000000
+    proc_list $start_t &>/dev/null || return
 
+    msg "Kill any remaining processes"
     kill_most -KILL $start_t
     list=$(proc_list $start_t) || return
 
@@ -524,7 +526,7 @@ mountpoint_list() {
     local read dev mp type opts other
     while read dev mp type opts other; do
 
-        case $type in 
+        case $type in
             tmpfs|devtmpfs) case $mp in
                                 /aufs*)          ;;
                                      *) continue ;;
