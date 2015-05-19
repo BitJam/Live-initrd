@@ -324,25 +324,21 @@ do_sendsigs() {
     #chvt 1
 
     if list=$(pgrep "$TARDY_LIST"); then
-        msg "Killing tardy processes$white $list"
+        msg "Killing known tardy processes: %s" "$white$(echo $list)"
         kill -KILL $list
     fi
 
     if ! list=$(proc_list $start_t); then
-        msg "Almost all process terminated immediately"
+        msg "Almost all processes terminated immediately"
         return
     fi
 
     vmsg 7 "$ME: remaining pids:$white $list"
 
-    vmsgN 4 "$ME Waiting for termination "
-
-    if [ $V_LEVEL -ge 6 ]; then
-        echo "> ps no (threads)"
-        ps_no_kthreads
-    fi
+    vmsgN 4 "%s Waiting for termination " "$ME:"
 
     # You have no chance to survive make your time
+    local all_dead
     for try in $(seq 1 10); do
         if list=$(proc_list $start_t); then
             vmsgN 4  "."
@@ -354,12 +350,17 @@ do_sendsigs() {
     done
     vmsg 4 "$nc done"
 
-    if [ -n "$all_dead" ]; then
-        pmsg $(( ($try +1)/ 2)) "All processes ended within$white %n$nc second%s."
+    if [ "$all_dead" ]; then
+        msg "All processes ended within %s second(s)"  $(( (try + 1)/ 2))
         return
     fi
 
-    msg "Killing most remaining processes"
+    if [ $V_LEVEL -ge 6 ]; then
+        echo "> ps no (threads)"
+        ps_no_kthreads
+    fi
+
+    msg "Killing remaining processes"
     kill_most -KILL $start_t
 
     breakpoint 12 "After killing processes"
@@ -368,7 +369,7 @@ do_sendsigs() {
 
     echo "> ps (no threads)"
     ps_no_kthreads
-    err "Unable to kill$white $list"
+    err "Unable to kill: %s" "$white $(echo $list)"
 }
 
 #------------------------------------------------------------------------------
