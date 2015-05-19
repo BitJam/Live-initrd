@@ -687,9 +687,13 @@ run_scripts() {
         full=/live/etc/init.d/$script
         test -x $full || continue
         $full stop
-        [ "$DB_PLUS" ] || continue
+
+        #[ "$DB_PLUS" ] || continue
+
         now=$(get_time)
-        vmsg 6 "$ME$white %25s$cyan @$magenta %s$cyan seconds" $script $(get_seconds $((now - last_time)))
+
+        #. "seconds" as in seconds per minute
+        vmsg 6 "$ME$white %25s$cyan @$magenta %s$cyan %s" $script $(get_seconds $((now - last_time))) "seconds"
         last_time=$now
     done
 }
