@@ -293,11 +293,14 @@ do_sendsigs() {
     # Make sure we have a fresh line to print out on
     echo
 
-    SCRIPTS="live-usb-save"
-    [ -e /live/config/save-persist ] && SCRIPTS="$SCRIPTS persist-autosave"
-    [ -e /live/config/static-root  ] && SCRIPTS="$SCRIPTS live-static-shutdown"
+    find_mounted_cd $BOOT_DEV_FILE
 
-    run_scripts persist-autosave $SCRIPTS
+    local scripts
+    [ -z "$TO_EJECT"               ] && scripts="$scripts live-usb-save"
+    [ -e /live/config/save-persist ] && scripts="$scripts persist-autosave"
+    [ -e /live/config/static-root  ] && scripts="$scripts live-static-shutdown"
+
+    run_scripts persist-autosave $scripts
 
     safe_get_start_t $pppid || return
     start_t=$START_T
