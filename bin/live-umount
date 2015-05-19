@@ -238,7 +238,7 @@ do_umountfs() {
     done
 
     breakpoint 2 "After pivot"
-   
+
     exec /bin/$me --final-umount
     final_umount
 }
@@ -249,19 +249,18 @@ final_umount() {
 
     breakpoint 3 "Start final umount"
 
-    find_mounted_cd $BOOT_DEV_FILE 
+    [ -z "$NO_PROMPT" ] && find_mounted_cd $BOOT_DEV_FILE
 
-    vmsg 5 "$ME Kill most remaining processes"
     kill_procs_fast
 
     breakpoint 4 "After killing processes"
 
-    vmsg 5 "$ME Unmount most filesystems"
+    msg "Unmount most filesystems"
     umount_most
 
     breakpoint 5 "After unmounting most filesystems"
 
-    vmsg 5 "$ME Disable swap"
+    msg "Disable swap"
     swapoff -a
 
     breakpoint 6 "After disabling swap"
@@ -641,8 +640,14 @@ shutdown_or_reboot() {
     [ -n "$VERBOSE_MODE" ] \
         && vmsg 1 "${green}Use$white <Shift><PgUp>$green and$white <Shift><PgDn>$green for scrolling"
 
-
-    vmsg 5 "Ready to$white $command"
+    # The echos ensure the strings that follow get translated
+    local cmd_msg
+    case $command in
+          reboot) cmd_msg=$(echo "reboot")   ;;
+        poweroff) cmd_msg=$(echo "poweroff") ;;
+               *) cmd_msg=$command           ;;
+    esac
+    msg "Ready to %s" "$white$cmd_msg"
 
     if [ -n "$TO_EJECT" ]; then
         eject_cd $TO_EJECT
