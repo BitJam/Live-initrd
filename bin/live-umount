@@ -591,18 +591,16 @@ umount_most() {
 #------------------------------------------------------------------------------
 find_mounted_cd() {
 
-    [ -n "$NO_PROMPT" ] && return
-
     local dev BOOT_DEV file=$1
     if test -r $file; then
         dev=$(cat $file 2>/dev/null)
     else
-        eval $(grep ^BOOT_DEV= /live/config/linuxrc.out)
+        eval $(grep ^BOOT_DEV= /live/config/initrd.out)
         dev=$BOOT_DEV
     fi
 
     vmsg 7 "boot_dev:$white $dev"
- 
+
     [ -n "$dev" ] || return
 
     # Make sure it is cdrom not a usb or hd drive
