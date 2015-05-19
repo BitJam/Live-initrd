@@ -752,7 +752,7 @@ read_xlat() {
 # But first call show_cmd().
 #------------------------------------------------------------------------------
 breakpoint() {
-    show_cmd "$1" "$2"
+    show_cmd "$@"
 
     case ,$BREAK_POINTS, in
         *,$1,*) ;;
