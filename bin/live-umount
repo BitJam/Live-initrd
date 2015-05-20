@@ -120,7 +120,7 @@ do_sendsigs() {
 
     local pppid=$(grep ^PPid: /proc/$PPID/status | cut -f2)
 
-    BREAK_POINTS=
+    #BREAK_POINTS=
 
     # Make sure we have a fresh line to print out on
     echo
