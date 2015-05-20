@@ -572,7 +572,8 @@ read_cmdline_params()
         [sS1-6]|BOOT_IMAGE=*);;
         video.*);;
 
-        # Most kernel codes from version 3.8
+        # Most kernel codes from version 3.8 (plus additions)
+        acpi_force_table_verification|acpi_no_auto_serialize|acpica_no_return_repair);;
         forcepae|systemd.*);;
         acpi=*|acpi_rsdp=*|acpi_apic_instance=*|acpi_backlight=*);;
         acpi.debug_layer=*|acpi.debug_level=*|acpi_irq_balance);;
