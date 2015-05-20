@@ -100,174 +100,6 @@ main() {
     esac
 }
 
-read_cmdline() {
-    if [ -r $CMDLINE_FILE ]; then
-        CMDLINE=$(cat $CMDLINE_FILE)
-        FROM_FILE=true
-    else
-        CMDLINE=$(cat /proc/cmdline)
-    fi
-
-    for param in $CMDLINE; do
-        case $param in
-             uverb=*)      VERBOSE=${param#*=} ;;
-                 db+)      DB_PLUS=true        ;;
-             ushow=*)         SHOW=${param#*=} ;;
-               ubp=*) BREAK_POINTS=${param#*=} ;;
-              lang=*)         LANG=${param#*=} ;;
-            noprompt)    NO_PROMPT=true        ;;
-              prompt)    DO_PROMPT=true        ;;
-        nocolor|noco)        NO_CO=true        ;;
-       lowcolor|loco)        LO_CO=true        ;;
-        esac
-    done
-
-    case $VERBOSE in
-        [0-9]|[0-9][0-9]) V_LEVEL=$VERBOSE;;
-    esac
-
-    case $SHOW in
-        [0-9]|[0-9][0-9]) SHOW_COMMAND=$SHOW;;
-    esac
-
-    if [ "$V_LEVEL" -ge 7 -o "$SHOW_COMMAND" -gt 0 ]; then
-        DO_PROMPT=true
-        VERBOSE_MODE=true
-    fi
-}
-
-do_shutdown() {
-    umask 022
-    mkdir -p /proc /sys /dev
-
-    mount -t proc   proc        /proc
-    mount -t sysfs  sys         /sys
-    mount -t devtmpfs devtmpfs  /dev
-    #exec < /dev/console > /dev/console
-
-    breakpoint 7 "Start shutdown mode"
-
-    shutdown_or_reboot 6
-}
-
-
-#------------------------------------------------------------------------------
-# Function: do_init
-#
-# Just sleep forever.  We hijack the init process in order to pull it out of
-# the aufs so we can cleanly umount the aufs.  You cannot kill init, the best
-# you can do is restart it.  We replace /sbin/init with a copy of ourselves
-# then use "telinit u" to restart the init process and then we finally end up
-# here doing nothing with pid 1.
-#------------------------------------------------------------------------------
-do_init() {
-    PATH=$BUSYBOX_BIN:/bin
-    export PATH
-
-    touch $HIJACKED_INIT
-
-    while true; do sleep 100; done
-}
-
-#------------------------------------------------------------------------------
-# Function: do_umountfs
-#
-# This is the ringleader.  It does almost all of the processing needed to
-# cleanly umount our Live system.
-#------------------------------------------------------------------------------
-do_umountfs() {
-
-    msg "${white}umountfs"
-
-    PATH=/sbin:/usr/sbin:/bin:/usr/bin:/usr/local/bin:$BUSYBOX_BIN
-
-    #chvt 1
-
-    # err "test error system"
-
-    vmsg 7 $HBAR
-    #msg "doing final umounts"
-
-    [ -n "$FROM_FILE" ] && vmsg 5 "Read parameters from$white $CMDLINE_FILE"
-
-    vmsg 8 'Current bootcodes:'
-    vmsg 8 "    $white$CMDLINE"
-
-    cd $NEW_ROOT
-
-    # Get the runlevel before we pivot
-    local runlevel=$(runlevel | cut -d" " -f2)
-
-    PATH=$BUSYBOX_BIN:/bin
-    export PATH
-    hash -r
-
-    vmsg 8 "runlevel:$white $runlevel"
-
-    breakpoint 1 "Before pivot"
-
-    # undo previous bind mount
-    umount ./aufs
-
-    vmsg 7 "$ME pivot_root:$white $PWD $OLD_ROOT"
-
-    # pivot so what was / ---> /aufs and /live ---> /
-    $BUSYBOX_BIN/pivot_root . aufs
-
-    mkdir -p /live /dev /sbin /etc
-    cp $OLD_ROOT/etc/fstab /etc
-
-    # Ensure #!/live/bin/sh still works
-    ln -sf /bin /live/bin
-
-    # Copy ourselves to run as the init program when it restarts
-    cp /bin/$me /sbin/init
-
-    rm -f $HIJACKED_INIT
-    # Use chroot to run "telinit u" in old environment
-    chroot $OLD_ROOT /sbin/telinit u
-
-    wait_for_init
-
-    # Move standard mounts out of aufs and up here where we can use them
-    vmsg 7 "$ME Move some mountpoints out of aufs"
-    for dir in sys proc dev media run tmp; do
-        mountpoint -q $OLD_ROOT/$dir || continue
-        mkdir -p /$dir
-        mount --move $OLD_ROOT/$dir /$dir
-    done
-
-    breakpoint 2 "After pivot"
-
-    exec /bin/$me --final-umount
-    final_umount
-}
-
-final_umount() {
-
-    read_cmdline
-
-    breakpoint 3 "Start final umount"
-
-    [ -z "$NO_PROMPT" ] && find_mounted_cd $BOOT_DEV_FILE
-
-    kill_procs_fast
-
-    breakpoint 4 "After killing processes"
-
-    msg "Unmount most filesystems"
-    umount_most
-
-    breakpoint 5 "After unmounting most filesystems"
-
-    msg "Disable swap"
-    swapoff -a
-
-    breakpoint 6 "After disabling swap"
-
-    shutdown_or_reboot $runlevel
-}
-
 #------------------------------------------------------------------------------
 # Function: do_sendsigs
 #
@@ -312,11 +144,11 @@ do_sendsigs() {
 
     msg "Asking most remaining processes to terminate"
 
-    breakpoint 10 "Before terminating processes"
+    breakpoint 1 "Before terminating processes"
 
     kill_most -TERM $start_t
 
-    breakpoint 11 "After terminating processes"
+    breakpoint 2 "After terminating processes"
 
     # wait 1/10th second
     usleep 100000
@@ -363,13 +195,180 @@ do_sendsigs() {
     msg "Killing remaining processes"
     kill_most -KILL $start_t
 
-    breakpoint 12 "After killing processes"
+    breakpoint 3 "After killing processes"
 
     list=$(proc_list $start_t) || return
 
     echo "> ps (no threads)"
     ps_no_kthreads
     err "Unable to kill: %s" "$white $(echo $list)"
+}
+
+#------------------------------------------------------------------------------
+# Function: do_umountfs
+#
+# This is the ringleader.  It does almost all of the processing needed to
+# cleanly umount our Live system.
+#------------------------------------------------------------------------------
+do_umountfs() {
+
+    msg "${white}umountfs"
+
+    PATH=/sbin:/usr/sbin:/bin:/usr/bin:/usr/local/bin:$BUSYBOX_BIN
+
+    #chvt 1
+
+    # err "test error system"
+
+    vmsg 7 $HBAR
+    #msg "doing final umounts"
+
+    [ -n "$FROM_FILE" ] && vmsg 5 "Read parameters from$white $CMDLINE_FILE"
+
+    vmsg 8 'Current bootcodes:'
+    vmsg 8 "    $white$CMDLINE"
+
+    cd $NEW_ROOT
+
+    # Get the runlevel before we pivot
+    local runlevel=$(runlevel | cut -d" " -f2)
+
+    PATH=$BUSYBOX_BIN:/bin
+    export PATH
+    hash -r
+
+    vmsg 8 "runlevel:$white $runlevel"
+
+    breakpoint 4 "Before pivot"
+
+    # undo previous bind mount
+    umount ./aufs
+
+    vmsg 7 "$ME pivot_root:$white $PWD $OLD_ROOT"
+
+    # pivot so what was / ---> /aufs and /live ---> /
+    $BUSYBOX_BIN/pivot_root . aufs
+
+    mkdir -p /live /dev /sbin /etc
+    cp $OLD_ROOT/etc/fstab /etc
+
+    # Ensure #!/live/bin/sh still works
+    ln -sf /bin /live/bin
+
+    # Copy ourselves to run as the init program when it restarts
+    cp /bin/$me /sbin/init
+
+    rm -f $HIJACKED_INIT
+    # Use chroot to run "telinit u" in old environment
+    chroot $OLD_ROOT /sbin/telinit u
+
+    wait_for_init
+
+    # Move standard mounts out of aufs and up here where we can use them
+    vmsg 7 "$ME Move some mountpoints out of aufs"
+    for dir in sys proc dev media run tmp; do
+        mountpoint -q $OLD_ROOT/$dir || continue
+        mkdir -p /$dir
+        mount --move $OLD_ROOT/$dir /$dir
+    done
+
+    breakpoint 5 "After pivot"
+
+    exec /bin/$me --final-umount
+    final_umount
+}
+
+final_umount() {
+
+    read_cmdline
+
+    breakpoint 6 "Start final umount"
+
+    [ -z "$NO_PROMPT" ] && find_mounted_cd $BOOT_DEV_FILE
+
+    kill_procs_fast
+
+    breakpoint 7 "After killing processes"
+
+    msg "Unmount most filesystems"
+    umount_most
+
+    breakpoint 8 "After unmounting most filesystems"
+
+    msg "Disable swap"
+    swapoff -a
+
+    breakpoint 9 "After disabling swap"
+
+    shutdown_or_reboot $runlevel
+}
+
+read_cmdline() {
+    if [ -r $CMDLINE_FILE ]; then
+        CMDLINE=$(cat $CMDLINE_FILE)
+        FROM_FILE=true
+    else
+        CMDLINE=$(cat /proc/cmdline)
+    fi
+
+    for param in $CMDLINE; do
+        case $param in
+             uverb=*)      VERBOSE=${param#*=} ;;
+                 db+)      DB_PLUS=true        ;;
+             ushow=*)         SHOW=${param#*=} ;;
+               ubp=*) BREAK_POINTS=${param#*=} ;;
+              lang=*)         LANG=${param#*=} ;;
+            noprompt)    NO_PROMPT=true        ;;
+              prompt)    DO_PROMPT=true        ;;
+        nocolor|noco)        NO_CO=true        ;;
+       lowcolor|loco)        LO_CO=true        ;;
+        esac
+    done
+
+    case $VERBOSE in
+        [0-9]|[0-9][0-9]) V_LEVEL=$VERBOSE;;
+    esac
+
+    case $SHOW in
+        [0-9]|[0-9][0-9]) SHOW_COMMAND=$SHOW;;
+    esac
+
+    if [ "$V_LEVEL" -ge 7 -o "$SHOW_COMMAND" -gt 0 ]; then
+        DO_PROMPT=true
+        VERBOSE_MODE=true
+    fi
+}
+
+do_shutdown() {
+    umask 022
+    mkdir -p /proc /sys /dev
+
+    mount -t proc   proc        /proc
+    mount -t sysfs  sys         /sys
+    mount -t devtmpfs devtmpfs  /dev
+    #exec < /dev/console > /dev/console
+
+    breakpoint s "Start shutdown mode"
+
+    shutdown_or_reboot 6
+}
+
+#------------------------------------------------------------------------------
+# Function: do_init
+#
+# Just sleep forever.  We hijack the init process in order to pull it out of
+# the aufs so we can cleanly umount the aufs.  You cannot kill init, the best
+# you can do is restart it.  We replace /sbin/init with a copy of ourselves
+# then use "telinit u" to restart the init process and then we finally end up
+# here doing nothing with pid 1.
+#------------------------------------------------------------------------------
+do_init() {
+    PATH=$BUSYBOX_BIN:/bin
+    export PATH
+
+    touch $HIJACKED_INIT
+
+    while true; do sleep 100; done
 }
 
 #------------------------------------------------------------------------------
@@ -758,7 +757,7 @@ breakpoint() {
         *,$1,*) ;;
          *,A,*) ;;
          *,a,*) case $1 in
-                   [e12345789])     ;;
+                   [e12345789s])    ;;
                           *) return ;;
                 esac   ;;
              *) return ;;
@@ -782,7 +781,7 @@ show_cmd() {
     [ "$1" = e ] && return
     local cmd show
     case $SHOW_COMMAND in
-        1) cmd=ps_no_kthreads ; show=2,3,4          ;;
+        1) cmd=ps_no_kthreads ; show=a              ;;
         2) cmd="free -m"      ; show=2,3,5          ;;
         3) cmd=lsof           ; show=1,2,3,4        ;;
         4) cmd="df -h"        ; show=1,2,4          ;;
@@ -793,6 +792,7 @@ show_cmd() {
 
     case ,$show, in
         *,$1,*) ;;
+         *,a,*) ;;
              *) return ;;
     esac
 
