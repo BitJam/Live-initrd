@@ -751,6 +751,9 @@ read_xlat() {
 # But first call show_cmd().
 #------------------------------------------------------------------------------
 breakpoint() {
+
+    #[ "$DB_PLUS" ] && echo "@bp$1 $2"
+
     show_cmd "$@"
 
     case ,$BREAK_POINTS, in
@@ -781,13 +784,12 @@ show_cmd() {
     [ "$1" = e ] && return
     local cmd show
     case $SHOW_COMMAND in
-        1) cmd=ps_no_kthreads ; show=a              ;;
-        2) cmd="free -m"      ; show=2,3,5          ;;
-        3) cmd=lsof           ; show=1,2,3,4        ;;
-        4) cmd="df -h"        ; show=1,2,4          ;;
-        5) cmd="df -ha"       ; show=1,2,4          ;;
-       11) cmd=ps_no_kthreads ; show=2,3,4,10,11,12 ;;
-        *) return                                   ;;
+        1) cmd=ps_no_kthreads ; show=a          ;;
+        2) cmd="free -m"      ; show=a          ;;
+        3) cmd=lsof           ; show=a          ;;
+        4) cmd="df -h"        ; show=a          ;;
+        5) cmd="df -ha"       ; show=a          ;;
+        *) return                               ;;
     esac
 
     case ,$show, in
