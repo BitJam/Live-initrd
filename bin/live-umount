@@ -178,10 +178,10 @@ do_sendsigs() {
 
     #chvt 1
 
-    if list=$(pgrep "$TARDY_LIST"); then
-        msg "Killing known tardy processes: %s" "$white$(echo $list)"
-        kill -KILL $list
-    fi
+    # if list=$(pgrep "$TARDY_LIST"); then
+    #     msg "Killing known tardy processes: %s" "$white$(echo $list)"
+    #     kill -KILL $list
+    # fi
 
     if ! list=$(proc_list $start_t); then
         msg "Almost all processes terminated immediately"
