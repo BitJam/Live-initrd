@@ -782,6 +782,9 @@ breakpoint() {
     case ,$BREAK_POINTS, in
         *,$1,*) ;;
          *,A,*) ;;
+         *,a,*) ;;
+
+         # This is not used ATM, see line above
          *,a,*) case $1 in
                    [e12345789s])    ;;
                           *) return ;;
