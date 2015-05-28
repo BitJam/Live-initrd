@@ -156,7 +156,7 @@ get_init_lang() {
         return 1
     fi
 
-    echo_live 'Setting language via: %s' $(pquote lang=$lang)
+    # echo_live 'Setting language via: %s' $(pquote lang=$lang)
     . $lang_file
     return 0
 }
