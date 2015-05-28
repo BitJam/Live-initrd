@@ -414,6 +414,8 @@ main_core() {
 
     prepare_switch_root $NEW_ROOT $LIVE_DIR $FINAL_DIR
 
+    write_ntfs_pids $FINAL_DIR/aufs/run/sendsigs.omit.d/initrd-ntfs-3g
+
     echo $LAST_BP_TIME > /LAST_BP_TIME
 }
 
@@ -4203,6 +4205,13 @@ late_umount() {
     cut -d" " -f1 /proc/mounts | grep -q "^$dev$" || return
     msg "late umount %s" $(pq $dev)
     log_cmd umount -l $dev
+}
+
+write_ntfs_pids() {
+    local file=$1  ntfs_pids=$(pgrep ntfs-3g)
+    [ "$ntfs_pids" ] || return
+    mkdir -p $(dirname $file)
+    echo "$ntfs_pids" > $file
 }
 
 prepare_switch_root() {
