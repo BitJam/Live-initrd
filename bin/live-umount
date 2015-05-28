@@ -93,11 +93,39 @@ main() {
     [ "$me" = 'shutdown' ] && do_shutdown
 
     case $1 in
-     --sendsigs) do_sendsigs   ;;
-     --umountfs) do_umountfs   ;;
- --final-umount) final_umount  ;;
-              *) err 'Expected --umountfs or --sendsigs'
+     --run-scripts) do_scripts    ;;
+        --sendsigs) do_sendsigs   ;;
+        --umountfs) do_umountfs   ;;
+    --final-umount) final_umount  ;;
+                 *) err 'Expected --umountfs or --sendsigs'
     esac
+}
+
+do_scripts() {
+
+    PATH=$BUSYBOX_BIN:/bin
+    export PATH
+
+    breakpoint s1 "Before running scripts"
+    # Make sure we have a fresh line to print out on
+    # echo
+
+    find_mounted_cd $BOOT_DEV_FILE
+
+    # FIXME: remove persist-autosave below for production
+    local scripts=persist-autosave
+    [ -z "$TO_EJECT"               ] && scripts="$scripts live-usb-save"
+    [ -e /live/config/save-persist ] && scripts="$scripts persist-autosave"
+    [ -e /live/config/static-root  ] && scripts="$scripts live-static-shutdown"
+
+    # Only say we are running scripts if we actually run at least one script
+    [ "$scripts" ] || return
+
+    msg "${white}run-scripts"
+
+    run_scripts $scripts
+
+    breakpoint s2 "After running scripts"
 }
 
 #------------------------------------------------------------------------------
@@ -122,17 +150,7 @@ do_sendsigs() {
 
     #BREAK_POINTS=
 
-    # Make sure we have a fresh line to print out on
-    echo
-
-    find_mounted_cd $BOOT_DEV_FILE
-
-    local scripts
-    [ -z "$TO_EJECT"               ] && scripts="$scripts live-usb-save"
-    [ -e /live/config/save-persist ] && scripts="$scripts persist-autosave"
-    [ -e /live/config/static-root  ] && scripts="$scripts live-static-shutdown"
-
-    run_scripts persist-autosave $scripts
+    do_scripts
 
     safe_get_start_t $pppid || return
     start_t=$START_T
