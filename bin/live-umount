@@ -62,7 +62,7 @@ me=${0##*/}
    LOCALE_DIR=/locale
  CMDLINE_FILE=/live/CMDLINE
 HIJACKED_INIT=/hijacked-init
- PROTECT_LIST="^(/sbin/mount.ntfs|mount.ntfs|mount.fuse|mount.cifs|ntfs-3g|/sbin/mount.ntfs-3g)$"
+ PROTECT_LIST="^(/sbin/mount.ntfs|mount.ntfs|mount.fuse|mount.cifs|ntfs-3g|/sbin/mount.ntfs-3g|rpcbind)$"
    TARDY_LIST="^(acpid)$"
 BOOT_DEV_FILE=/config/boot-device
 
