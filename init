@@ -193,6 +193,13 @@ main_wrapper() {
     run_init_scripts $NEW_ROOT $LIVE_SCRIPTS
     PATH=$LIVE_BIN
 
+    # FIXME: since we are using the real persist-save we can do these either
+    # before or after we run the init scripts!
+
+    sync
+    late_umount $PERSIST_DEVICE
+    late_umount $SQFILE_DEV
+
     #free -m >> $MY_LOG
     echo 3 > /proc/sys/vm/drop_caches
     vmsg 6 'drop caches'
@@ -402,13 +409,6 @@ main_core() {
 
     mkdir -p $NEW_ROOT/etc/live
     echo $FINAL_DIR > $NEW_ROOT/etc/live/live-dir
-
-    # FIXME: since we are using the real persist-save we can do these either
-    # before or after we run the init scripts!
-
-    sync
-    late_umount $PERSIST_DEVICE
-    late_umount $SQFILE_DEV
 
     breakpoint 7 "before prepare switch_root"
 
