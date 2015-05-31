@@ -21,10 +21,6 @@ GSTATE_FILES="
     /etc/network/interfaces.d/*
 "
 
-MSTATE_FILES_FILE="/etc/live/config/machine-state-files"
-GSTATE_FILES_FILE="/etc/live/config/general-state-files"
-    NO_STATE_FILE="/etc/live/config/no-state"
-
 MSTATE_DIR=state/machine
 GSTATE_DIR=state/general
 USTATE_DIR=state/user
@@ -55,7 +51,6 @@ main() {
 do_start() {
 
     test -e /live/config/remasterable || exit 0
-    test -e $NO_STATE_FILE            && exit 0
     read_cmdline
 
     local bdir root_dir
@@ -66,15 +61,8 @@ do_start() {
     done
 
     [ "$root_dir" ] || exit 0
-    test -e $root_dir/state/no-state && exit 0
 
-    # Create default config file if it doesn't already exist
-    if test -r $MSTATE_FILES_FILE; then
-        MSTATE_FILES=$(cat $MSTATE_FILES_FILE 2>/dev/null)
-    else
-        echo_cmd mkdir -p $(dirname $MSTATE_FILES_FILE)
-        echo "$MSTATE_FILES" > $MSTATE_FILES_FILE
-    fi
+    read_create_config_files $root_dir
 
     echo_script "Restore state information" $0
 
@@ -84,14 +72,6 @@ do_start() {
     # Only restore general state files and user files if root persistence is not
     # enabled
     test -e $root_dir/config/persist-root && return
-
-    # Create default config file if it doesn't already exist
-    if test -r $GSTATE_FILES_FILE; then
-        GSTATE_FILES=$(cat $GSTATE_FILES_FILE 2>/dev/null)
-    else
-        echo_cmd mkdir -p $(dirname $GSTATE_FILES_FILE)
-        echo "$GSTATE_FILES" > $GSTATE_FILES_FILE
-    fi
 
     restore_state   $root_dir/$GSTATE_DIR ""         "$(state_files "$GSTATE_FILES")"
 
@@ -103,7 +83,6 @@ do_start() {
 do_stop() {
 
     test -e /live/config/remasterable || exit 0
-    test -e $NO_STATE_FILE            && exit 0
     read_cmdline
 
     local root_dir=$SQFILE_DIR
@@ -123,16 +102,37 @@ do_stop() {
         fi
     fi
 
-    test -e $root_dir/state/no-state && exit 0
-
-    test -r $MSTATE_FILES_FILE && MSTATE_FILES=$(cat $MSTATE_FILES_FILE 2>/dev/null)
-    test -r $GSTATE_FILES_FILE && GSTATE_FILES=$(cat $GSTATE_FILES_FILE 2>/dev/null)
+    read_create_config_files $root_dir
 
     echo_script "Save state information" $0
 
     save_desktop $root_dir/$USTATE_DIR
     save_state   $root_dir/$MSTATE_DIR $(mach_id) "$(state_files "$MSTATE_FILES")"
     save_state   $root_dir/$GSTATE_DIR ""         "$(state_files "$GSTATE_FILES")"
+}
+
+read_create_config_files() {
+    local dir="$1"
+
+    test -e $dir/state/no-state && exit 0
+    MSTATE_FILES_FILE=$dir/state/machine-state-files
+    GSTATE_FILES_FILE=$dir/state/general-state-files
+
+    # Create default config file if it doesn't already exist
+    if test -r $MSTATE_FILES_FILE; then
+        MSTATE_FILES=$(cat $MSTATE_FILES_FILE 2>/dev/null)
+    else
+        echo_cmd mkdir -p $(dirname $MSTATE_FILES_FILE)
+        echo "$MSTATE_FILES" > $MSTATE_FILES_FILE
+    fi
+
+    # Create default config file if it doesn't already exist
+    if test -r $GSTATE_FILES_FILE; then
+        GSTATE_FILES=$(cat $GSTATE_FILES_FILE 2>/dev/null)
+    else
+        echo_cmd mkdir -p $(dirname $GSTATE_FILES_FILE)
+        echo "$GSTATE_FILES" > $GSTATE_FILES_FILE
+    fi
 }
 
 save_desktop() {
