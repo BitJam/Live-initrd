@@ -43,7 +43,7 @@
 
           AUFS_DIR="aufs"
 
-       EXTRA_FILES="deb xtra xtra.tgz desktop"
+       EXTRA_FILES="deb xtra xtra.tgz state"
        MIN_SYS_RAM=80
       MIN_AUFS_RAM=80
 
@@ -193,13 +193,6 @@ main_wrapper() {
     PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin
     run_init_scripts $NEW_ROOT $LIVE_SCRIPTS
     PATH=$LIVE_BIN
-
-    # FIXME: since we are using the real persist-save we can do these either
-    # before or after we run the init scripts!
-
-    sync
-    late_umount $PERSIST_DEVICE
-    late_umount $SQFILE_DEV
 
     #free -m >> $MY_LOG
     echo 3 > /proc/sys/vm/drop_caches
@@ -409,7 +402,16 @@ main_core() {
     [ "$NO_OLD_OUTPUT" ] || old_write_output_files $OUTPUT_DIR
 
     mkdir -p $NEW_ROOT/etc/live
+
     echo $FINAL_DIR > $NEW_ROOT/etc/live/live-dir
+
+    # FIXME: since we are using the real persist-save we can do these either
+    # before or after we run the init scripts!  But we lose some of the variables
+    # when not run inside of main_core().
+
+    sync
+    late_umount $PERSIST_DEVICE
+    late_umount $SQFILE_DEV
 
     breakpoint 7 "before prepare switch_root"
 
