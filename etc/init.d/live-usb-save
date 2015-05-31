@@ -11,13 +11,23 @@
 # Description:       save/restore some information on raw liveusb w/o persistence
 ### END INIT INFO
 
-STATE_FILES="
-/var/lib/alsa/asound.state
+MSTATE_FILES="
+    /var/lib/alsa/asound.state
+"
+GSTATE_FILES="
+    /var/lib/wicd/configuration/*
+    /etc/wicd/*.conf
+    /etc/NetworkManager/system-connections/*
+    /etc/network/interfaces
+    /etc/network/interfaces.d/*
 "
 
-STATE_FILES_FILE="/etc/live/state-files"
+MSTATE_FILES_FILE="/etc/live/config/machine-state-files"
+GSTATE_FILES_FILE="/etc/live/config/general-state-files"
+    NO_STATE_FILE="/etc/live/config/no-state"
 
- STATE_DIR=state/mach
+MSTATE_DIR=state/machine
+GSTATE_DIR=state/general
 USTATE_DIR=state/user
 
 ID_DIR="/sys/class/dmi/id"
@@ -46,15 +56,8 @@ main() {
 do_start() {
 
     test -e /live/config/remasterable || exit 0
-    echo_script "Restore state information" $0
+    test -e $NO_STATE_FILE            && exit 0
     read_cmdline
-
-    if test -r $STATE_FILES_FILE; then
-        STATE_FILES=$(cat $STATE_FILES_FILE 2>/dev/null)
-    else
-        echo_cmd mkdir -p $(dirname $STATE_FILES_FILE)
-        echo "$STATE_FILES" > $STATE_FILES_FILE
-    fi
 
     local bdir root_dir
     for bdir in $SQFILE_DIR $TORAM_MP; do
@@ -64,15 +67,44 @@ do_start() {
     done
 
     [ "$root_dir" ] || exit 0
+    test -e $root_dir/state/no-state && exit 0
 
-    restore_mach_state $root_dir/$STATE_DIR
-    restore_desktop    $root_dir/$USTATE_DIR
+    # Create default config file if it doesn't already exist
+    if test -r $MSTATE_FILES_FILE; then
+        MSTATE_FILES=$(cat $MSTATE_FILES_FILE 2>/dev/null)
+    else
+        echo_cmd mkdir -p $(dirname $MSTATE_FILES_FILE)
+        echo "$MSTATE_FILES" > $MSTATE_FILES_FILE
+    fi
+
+    echo_script "Restore state information" $0
+
+    # Always restore machine specific state files
+    restore_state   $root_dir/$MSTATE_DIR $(mach_id) "$(state_files "$MSTATE_FILES")"
+
+    # Only restore general state files and user files if root persistence is not
+    # enabled
+    test -e $root_dir/config/persist-root && return
+
+    # Create default config file if it doesn't already exist
+    if test -r $GSTATE_FILES_FILE; then
+        GSTATE_FILES=$(cat $GSTATE_FILES_FILE 2>/dev/null)
+    else
+        echo_cmd mkdir -p $(dirname $GSTATE_FILES_FILE)
+        echo "$GSTATE_FILES" > $GSTATE_FILES_FILE
+    fi
+
+    restore_state   $root_dir/$GSTATE_DIR ""         "$(state_files "$GSTATE_FILES")"
+
+    [ "$PERSISTENCE" ] && return
+
+    restore_desktop $root_dir/$USTATE_DIR
 }
 
 do_stop() {
 
     test -e /live/config/remasterable || exit 0
-    echo_script "Save state information" $0
+    test -e $NO_STATE_FILE            && exit 0
     read_cmdline
 
     local root_dir=$SQFILE_DIR
@@ -92,14 +124,22 @@ do_stop() {
         fi
     fi
 
-    test -r $STATE_FILES_FILE && STATE_FILES=$(cat $STATE_FILES_FILE 2>/dev/null)
+    test -e $root_dir/state/no-state && exit 0
 
-    save_mach_state $root_dir/$STATE_DIR
-    save_desktop    $root_dir/$USTATE_DIR
+    test -r $MSTATE_FILES_FILE && MSTATE_FILES=$(cat $MSTATE_FILES_FILE 2>/dev/null)
+    test -r $GSTATE_FILES_FILE && GSTATE_FILES=$(cat $GSTATE_FILES_FILE 2>/dev/null)
+
+    echo_script "Save state information" $0
+
+    save_desktop $root_dir/$USTATE_DIR
+    save_state   $root_dir/$MSTATE_DIR $(mach_id) "$(state_files "$MSTATE_FILES")"
+    save_state   $root_dir/$GSTATE_DIR ""         "$(state_files "$GSTATE_FILES")"
 }
 
 save_desktop() {
     local to_dir=$1
+
+    test -e $to_dir/no-state && return
 
     local user from to
     for user in $(ls /home); do
@@ -114,11 +154,12 @@ save_desktop() {
 }
 
 restore_desktop() {
-    local from_dir=$1
+    local from_dir="$1"
 
     # There are many reasons to not restore
     [ "$CMD_DESKTOP" ] && return
-    [ "$PERSISTENCE" ] && return
+
+    test -e $from_dir/no-state && return
 
     local user dest_dir dest sorc
     for user in $(ls $from_dir 2>/dev/null); do
@@ -134,20 +175,26 @@ restore_desktop() {
     done
 }
 
-save_mach_state() {
-    local mach_dir=$1/$(mach_id)  file
+save_state() {
+    local state_dir="$1" dir2="$2" files="$3"
+    test -e $state_dir/no-state && return
 
-    if ! test -e $mach_dir; then
-        echo_cmd mkdir -p $mach_dir
-        for file in $ID_FILES; do
-            echo_cmd cp $ID_DIR/$file $mach_dir
-        done
+    state_dir=$state_dir${dir2:+/$dir2}
+
+    if ! test -e $state_dir; then
+        echo_cmd mkdir -p $state_dir
+        if [ "$dir2" ]; then
+            for file in $ID_FILES; do
+                echo_cmd cp $ID_DIR/$file $state_dir
+            done
+        fi
     fi
 
-    # Save system files under mach_dir
-    for file in $(state_files); do
+    # Save system files under state_dir
+    local file
+    for file in $files; do
         local from=$file
-        local to=$mach_dir$file
+        local to=$state_dir/files$file
         should_copy $from $to || continue
         echo_live "save state file %s" $(pquote $file)
         echo_cmd mkdir -p $(dirname $to)
@@ -155,23 +202,26 @@ save_mach_state() {
     done
 }
 
-restore_mach_state() {
-    local mach_dir=$1/$(mach_id)  file
+restore_state() {
+    local state_dir="$1" dir2="$2" files="$3"
+    test -e $state_dir/no-state && return
 
-    if test -e $mach_dir; then
+    state_dir=$state_dir${dir2:+/$dir2}
+
+    if test -e $state_dir; then
         # Copy saved state files to system
-        for file in $(state_files); do
-            local from=$mach_dir/$file
-            local to=$file
+        for from in $(find $state_dir/files -type f 2>/dev/null); do
+            local to=${from#$state_dir/files}
             should_copy $from $to || continue
-            echo_live "restore state file %s" $(pquote $file)
+            echo_live "restore state file %s" $(pquote $to)
             echo_cmd mkdir -p $(dirname $to)
             echo_cmd cp $from $to
         done
     else
-        # Delete state files on a "new" machine
-        for file in $STATE_FILES; do
-            test -e $file || continue
+        [ "$dir2" ] || return
+        # Delete machine-specific state files on a "new" machine
+        for file in $MSTATE_FILES; do
+            test -f $file || continue
             echo_live "delete state file %s" $(pquote $file)
             echo_cmd rm -f $file
         done
@@ -185,6 +235,7 @@ read_cmdline() {
         value=${param#*=}
         case $param in
            nousbstate)  exit 0 ;;
+           dbusbstate)  DB_USB_STATE=true;;
             desktop=*)  CMD_DESKTOP=$value ;;
         esac
     done
@@ -199,10 +250,12 @@ should_copy() {
 }
 
 mach_id() { cat $ID_DIR/board_* | md5sum | cut -d" " -f1 ;}
-state_files() { echo "$STATE_FILES" | grep -v "^\s*#" | sed "s/\s*#.*//" ;}
+state_files() { echo "$1" | grep -v "^\s*#" | sed "s/\s*#.*//" ;}
 
-# For early testing
-echo_cmd() { "$@" ;}
+# For testing
+echo_cmd() {
+    [ "$DB_USB_STATE" ] && echo "$@"
+    "$@"
+}
 
-main "$@"
-
+main "$@" 2>&1 | tee -a $INIT_LOG_FILE
