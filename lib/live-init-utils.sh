@@ -33,7 +33,7 @@ export TEXTDOMAINDIR=/usr/share/locale
 
 VERBOSE=5
 
-[ "$CMDLINE" ] || CMDLINE="$(cat /proc/cmdline)"
+: ${CMDLINE:=$(cat /proc/cmdline /live/config/cmdline 2>/dev/null)}
 for param in $CMDLINE; do
     case "$param" in
     #    verbose=*|verb=*|v=*) VERBOSE=${param#*=}      ;;
