@@ -191,6 +191,7 @@ main_wrapper() {
     # Do this last so the changes aren't saved until after a "real" persist-save
     [ -e /live/config/systemd ] || LIVE_SCRIPTS="$LIVE_SCRIPTS live-disable-services"
 
+    unset CMDLINE
     PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin
     run_init_scripts $NEW_ROOT $LIVE_SCRIPTS
     PATH=$LIVE_BIN
