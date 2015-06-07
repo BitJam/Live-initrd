@@ -62,7 +62,6 @@ do_stop() {
     # Don't auto-save twice in a row
     local last_save_file=/live/config/last-auto-save
     if test -r $last_save_file; then
-        local prev=$(cat $last_save_file)
         local diff=$(( $(date +%s) - $(cat $last_save_file)))
         if [ $diff -le $LOCKOUT_TIME ]; then
             echo_live "Already autosaved %s seconds ago" $diff
