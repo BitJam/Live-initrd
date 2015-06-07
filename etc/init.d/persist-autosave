@@ -47,8 +47,8 @@ do_start() {
 
     persist-config --cli --startup --nolog
     [ -e $persist_conf -o -e $new_passwd ] || exit 0
-    [ -e $new_passwd ]   && echo "Save new passwords"
-    [ -e $persist_conf ] && echo "Save new autosave selection"
+    [ -e $new_passwd ]   && echo_live "Save new passwords"
+    [ -e $persist_conf ] && echo_live "Save new autosave selection"
 
     persist-save --quiet -cli --nolog
 }
