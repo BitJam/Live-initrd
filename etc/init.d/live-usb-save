@@ -147,7 +147,7 @@ read_create_config_files() {
 }
 
 save_desktop() {
-    local to_dir=$1
+    local to_dir="$1"
 
     test -e $to_dir/no-state && return
 
