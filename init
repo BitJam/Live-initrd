@@ -230,8 +230,10 @@ main_wrapper() {
         safe_shutdown poweroff ask
 
     else
-        vmsg 6 "Start %s process" $(pq /sbin/init)
-        exec $LIVE_BIN/switch_root -c /dev/console $NEW_ROOT /sbin/init "$@"
+        : ${INIT_COMMAND:=/sbin/init}
+        test -x $NEW_ROOT$INIT_COMMAND || INIT_COMMAND=/sbin/init
+        vmsg 6 "Start %s process" $(pq $INIT_COMMAND)
+        exec $LIVE_BIN/switch_root -c /dev/console $NEW_ROOT $INIT_COMMAND "$@"
     fi
 }
 
@@ -575,6 +577,7 @@ read_cmdline_params()
                livedir=*|ldir=*) FINAL_DIR=$value                                ;;
         pw|passwd|pw=*|passwd=*) FORCE_PASSWD=true                               ;;
               private|private=*) FORCE_PASSWD=true                               ;;
+                      bootchart) INIT_COMMAND=/sbin/bootchartd                   ;;
 
         #----- Some known codes -------------------------
 
