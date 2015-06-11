@@ -31,10 +31,10 @@ do_stop() {
 
     delete_static_rootfs
 
-    if which auplink 2>/dev/null; then
-        echo_live "Cleaning aufs"
-        auplink /live/aufs flush
-    fi
+    #-jbb if which auplink 2>/dev/null; then
+    #-jbb     echo_live "Cleaning aufs"
+    #-jbb     auplink /live/aufs flush
+    #-jbb fi
 }
 
 delete_static_rootfs() {
