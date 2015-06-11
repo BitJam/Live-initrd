@@ -84,7 +84,9 @@ do_start() {
 
     # Only restore general state files and user files if root persistence is not
     # enabled
-    test -e /live/config/persist-root && return
+    # Not saving state when I enable persistence was a pain.
+    # We'll see.  Maybe just restore it the first time?!
+    #test -e /live/config/persist-root && return
 
     restore_state $root_dir/$GSTATE_DIR "$(state_files "$GSTATE_FILES")"
 
