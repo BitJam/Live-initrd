@@ -25,6 +25,9 @@ GSTATE_FILES="# File: general-state-files
 /etc/network/interfaces
 /etc/network/interfaces.d/*
 
+/var/log/live/persist-save.log
+/var/log/live/live-remaster.log
+
 # /etc/passwd
 # /etc/shadow
 # /etc/group
