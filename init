@@ -95,6 +95,8 @@ MKFS_FREE_MARGIN=20
 
    GFX_SAVE_SCRIPT="/bin/gfxsave"
 
+          NO_PLINK=",noplink"
+
 set_live_dirs() {
     local dir=$1
 
@@ -578,7 +580,8 @@ read_cmdline_params()
         pw|passwd|pw=*|passwd=*) FORCE_PASSWD=true                               ;;
               private|private=*) FORCE_PASSWD=true                               ;;
                       bootchart) INIT_COMMAND=/sbin/bootchartd                   ;;
-
+                        noplink) NO_PLINK=,noplink                               ;;
+                          plink) NO_PLINK=                                       ;;
         #----- Some known codes -------------------------
 
         [sS1-6]|BOOT_IMAGE=*);;
@@ -1754,10 +1757,10 @@ mount_aufs() {
     if [ -n "$PERSIST_ROOT" -a -n "$STATIC_ROOT" ]; then
         #. Enable <type> persistence
         msg "Enable %s persistence" "$(pq static rootfs)"
-        aufs_arg="$rootfs_mp:$sqfs_mp=ro"
+        aufs_arg="$rootfs_mp:$sqfs_mp=ro$NO_PLINK"
     else
         STATIC_ROOT=
-        aufs_arg="$aufs_ram_mp:$sqfs_mp=ro"
+        aufs_arg="$aufs_ram_mp:$sqfs_mp=ro$NO_PLINK"
     fi
 
     # Do the actual aufs mount
