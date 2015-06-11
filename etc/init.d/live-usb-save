@@ -223,6 +223,10 @@ save_state() {
 
     # Save system files under state_dir
     for file in $files; do
+
+        # Don't save from /live
+        [ -z "${file##/live/*}" ] && continue
+
         local from=$file
         local to=$state_dir/files$file
         should_copy $from $to || continue
@@ -257,6 +261,10 @@ restore_state() {
         # Copy saved state files to system
         for from in $(find $state_dir/files -type f 2>/dev/null); do
             local to=${from#$state_dir/files}
+
+            # Don't write to /live
+            [ -z "${to##/live/*}" ] && continue
+
             should_copy $from $to || continue
             echo_live "restore state file %s" $(pquote $to)
             echo_cmd mkdir -p $(dirname $to)
