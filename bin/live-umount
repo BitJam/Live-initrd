@@ -112,8 +112,6 @@ do_scripts() {
 
     find_mounted_cd $BOOT_DEV_FILE
 
-    # FIXME: remove persist-autosave below for production
-    #local scripts=persist-autosave
     local scripts=
     [ -z "$TO_EJECT"               ] && scripts="$scripts live-usb-save"
     [ -e /live/config/save-persist ] && scripts="$scripts persist-autosave"
