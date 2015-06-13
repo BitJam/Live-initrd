@@ -93,6 +93,10 @@ pquote() {
     echo "$START_PARAM$*$END_PARAM"
 }
 
+wq() {
+    echo "$WHITE$*$LIVE_COLOR"
+}
+
 paren() {
     echo "($SCRIPT_COLOR$*$LIVE_COLOR)"
 }

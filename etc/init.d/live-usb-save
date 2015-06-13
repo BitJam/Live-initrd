@@ -230,7 +230,7 @@ save_state() {
         local from=$file
         local to=$state_dir/files$file
         should_copy $from $to || continue
-        echo_live "save state file %s" $(pquote $file)
+        echo_live "save state file %s" $(wq $file$NOCOLOR)
         echo_cmd mkdir -p $(dirname $to)
         echo_cmd cp $from $to
 
@@ -266,7 +266,7 @@ restore_state() {
             [ -z "${to##/live/*}" ] && continue
 
             should_copy $from $to || continue
-            echo_live "restore state file %s" $(pquote $to)
+            echo_live "restore state file %s" $(wq $to)
             echo_cmd mkdir -p $(dirname $to)
 
             echo_cmd cp $from $to
