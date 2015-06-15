@@ -557,7 +557,7 @@ read_cmdline_params()
                         checkfs) FORCE_FSCK=true                                 ;;
                       nocheckfs) DO_FSCK=                                        ;;
 
-                       failsafe) MODULE_LIST=all BLACK_LIST=$BLACK_LIST,VIDEO    ;;
+                       failsafe) MODULE_LIST=all; BLACK_LIST=$BLACK_LIST,VIDEO; FROM_TYPE=all ;;
                          load=*) MODULE_LIST=$MODULE_LIST,$value                 ;;
                bl=*|blacklist=*) BLACK_LIST=$BLACK_LIST,$value                   ;;
 
