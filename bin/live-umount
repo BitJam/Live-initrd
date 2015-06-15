@@ -141,7 +141,7 @@ do_sendsigs() {
     export PATH
 
     if [ "$(pgrep "^acpid$")" ]; then
-        echo "tell acpid to stop"
+        echo 'tell acpid to stop'
         /etc/init.d/acpid stop
     fi
 
