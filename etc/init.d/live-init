@@ -14,14 +14,15 @@
 
 export PATH=/sbin:/usr/sbin:/bin:/usr/bin:/usr/local/bin
 
-XSESSION_DIR=/usr/share/xsessions
-    MENU_WMs="fluxbox icewm jwm"
-    FF_PREFS="/etc/skel/.mozilla/firefox/*/prefs.js"
-   AUTOMOUNT=
-   EARLY_VID=
-   FOUND_KMS=
+ XSESSION_DIR=/usr/share/xsessions
+     MENU_WMs="fluxbox icewm jwm"
+     FF_PREFS="/etc/skel/.mozilla/firefox/*/prefs.js"
+    AUTOMOUNT=
+    EARLY_VID=
+FOUND_VDRIVER=
 
-ALL_VIDEO_MODULES="ast|cirrus|gma500_gfx|ch7006|sil164|tda998x|i810|i915|mga|mgag200|nouveau|qxl|r128|radeon|savage|sis|tdfx|ttm|udl|via|vmwgfx"
+# ALL_VIDEO_MODULES="ast|cirrus|gma500_gfx|ch7006|sil164|tda998x|i810|i915|mga|mgag200|nouveau|qxl|r128|radeon|savage|sis|tdfx|ttm|udl|via|vmwgfx"
+ALL_VIDEO_MDOULES="ali[_-]agp|amd[_-]k7[_-]agp|amd64[_-]agp|ast|ati[_-]agp|bochs[_-]drm|ch7006|cirrus|efficeon[_-]agp|gma500[_-]gfx|i810|i915|intel[_-]agp|intel[_-]gtt|mga|mgag200|nouveau|nvidia[_-]agp|qxl|r128|radeon|savage|sil164|sis|sis[_-]agp|sworks[_-]agp|tda998x|tdfx|ttm|udl|via|via[_-]agp|vmwgfx"
 
 KMS_VIDEO_MODULES="ast|cirrus|gma500_gfx|ch7006|tda998x|i915|mgag200|nouveau|qxl|radeon|udl|vmwgfx"
 
@@ -107,12 +108,12 @@ do_start() {
         if [ "$EARLY_VID" ]; then
             load_video_driver
         else
-            detect_kms_driver
+            detect_any_video_driver
         fi
 
         set_dpi $CMD_DPI
 
-        make_xorg_conf "$XORG_ARGS" "$FOUND_KMS"
+        make_xorg_conf "$XORG_ARGS" "$FOUND_VDRIVER"
         HAVE_X=true
     fi
 
@@ -350,7 +351,7 @@ set_utc_local() {
 #    3) there is a frame buffer other than vesa
 
 make_xorg_conf() {
-    local args=$1 found_kms=$2 safe_mode= xorg_conf=/etc/X11/xorg.conf
+    local args=$1 found_vdriver=$2 safe_mode= xorg_conf=/etc/X11/xorg.conf
 
     case ,$args, in
         *,safe,*) safe_mode=true;;
@@ -373,7 +374,7 @@ make_xorg_conf() {
     local no_default
     test -e $xorg_conf             && no_default=true
     [ "$NO_XORG" ]                 && no_default=true
-    [ "$FOUND_KMS" ]               && no_default=true
+    [ "$found_vdriver" ]           && no_default=true
     [ -e /live/config/virtualbox ] && no_default=true
 
     # safe mode from the user over-rides vbox mode
@@ -449,14 +450,25 @@ load_video_driver() {
     fi
 }
 
-# Note: we will report FOUND_KMS even if "nomodeset" is used because unless the
-# user wants safe mode then they should be allowed to use the KMS driver and
+# Note: we will report FOUND_VDRIVER even if "nomodeset" is used because unless
+# the user wants safe mode then they should be allowed to use the KMS driver and
+# "nomodeset" without us forcing vesa.  That's what safe mode is for.
+detect_any_video_driver() {
+    local drivers=$(find_video_modules)
+    [ "$drivers" ] || return
+    drivers=$(echo $drivers | sed 's/ \+/,/g')
+    echo_live "Found %s video module(s) %s" "" "$drivers"
+    FOUND_VDRIVER=true
+}
+
+# Note: we will report FOUND_VDRIVER even if "nomodeset" is used because unless
+# the user wants safe mode then they should be allowed to use the KMS driver and
 # "nomodeset" without us forcing vesa.  That's what safe mode is for.
 detect_kms_driver() {
     local kms_drivers=$(find_video_modules "$KMS_VIDEO_MODULES|drm_kms_helper")
     [ "$kms_drivers" ] || return
     echo_live "Found %s video module(s) %s" KMS ""
-    FOUND_KMS=true
+    FOUND_VDRIVER=true
 }
 
 set_dpi() {
