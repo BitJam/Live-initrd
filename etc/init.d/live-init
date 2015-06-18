@@ -377,8 +377,8 @@ make_xorg_conf() {
     [ "$found_vdriver" ]           && no_default=true
     [ -e /live/config/virtualbox ] && no_default=true
 
-    # safe mode from the user over-rides vbox mode
-    [ -z "$safe_mode" -a -e /live/config/virtualbox ] && args=vbox${args:+,}$args
+    # safe mode from the user over-rides vbox-a -z "$args"  mode
+    [ -z "$safe_mode" -a -e /live/config/virtualbox -a -z "$args" ] && args=vbox${args:+,}$args
 
     # Check who is creating the framebuffer (in any)
     local vga_fb fb_name=none
