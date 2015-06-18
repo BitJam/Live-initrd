@@ -410,6 +410,9 @@ find_video_modules() {
     find /sys/devices -name modalias -print0 | xargs -0 sort -u \
         | xargs modprobe -a -D -q 2>> $INIT_LOG_FILE | sort -u \
         | sed -n -r "s/^insmod [^ ]*($modules)\.ko.*/\1/p"
+
+    # FIXME: for testing
+    # echo sis-agp
 }
 
 set_fbcondecor() {
@@ -438,6 +441,10 @@ load_video_driver() {
     read orig_fb_name 2</dev/null < /sys/class/graphics/fb0/name
     echo_live "Scanning for hardware specific video modules ..."
     local video_modules="$(find_video_modules)"
+    [ "$video_modules" ] || return
+
+    FOUND_VDRIVER=true
+    detect_sisimedia_driver "$video_modules"
     local kms_modules="$(echo "$video_modules" | egrep "^($KMS_VIDEO_MODULES)$")"
 
     if [ "$kms_modules" ]; then
@@ -445,7 +452,7 @@ load_video_driver() {
         echo_live "Load module(s) %s" "$(pquote $(echo $kms_modules))"
         modprobe -b -a -q "$kms_modules"
         set_fbcondecor "$SPLASH_PARAM" "$orig_fb_name"
-    elif [ "$video_modules" ]; then
+    else
         echo_live "Found video module(s) %s" "$(pquote $(echo $video_modules))"
     fi
 }
@@ -454,11 +461,13 @@ load_video_driver() {
 # the user wants safe mode then they should be allowed to use the KMS driver and
 # "nomodeset" without us forcing vesa.  That's what safe mode is for.
 detect_any_video_driver() {
-    local drivers=$(find_video_modules)
-    [ "$drivers" ] || return
-    drivers=$(echo $drivers)
-    echo_live "Found %s video module(s) %s" "" "$(pquote "$drivers")"
+    echo_live "Scanning for hardware specific video modules ..."
+    local video_modules=$(find_video_modules)
+    [ "$video_modules" ] || return
+
     FOUND_VDRIVER=true
+    detect_sisimedia_driver "$video_modules"
+    echo_live "Found %s video module(s) %s" "" "$(pquote $(echo $video_modules))"
 }
 
 # Note: we will report FOUND_VDRIVER even if "nomodeset" is used because unless
@@ -469,6 +478,15 @@ detect_kms_driver() {
     [ "$kms_drivers" ] || return
     echo_live "Found %s video module(s) %s" KMS ""
     FOUND_VDRIVER=true
+}
+
+detect_sisimedia_driver() {
+    local video_modules=$1  xorg_driver=sisimedia
+    echo "$video_modules" | egrep -q "^($SISIMEDIA_K_DRIVERS)$" || return
+    echo_live "Found sis kernel modules ..."
+    test -e $XORG_DRIVER_DIR/${xorg_driver}_drv.so || return
+    echo_live "found $xorg_driver xorg driver"
+    XORG_ARGS="$xorg_driver${XORG_ARGS:+,$XORG_ARGS}"
 }
 
 set_dpi() {
