@@ -21,10 +21,10 @@ export PATH=/sbin:/usr/sbin:/bin:/usr/bin:/usr/local/bin
     EARLY_VID=
 FOUND_VDRIVER=
 
-# ALL_VIDEO_MODULES="ast|cirrus|gma500_gfx|ch7006|sil164|tda998x|i810|i915|mga|mgag200|nouveau|qxl|r128|radeon|savage|sis|tdfx|ttm|udl|via|vmwgfx"
-ALL_VIDEO_MODULES="ali[_-]agp|amd[_-]k7[_-]agp|amd64[_-]agp|ast|ati[_-]agp|bochs[_-]drm|ch7006|cirrus|efficeon[_-]agp|gma500[_-]gfx|i810|i915|intel[_-]agp|intel[_-]gtt|mga|mgag200|nouveau|nvidia[_-]agp|qxl|r128|radeon|savage|sil164|sis|sis[_-]agp|sworks[_-]agp|tda998x|tdfx|ttm|udl|via|via[_-]agp|vmwgfx"
-
-KMS_VIDEO_MODULES="ast|cirrus|gma500_gfx|ch7006|tda998x|i915|mgag200|nouveau|qxl|radeon|udl|vmwgfx"
+ALL_VIDEO_MODULES="ast|bochs[_-]drm|cirrus|emgd|gma500[_-]gfx|i810|i915|mga|mgag200|nouveau|nvidia|qxl|r128|radeon|savage|sis|sis[_-]agp|tdfx|via|via[_-]agp|vmwgfx"
+KMS_VIDEO_MODULES="ast|bochs[_-]drm|cirrus|emgd|gma500[_-]gfx|i915|mgag200|nouveau|qxl|radeon,udl,vvwgfx"
+SISIMEDIA_K_DRIVERS="sis|sis[_-]agp"
+XORG_DRIVER_DIR="/usr/lib/xorg/modules/drivers"
 
 #-jbb For debugging
 : ${CMDLINE:=$(cat /proc/cmdline /live/config/cmdline)}
