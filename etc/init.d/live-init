@@ -486,7 +486,7 @@ detect_sisimedia_driver() {
     echo_live "Found sis kernel modules ..."
     test -e $XORG_DRIVER_DIR/${xorg_driver}_drv.so || return
     echo_live "found $xorg_driver xorg driver"
-    XORG_ARGS="$xorg_driver${XORG_ARGS:+,$XORG_ARGS}"
+    XORG_ARGS="default,$xorg_driver${XORG_ARGS:+,$XORG_ARGS}"
 }
 
 set_dpi() {
