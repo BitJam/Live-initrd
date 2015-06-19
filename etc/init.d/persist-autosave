@@ -60,15 +60,20 @@ do_stop() {
     echo_script "Possibly save persistent information" $0
 
     # Don't auto-save twice in a row
-    local last_save_file=/live/config/last-auto-save
-    if test -r $last_save_file; then
-        local diff=$(( $(date +%s) - $(cat $last_save_file)))
+    local last_as_file=/live/config/last-auto-save
+    local last_ps_file=/live/config/last-persist-save
+
+    local file prev now=$(date +%s)
+    for file in $last_as_file $last_ps_file; do
+        test -r $file || continue
+        read prev 2>/dev/null <$file
+        local diff=$(( $now - $prev))
         if [ $diff -le $LOCKOUT_TIME ]; then
-            echo_live "Already autosaved %s seconds ago" $diff
-            echo_live "Won't autosave again"
+            echo_live "Already saved %s seconds ago" $diff
+            echo_live "Won't autosave within %s seconds of a previous save" $LOCKOUT_TIME
             return
         fi
-    fi
+    done
 
     local p_config=/usr/local/bin/persist-config
     test -x $p_config && $p_config --cli --shutdown
