@@ -185,11 +185,12 @@ main_wrapper() {
 
     breakpoint 8 "before running init.d scripts"
 
+    # Try running live-usb-save first so it can restore an xorg.conf machine-state file
+    [ -e /live/config/remasterable ] && LIVE_SCRIPTS="live-usb-save $LIVE_SCRIPTS"
+
     [ -e /live/config/persist-root -o -e /live/config/force-passwd ] \
                                      && LIVE_SCRIPTS="$LIVE_SCRIPTS persist-password"
     [ -e /live/config/save-persist ] && LIVE_SCRIPTS="$LIVE_SCRIPTS persist-autosave"
-    [ -e /live/config/remasterable ] && LIVE_SCRIPTS="$LIVE_SCRIPTS live-usb-save"
-
     # Do this last so the changes aren't saved until after a "real" persist-save
     [ -e /live/config/systemd ] || LIVE_SCRIPTS="$LIVE_SCRIPTS live-disable-services"
 
