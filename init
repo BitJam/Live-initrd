@@ -53,7 +53,7 @@
             MY_LOG=/init.log
            VID_DIR="/etc/live/version"
           VID_FILE="$VID_DIR/linuxfs.ver"
-          MAKE_OLD="rootfs xtra deb xtra.tgz"
+          MAKE_OLD="rootfs xtra deb xtra.tgz linuxfs.md5"
            MOD_DIR="/lib/modules/$(uname -r)"
 
          FROM_TYPE="usb,cd"
