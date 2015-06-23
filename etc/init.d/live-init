@@ -126,7 +126,7 @@ do_start() {
     USER_HOME=$(getent passwd "$DEF_USER" | cut -d: -f6)
 
     if [ -z "$USER_HOME" ]; then
-        echo_live "No default user %s found on the system." $(pquote $DEF_USER)
+        echo_live "No default user %s found on the system." "$(pquote $DEF_USER)"
         return
     fi
 
@@ -517,8 +517,8 @@ set_dpi() {
 # DEFAULT USER stuff
 #-------------------------------------------------------------------------------
 find_def_user() {
-    local user=$(sed -r -n 's/^\s*default_user\s+//p' /etc/slim.conf 2>/dev/null)
-    : ${user:=$(sed -r -n 's/^\s*autologin-user=//p' /etc/lightdm/lightdm.conf 2>/dev/null)}
+    local user=$(sed -r -n 's/^\s*default_user\s+//p' /etc/slim.conf 2>/dev/null | tail -n1)
+    : ${user:=$(sed -r -n 's/^\s*autologin-user=//p' /etc/lightdm/lightdm.conf 2>/dev/null | tail -n1)}
     : ${user:=$(getent passwd 1000 | cut -d: -f1)}
     : ${user:=demo}
     echo ${user%% *}
