@@ -537,7 +537,10 @@ create_home() {
     echo_live "Populating %s directory" $(pquote $home)
     mkdir -p $home
     cp -a /etc/skel/* /etc/skel/.[^.]* $home 2>/dev/null # Avoid error msgs for ".../* not found"
-    chown -R $user:users $home
+
+    local group=users
+    grep -q "^$user:" /etc/group && group=$user
+    chown -R $user:$group $home
 }
 
 set_default_desktop() {
