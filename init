@@ -186,13 +186,14 @@ main_wrapper() {
     breakpoint 8 "before running init.d scripts"
 
     # Try running live-usb-save first so it can restore an xorg.conf machine-state file
-    [ -e /live/config/remasterable ] && LIVE_SCRIPTS="live-usb-save $LIVE_SCRIPTS"
+    confile remasterable   && LIVE_SCRIPTS="live-usb-save $LIVE_SCRIPTS"
+    ! confile persist-root || ! confile force-passwd || LIVE_SCRIPTS="$LIVE_SCRIPTS persist-password"
+    confile save-persist   && LIVE_SCRIPTS="$LIVE_SCRIPTS persist-autosave"
 
-    [ -e /live/config/persist-root -o -e /live/config/force-passwd ] \
-                                     && LIVE_SCRIPTS="$LIVE_SCRIPTS persist-password"
-    [ -e /live/config/save-persist ] && LIVE_SCRIPTS="$LIVE_SCRIPTS persist-autosave"
-    # Do this last so the changes aren't saved until after a "real" persist-save
-    [ -e /live/config/systemd ] || LIVE_SCRIPTS="$LIVE_SCRIPTS live-disable-services"
+    # Do this after the above so the changes aren't saved until after a "real" persist-save
+    confile systemd        || LIVE_SCRIPTS="$LIVE_SCRIPTS live-disable-services"
+
+    confile toram-eject    && LIVE_SCRIPTS="$LIVE_SCRIPTS live-toram-eject"
 
     unset CMDLINE
     PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin
@@ -4007,6 +4008,12 @@ chroot_umount() {
     list=$(mountpoints_under $dir) || return 0
     err "Unable to unmount %s" "$(hq $list)"
     return 1
+}
+
+confile() {
+    local file=$1 dir=${2:-/live/config}
+    test -e $dir/$file
+    return $?
 }
 
 write_output_files() {
