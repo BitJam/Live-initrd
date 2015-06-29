@@ -4227,6 +4227,9 @@ late_umount() {
     local dev=$1
     [ "$dev" ] || return
 
+    # It does not suffice to only disable the liveCD (see below)
+    [ "$TO_RAM_EJECT" ] || return
+
     local dep
     for dep in $HOMEFS_DEV $ROOTFS_DEV $LINUXFS_DEV; do
         [ "$dep" = "$dev" ] && return
