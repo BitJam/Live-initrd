@@ -327,7 +327,7 @@ final_umount() {
 
 read_cmdline() {
     if [ -r $CMDLINE_FILE ]; then
-        CMDLINE=$(cat $CMDLINE_FILE)
+        CMDLINE=$(cat $CMDLINE_FILE /proc/cmdline)
         FROM_FILE=true
     else
         CMDLINE=$(cat /proc/cmdline)
