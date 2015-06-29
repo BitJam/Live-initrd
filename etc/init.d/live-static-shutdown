@@ -1,7 +1,7 @@
 #!/live/bin/sh
 
 ### BEGIN INIT INFO
-# Provides:          live-static-persist
+# Provides:          live-static-shutdown
 # Required-Start:
 # Required-Stop:
 # Should-Start:
