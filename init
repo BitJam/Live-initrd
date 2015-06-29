@@ -547,6 +547,7 @@ read_cmdline_params()
                autologin|alogin) DO_AUTO_LOGIN=true                              ;;
 
                           toram) TO_RAM=true                                     ;;
+                    toram-eject) TO_RAM=true ; TO_RAM_EJECT=true                 ;;
 
                      noremaster) NO_REMASTER=true                                ;;
                        rollback) ROLLBACK=true                                   ;;
@@ -4075,6 +4076,9 @@ Initrd_Out
     [ "$PERSIST_ROOT" -a    "$STATIC_ROOT" ] && touch $dir/static-root
     [ "$FORCE_PASSWD" ]                      && touch $dir/force-passwd
 
+    [ "$DID_TORAM" ] && [ "$(stat -c %t $SQFILE_DEV)" = b ] \
+        && echo "BOOT_DEV=$SQFILE_DEV" > $dir/toram-eject
+
     [ -d /sys/class/power_supply ] \
         && grep -q Battery /sys/class/power_supply/*/type 2>/dev/null \
         && touch $dir/laptop
@@ -4230,6 +4234,14 @@ late_umount() {
 
     # Don't umount if not mounted
     cut -d" " -f1 /proc/mounts | grep -q "^$dev$" || return
+
+    if [ -z "$TO_RAM_EJECT" ]; then
+        case $(stat -c %t $dev) in
+            b) msg 'Will not late umount cd/dvd device %s' $(pq $dev)
+               return ;;
+        esac
+    fi
+
     msg "late umount %s" $(pq $dev)
     log_cmd umount -l $dev
 }
