@@ -123,14 +123,14 @@ do_start() {
 
     DEF_USER=$(find_def_user)
 
-    USER_HOME=$(getent passwd "$DEF_USER" | cut -d: -f6)
+    eval "USER_HOME=~$DEF_USER"
 
-    if [ -z "$USER_HOME" ]; then
+    if [ -z "$DEF_USER" -o -z "${USER_HOME##~*}" ]; then
         echo_live "No default user %s found on the system." "$(pquote $DEF_USER)"
         return
     fi
 
-    create_home $DEF_USER $USER_HOME
+    create_home "$DEF_USER" "$USER_HOME"
 
     # Don't bother with desktop stuff on systems without X
     #--------------------------------------------------------------------------
