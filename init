@@ -189,11 +189,9 @@ main_wrapper() {
     confile remasterable && LIVE_SCRIPTS="live-usb-save $LIVE_SCRIPTS"
     confile persist-root force-passwd && LIVE_SCRIPTS="$LIVE_SCRIPTS persist-password"
     confile save-persist && LIVE_SCRIPTS="$LIVE_SCRIPTS persist-autosave"
-
     # Do this after the above so the changes aren't saved until after a "real" persist-save
-    confile systemd     || LIVE_SCRIPTS="$LIVE_SCRIPTS live-disable-services"
-
-    confile toram-eject && LIVE_SCRIPTS="$LIVE_SCRIPTS live-toram-eject"
+    confile systemd      || LIVE_SCRIPTS="$LIVE_SCRIPTS live-disable-services"
+    confile toram-eject  && LIVE_SCRIPTS="$LIVE_SCRIPTS live-toram-eject"
 
     unset CMDLINE
     PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin
