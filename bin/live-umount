@@ -110,10 +110,10 @@ do_scripts() {
     # Make sure we have a fresh line to print out on
     # echo
 
-    find_mounted_cd $BOOT_DEV_FILE
+    #find_mounted_cd $BOOT_DEV_FILE
 
     local scripts=
-    [ -z "$TO_EJECT"               ] && scripts="$scripts live-usb-save"
+    [ -e /live/config/remasterable ] && scripts="$scripts live-usb-save"
     [ -e /live/config/save-persist ] && scripts="$scripts persist-autosave"
     [ -e /live/config/static-root  ] && scripts="$scripts live-static-shutdown"
 
