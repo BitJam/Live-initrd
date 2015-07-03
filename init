@@ -4249,13 +4249,13 @@ late_umount() {
     #     esac
     # fi
 
-    msg "late umount %s" $(pq $dev)
+    msg "umount %s" $(pq $dev)
     for i in $(seq 1 5); do
         log_cmd umount $dev 2>/dev/null
         cut -d" " -f1 /proc/mounts | grep -q "^$dev$" || return
         usleep 500000
     done
-    err "late umount of %s failed" $(pqe $dev)
+    err "umount of %s failed" $(pqe $dev)
 }
 
 write_ntfs_pids() {
