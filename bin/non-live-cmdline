@@ -2,77 +2,125 @@
 
 for param in $(cat /proc/cmdline); do
     case $param in
-               bootdir=*|bdir=*) ;;
-    bootlabel=*|blabel=*|blab=*) ;;
-             bootuuid=*|buuid=*) ;;
-               bootdev=*|bdev=*) ;;
-                        retry=*) ;;
 
-            persistdir=*|pdir=*) ;;
- persistlabel=*|plabel=*|plab=*) ;;
-          persistuuid=*|puuid=*) ;;
-            persistdev=*|pdev=*) ;;
-        persistretry=*|pretry=*) ;;
+                          menus)  ;;
+                        menus=*)  ;;
+                       old-conf)  ;;
+                       new-conf)  ;;
+                         splash)  ;;
+                       splash=*)  ;;
+                       poweroff)  ;;
+                         reboot)  ;;
+               bootdir=*|bdir=*)  ;;
+    bootlabel=*|blabel=*|blab=*)  ;;
+             bootuuid=*|buuid=*)  ;;
+               bootdev=*|bdev=*)  ;;
 
-   cryptlabel=*|clabel=*|clab=*) ;;
-            cryptuuid=*|cuuid=*) ;;
-              cryptdev=*|cdev=*) ;;
+                  try=*|retry=*)  ;;
 
-                      fromiso=*) ;;
-                        fromiso) ;;
+            persistdir=*|pdir=*)  ;;
 
-                         scan=*) ;;
-                         from=*) ;;
+ persistlabel=*|plabel=*|plab=*)  ;;
+          persistuuid=*|puuid=*)  ;;
+            persistdev=*|pdev=*)  ;;
 
-                      persist=*) ;;
-                        persist) ;;
+ persistretry=*|pretry=*|ptry=*)  ;;
 
-                        sqext=*) ;;
-                       sqname=*) ;;
-                           sq=*) ;;
+                          dbv=*)  ;;
+                        fneed=*)  ;;
+                         fforce)  ;;
+                         frugal)  ;;
+                       frugal=*)  ;;
+                         flab=*)  ;;
+                         fdev=*)  ;;
+                        fuuid=*)  ;;
 
-           verbose=*|verb=*|v=*) ;;
-                           db++) ;;
-                            db+) ;;
-                            db-) ;;
-                           bp=*) ;;
-                           pk=*) ;;
+                iso=*|fromiso=*)  ;;
+                    iso|fromiso)  ;;
 
-             check|md5|checkmd5) ;;
-                 hico|highcolor) ;;
-                  loco|lowcolor) ;;
-                   noco|nocolor) ;;
-                          nodeb) ;;
-                         noxtra) ;;
+                         from=*)  ;;
 
-                        toram=*) ;;
-                          toram) ;;
+                  persist=*|p=*)  ;;
+                        persist)  ;;
 
-                     noremaster) ;;
-                       rollback) ;;
-                         lang=*) ;;
-                          ascii) ;;
+                        sqext=*)  ;;
+                       sqname=*)  ;;
+                           sq=*)  ;;
 
-                         load=*) ;;
-                          nolog) ;;
-                        noclear) ;;
+           verbose=*|verb=*|v=*)  ;;
+                           bp=*)  ;;
+                           pk=*)  ;;
 
-                      gfxsave=*) ;;
-                        checkfs) ;;
-                      nocheckfs) ;;
-                     noautoload) ;;
+             check|md5|checkmd5)  ;;
+                 hico|highcolor)  ;;
+                  loco|lowcolor)  ;;
+                   noco|nocolor)  ;;
 
-                    image_dir=*) ;;
-                   image_name=*) ;;
-                       fromhd=*) ;;
+                         noxtra)  ;;
+                         doxtra)  ;;
 
-    # Our Live params:
-    aX=*|amnt|amnt=*|antiX=*|automount|automount=*|confont=*|conkeys=*);;
-    desktop=*|dpi=*|drvr=*|dummy|fstab=*|hostname=*|kbd=*|kbopt=*|kbvar=*);;
-    lang=*|lean|mean|mirror=*|mount=*|noRox|nodbus|noloadkeys|noprompt);;
-    nosplash|password|password=*|prompt|pw|pw=*|tz=*|ubp=*|ushow=*);;
-    uverb=*|xdrvr=*|xorgconf|xres=*|Xtralean);;
+                            db+)  ;;
+                           db++)  ;;
 
-                              *) printf "$param "
+            fancyprompt|fprompt)  ;;
+               autologin|alogin)  ;;
+
+                          toram)  ;;
+
+                     noremaster)  ;;
+                       rollback)  ;;
+                         lang=*)  ;;
+
+                        noclear)  ;;
+                      gfxsave=*)  ;;
+
+                        checkfs)  ;;
+                      nocheckfs)  ;;
+
+                       failsafe)  ;;
+                         load=*)  ;;
+               bl=*|blacklist=*)  ;;
+
+                       coldplug)  ;;
+                        hotplug)  ;;
+                      traceload)  ;;
+                 autoload|aload)  ;;
+
+                         init=*)  ;;
+
+                  nousb2|noehci)  ;;
+
+                       noerrlog)  ;;
+                        errtest)  ;;
+                      errtest=*)  ;;
+                        noerr=*)  ;;
+
+                      vtblank=*)  ;;
+
+               livedir=*|ldir=*)  ;;
+        pw|passwd|pw=*|passwd=*)  ;;
+              private|private=*)  ;;
+                      bootchart)  ;;
+                        noplink)  ;;
+                          plink)  ;;
+
+        disable_srv=*|disable_service=*)  ;;
+        aX=*|antiX=*)                     ;;
+        lean)                             ;;
+        mean)                             ;;
+        Xtralean)                         ;;
+        nodbus)                           ;;
+
+        # Our Live params
+        hwclock=utc|hwclock=local|xorg|xorg=*|noearlyvid|earlyvid) ;;
+        amnt|amnt=*|automount|automount=*|confont=*|conkeys=*);;
+        desktop=*|dpi=*|fstab=*|hostname=*|kbd=*|kbopt=*|kbvar=*);;
+        lang=*|mirror=*|mount=*|noloadkeys|noprompt);;
+        nosplash|password|password=*|prompt|pw|pw=*|tz=*|ubp=*|ushow=*);;
+        uverb=*|xres=*|noxorg);;
+        desktheme=*) ;;
+        nosavestate|savestate|dbsavestate) ;;
+
+        *) printf "$param "
     esac
 done
