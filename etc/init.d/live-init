@@ -455,6 +455,7 @@ load_video_driver() {
         set_fbcondecor "$SPLASH_PARAM" "$orig_fb_name"
     else
         echo_live "Found video module(s) %s" "$(pquote $(echo $video_modules))"
+        detect_sisimedia_driver "$video_modules"
     fi
 }
 
@@ -467,8 +468,11 @@ detect_any_video_driver() {
     [ "$video_modules" ] || return
 
     FOUND_VDRIVER=true
-    detect_sisimedia_driver "$video_modules"
+
+    local kms_modules="$(echo "$video_modules" | egrep "^($KMS_VIDEO_MODULES)$")"
+
     echo_live "Found %s video module(s) %s" "" "$(pquote $(echo $video_modules))"
+    [ "$kms_modules" ] || detect_sisimedia_driver "$video_modules"
 }
 
 # Note: we will report FOUND_VDRIVER even if "nomodeset" is used because unless
