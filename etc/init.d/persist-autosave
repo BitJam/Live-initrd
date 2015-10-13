@@ -16,7 +16,11 @@ export PATH=/sbin:/usr/sbin:/bin:/usr/bin:/usr/local/bin
 # . /usr/share/antiX/lib/live-init-utils.sh
 . /live/lib/live-init-utils.sh
 
-LOCKOUT_TIME=15
+read DISTRO 2>/dev/null </live/config/distro
+case $DISTRO in
+    MX*|mx*) LOCKOUT_TIME=60 ;;
+          *) LOCKOUT_TIME=15 ;;
+esac
 
 start_init_logging
 load_translation
