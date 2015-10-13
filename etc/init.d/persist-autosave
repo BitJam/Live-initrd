@@ -18,8 +18,8 @@ export PATH=/sbin:/usr/sbin:/bin:/usr/bin:/usr/local/bin
 
 read DISTRO 2>/dev/null </live/config/distro
 case $DISTRO in
-    MX*|mx*) LOCKOUT_TIME=60 ;;
-          *) LOCKOUT_TIME=15 ;;
+    [mM][xX]*) LOCKOUT_TIME=60 ;;
+            *) LOCKOUT_TIME=15 ;;
 esac
 
 start_init_logging
