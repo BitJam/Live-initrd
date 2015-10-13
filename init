@@ -1804,28 +1804,16 @@ try_mount() {
     local dev=$1  mp=$2  rw=${3:-$RW_MODE}
     local type=$(blkid $dev | sed -n -r 's/.* TYPE="([^"]*)"$/\1/p' | tail -n 1)
     [ "$type" ] || return 1
+    local opts=$rw,noatime
+    local winops=$opts,umask=000,dmask=002,fmask=113
     case $type in
-        ext[234]) log_cmd mount -t $type -o $rw,noatime                           $dev "$mp" 2>/dev/null ;;
-            vfat) log_cmd mount -t vfat -o $rw,umask=000,shortname=winnt,noatime  $dev "$mp" 2>/dev/null ;;
-         iso9660) log_cmd mount -t iso9660 -o ro                                  $dev "$mp" 2>/dev/null ;;
-            ntfs) log_cmd ntfs-3g -o umask=000,force,$rw,noatime                  $dev "$mp" 2>/dev/null 17>/dev/null || \
-                  log_cmd mount -t ntfs -o umask=000,ro                           $dev "$mp" 2>/dev/null ;;
-               *) log_cmd mount -t $type -o $rw,noatime                           $dev "$mp" 2>/dev/null ;;
+        ext[234]) log_cmd mount -t $type -o $opts                    $dev "$mp" 2>/dev/null ;;
+            vfat) log_cmd mount -t vfat -o shortname=winnt,$winopts  $dev "$mp" 2>/dev/null ;;
+         iso9660) log_cmd mount -t iso9660 -o ro                     $dev "$mp" 2>/dev/null ;;
+            ntfs) log_cmd ntfs-3g -o force,$winopts                  $dev "$mp" 2>/dev/null 17>/dev/null || \
+                  log_cmd mount -t ntfs -o umask=000,ro              $dev "$mp" 2>/dev/null ;;
+               *) log_cmd mount -t $type -o $opts                    $dev "$mp" 2>/dev/null ;;
     esac
-    return $?
-}
-
-try_mount_old() {
-    local dev=$1  mp=$2  rw=${3:-$RW_MODE}
-
-    mount -t vfat -o $rw,umask=000,shortname=winnt    "$dev" "$mp" 2>/dev/null || \
-        mount -t iso9660                     -o ro    "$dev" "$mp" 2>/dev/null || \
-            ntfs-3g -o umask=000,force,"$rw"          "$dev" "$mp" 2>/dev/null || \
-            mount -t ntfs -o umask=000,ro             "$dev" "$mp" 2>/dev/null || \
-                mount -t reiserfs            -o "$rw" "$dev" "$mp" 2>/dev/null || \
-                    mount -t ext4            -o "$rw" "$dev" "$mp" 2>/dev/null || \
-                        mount -t ext3        -o "$rw" "$dev" "$mp" 2>/dev/null || \
-                            mount -t ext2    -o "$rw" "$dev" "$mp" 2>/dev/null
     return $?
 }
 
