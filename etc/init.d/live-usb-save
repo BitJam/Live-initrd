@@ -22,7 +22,6 @@ GSTATE_FILES="# File: general-state-files
 # Files to be saved across reboots and across machines
 
 /etc/wicd/*.conf
-/etc/NetworkManager/system-connections/*
 /etc/network/interfaces
 /etc/network/interfaces.d/*
 
