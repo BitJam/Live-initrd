@@ -4076,6 +4076,7 @@ Initrd_Out
     [ "$PERSIST_ROOT" -a -z "$STATIC_ROOT" ] && touch $dir/save-persist
     [ "$PERSIST_ROOT" -a    "$STATIC_ROOT" ] && touch $dir/static-root
     [ "$FORCE_PASSWD" ]                      && touch $dir/force-passwd
+    echo "$DISTRO_NAME"                             > $dir/distro
 
     [ "$DID_TORAM" ] && [ "$(stat -c %t $SQFILE_DEV)" = b ] \
         && echo "BOOT_DEV=$SQFILE_DEV" > $dir/toram-eject
