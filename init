@@ -307,6 +307,10 @@ main_core() {
     dir_has_param "$BOOT_MP" rw && REMASTERABLE=true
     [ "$DID_ISO" ] && REMASTERABLE=
 
+    case $BOOT_FSTYPE in
+        iso9660|udf) REMASTERABLE= ;;
+    esac
+
     BOOT_UUID=$(device_uuid $SQFILE_DEV)
     [ "$BOOT_UUID" ] && vmsg 6 "boot device uuid: $BOOT_UUID"
     breakpoint 4 "after mounting boot device"
@@ -1382,9 +1386,14 @@ _find_files() {
                     vmsg 4 "Mounted %s device. Mounted device %s at %s" \
                         $find_type "$(fq $dev)" "${to_co}$mntpnt${m_co}"
 
+                    local fstype=$(mntpnt_fstype $mntpnt)
                     #. <type> device filesystem: <filesystem-name>
                     vmsg 5 "%s device filesystem: %s" $find_type \
-                        "$(cq $(mntpnt_fstype $mntpnt))"
+                        "$(cq $fstype)"
+
+                    case $find_type in
+                        boot) BOOT_FSTYPE=$fstype ;;
+                    esac
 
                     local short_dev=${dev##*/}
                     local model=$(cat /sys/block/${short_dev%%[0-9]*}/device/model 2>/dev/null)
@@ -1653,7 +1662,8 @@ find_linuxfs_file() {
 
         # Mount the iso file
         mkdir -p $ISO_FILE_MP
-        mount -t iso9660 -o loop,ro $iso_full $ISO_FILE_MP \
+        mount -t iso9660 -o loop,ro $iso_full $ISO_FILE_MP
+            || mount -t udf -o loop,ro $iso_full $ISO_FILE_MP
             || fatal "Could not mount %s as a %s file" "$(pqh $iso_full)" 'iso'
 
         # Find the linuxfs file
@@ -1810,6 +1820,7 @@ try_mount() {
         ext[234]) log_cmd mount -t $type -o $opts                    $dev "$mp" 2>/dev/null ;;
             vfat) log_cmd mount -t vfat -o shortname=winnt,$winopts  $dev "$mp" 2>/dev/null ;;
          iso9660) log_cmd mount -t iso9660 -o ro                     $dev "$mp" 2>/dev/null ;;
+             udf) log_cmd mount -t udf -o ro                         $dev "$mp" 2>/dev/null ;;
             ntfs) log_cmd ntfs-3g -o force,$winopts                  $dev "$mp" 2>/dev/null 17>/dev/null || \
                   log_cmd mount -t ntfs -o umask=000,ro              $dev "$mp" 2>/dev/null ;;
                *) log_cmd mount -t $type -o $opts                    $dev "$mp" 2>/dev/null ;;
@@ -4032,6 +4043,7 @@ AUFS_MP="$AUFS_MP"
 AUFS_RAM_MP="$AUFS_RAM_MP"
 AUFS_VID_FILE="$AUFS_MP$VID_FILE"
 BOOT_DEV="$SQFILE_DEV"
+BOOT_FSTYPE="$BOOT_FSTYPE"
 BOOT_MP="$ORIG_SQFILE_MP"
 BOOT_UUID="$BOOT_UUID"
 DF_ROOTFS="$DF_ROOTFS"
