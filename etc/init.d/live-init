@@ -22,7 +22,7 @@ export PATH=/sbin:/usr/sbin:/bin:/usr/bin:/usr/local/bin
 FOUND_VDRIVER=
 
 ALL_VIDEO_MODULES="ast|bochs[_-]drm|cirrus|emgd|gma500[_-]gfx|i810|i915|mga|mgag200|nouveau|nvidia|qxl|r128|radeon|savage|sis|sis[_-]agp|tdfx|via|via[_-]agp|vmwgfx"
-KMS_VIDEO_MODULES="ast|bochs[_-]drm|cirrus|emgd|gma500[_-]gfx|i915|mgag200|nouveau|qxl|radeon,udl,vvwgfx"
+KMS_VIDEO_MODULES="ast|bochs[_-]drm|cirrus|emgd|gma500[_-]gfx|i915|mgag200|nouveau|qxl|radeon|udl|vmwgfx"
 SISIMEDIA_K_DRIVERS="sis|sis[_-]agp"
 XORG_DRIVER_DIR="/usr/lib/xorg/modules/drivers"
 
