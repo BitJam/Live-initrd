@@ -91,6 +91,7 @@ prep_main() {
         case "$param" in
             antiX=*|aX=*) antiX_param=${param#*=}; must_run=true ;;
            disable_srv=*) antiX_param=${param#*=}; must_run=true ;;
+                nosysv=*) antiX_param=${param#*=}; must_run=true ;;
        disable_service=*) antiX_param=${param#*=}; must_run=true ;;
                     lean)        LEAN=true;        must_run=true ;;
                     mean)        MEAN=true;        must_run=true ;;
