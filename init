@@ -1662,8 +1662,8 @@ find_linuxfs_file() {
 
         # Mount the iso file
         mkdir -p $ISO_FILE_MP
-        mount -t iso9660 -o loop,ro $iso_full $ISO_FILE_MP
-            || mount -t udf -o loop,ro $iso_full $ISO_FILE_MP
+        mount -t iso9660 -o loop,ro $iso_full $ISO_FILE_MP \
+            || mount -t udf -o loop,ro $iso_full $ISO_FILE_MP \
             || fatal "Could not mount %s as a %s file" "$(pqh $iso_full)" 'iso'
 
         # Find the linuxfs file
