@@ -206,6 +206,7 @@ save_state() {
         # But only if this is a machine-specific directory
         if [ "$dir2" ]; then
             for file in $ID_FILES; do
+                test -r $ID_DIR/$file || continue
                 echo_cmd cp $ID_DIR/$file $state_dir
             done
         fi
@@ -348,7 +349,16 @@ should_copy() {
     return 0
 }
 
-mach_id() { cat $ID_DIR/board_* | md5sum | cut -d" " -f1 ;}
+mach_id() {
+    local data=$(find $ID_DIR/ -name "board_*" -exec cat '{}' +)
+    if [ ${#data} -eq 0 ]; then
+        echo "0000000000000000000000"
+        return 1
+    fi
+    cat "$data" | md5sum | cut -d" " -f1 ;
+    return 0
+}
+
 state_files() { echo "$1" | grep -v "^\s*#" | sed "s/\s*#.*//" ;}
 
 # For testing
