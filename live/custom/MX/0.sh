@@ -20,7 +20,7 @@ live_param_filter() {
 
         case $param in
         disable_srv=*|disable_service=*) disable=$val ;;
-        aX=*|antiX=*)                    disable=$val ;;
+        nosysv=*|aX=*|antiX=*)           disable=$val ;;
         lean)                           CMD_LEAN=true ;;
         mean)                           CMD_MEAN=true ;;
         Xtralean)                  CMD_XTRA_LEAN=true ;;
