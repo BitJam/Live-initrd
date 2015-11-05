@@ -377,21 +377,24 @@ make_xorg_conf() {
     [ "$found_vdriver" ]           && no_default=true
     [ -e /live/config/virtualbox ] && no_default=true
 
-    # safe mode from the user over-rides vbox-a -z "$args"  mode
-    [ -z "$safe_mode" -a -e /live/config/virtualbox -a -z "$args" ] && args=vbox${args:+,}$args
+    # FIXME: should I include this or does check for "EFI VGA" below suffice?
+    #[ -e /live/config/uefi ]       && no_default=true
 
     # Check who is creating the framebuffer (in any)
     local vga_fb fb_name=none
     read fb_name 2>/dev/null < /sys/class/graphics/fb0/name
 
     case $fb_name in
+            none) ;;
       "VESA VGA") vga_fb=true ;;
-       "EFI VGA") if [ "$safe_mode" ]; then
-                    echo_live "Disabling safe mode because of %s" $(pquote EFI framebuffer)
-                    no_default=true
-                    safe_mode=
-                  fi ;;
+     "EFI VGA"|*) echo_live "Disabling safe mode because of %s" $(pquote $fb_name framebuffer)
+                  no_default=true
+                  safe_mode= ;;
     esac
+
+    # safe mode from the user over-rides vbox
+    [ -z "$safe_mode" -a -e /live/config/virtualbox -a -z "$args" -a -z "$no_default" ] \
+        && args=vbox${args:+,}$args
 
     # Force X video driver to be vesa if the vga framebuffer is enabled.
     if  [ "$vga_fb" -a -z "$no_default" -a -z "$safe_mode" ]; then
