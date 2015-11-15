@@ -3,6 +3,8 @@
 OLD_GFX_CONFIG_FILE="/live/config/gfxsave.conf"
          GFX_SUFFIX=".def"
         GFX_SAVE_ON="gfxsave.on"
+          CPIO_FILE="gfx-cpio"
+           CPIO_DIR="/live/tmp/cpio"
 
 hbar="======================================================================"
 tab="----------------------------------------------------------------------"
@@ -65,9 +67,13 @@ Expected$cheat_co always menus custom both$err_co or$cheat_co reset"
             continue
         fi
 
+        MENU_DIR=$XXX_LINUX_DIR
+        unpack_cpio $XXX_LINUX_DIR/$CPIO_FILE $CPIO_DIR && MENU_DIR=$CPIO_DIR
+
+        # FIXME: will this work with gfx-cpio?
         # Handle the "always" parameter and then work like "both"
         # Must do this for each directory
-        local gfx_def_file=$XXX_LINUX_DIR/gfxsave.def
+        local gfx_def_file=$MENU_DIR/gfxsave.def
         if [ "$gfx_cmd" = "always" ]; then
             test -e $gfx_def_file || echo gfxsave=always > $gfx_def_file
             gfx_cmd=both
@@ -77,7 +83,7 @@ Expected$cheat_co always menus custom both$err_co or$cheat_co reset"
 
         case $gfx_cmd in
             menus|both|custom)
-                write_gfx_menu_defaults prep $XXX_LINUX_DIR ""
+                write_gfx_menu_defaults prep $MENU_DIR ""
                 msg  "    popup params:$cheat_co$ALL_MENU_PARAMS"
                 msg  "main menu params:$cheat_co" $(extra_cmdline_params) ;;
         esac
@@ -88,19 +94,36 @@ Expected$cheat_co always menus custom both$err_co or$cheat_co reset"
         esac
 
         case $gfx_cmd in
-            reset|menus|both) reset_one_dir $NAME $XXX_LINUX_DIR ;;
+            reset|menus|both) reset_one_dir $NAME $MENU_DIR ;;
         esac
 
         case $gfx_cmd in
-            menus|both) update_gfxmenus $XXX_LINUX_DIR;;
+            menus|both) update_gfxmenus $MENU_DIR;;
         esac
 
+        repack_cpio $XXX_LINUX_DIR/$CPIO_FILE $CPIO_DIR
         if [ -n "$GFX_LOG_FILE" -a -z "$NO_LOG" ]; then
             mkdir -p $(dirname $GFX_LOG_FILE)
             echo -e "$LOG" | /bin/sed -r "s:\x1B\[[0-9;]*[mK]::g" > $GFX_LOG_FILE
             [ -n "$NO_COLOR" ] || echo -e "$LOG" > $GFX_LOG_FILE.color
         fi
     done
+}
+
+unpack_cpio() {
+    local file=$1  dir=$2
+    test -r $file || return 1
+    rm -rf $dir
+    mkdir -p $dir || return 1
+    (cd $dir && cpio -idum < $file)
+    return 0
+}
+
+repack_cpio() {
+    local file=$1  dir=$2
+    test -r $file || return 1
+    (cd $dir && find . | cpio -o) > $file
+    return 0
 }
 
 #==============================================================================
