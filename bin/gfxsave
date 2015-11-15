@@ -102,6 +102,7 @@ Expected$cheat_co always menus custom both$err_co or$cheat_co reset"
         esac
 
         repack_cpio $XXX_LINUX_DIR/$CPIO_FILE $CPIO_DIR
+
         if [ -n "$GFX_LOG_FILE" -a -z "$NO_LOG" ]; then
             mkdir -p $(dirname $GFX_LOG_FILE)
             echo -e "$LOG" | /bin/sed -r "s:\x1B\[[0-9;]*[mK]::g" > $GFX_LOG_FILE
@@ -115,6 +116,7 @@ unpack_cpio() {
     test -r $file || return 1
     rm -rf $dir
     mkdir -p $dir || return 1
+    msg " Unpack CPIO file:$cheat_co $file"
     (cd $dir && cpio -idum < $file)
     return 0
 }
@@ -122,6 +124,7 @@ unpack_cpio() {
 repack_cpio() {
     local file=$1  dir=$2
     test -r $file || return 1
+    msg " Repack CPIO file:$cheat_co $file"
     (cd $dir && find . | cpio -o) > $file
     return 0
 }
