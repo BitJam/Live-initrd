@@ -200,7 +200,7 @@ main_wrapper() {
     # Do this after the above so the changes aren't saved until after a "real" persist-save
     confile systemd      || LIVE_SCRIPTS="$LIVE_SCRIPTS live-disable-services"
     confile toram-eject  && LIVE_SCRIPTS="$LIVE_SCRIPTS live-toram-eject"
-
+    confile gfxsave      && LIVE_SCRIPTS="$LIVE_SCRIPTS live-gfxsave"
     unset CMDLINE
     PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin
     run_init_scripts $NEW_ROOT $LIVE_SCRIPTS
@@ -356,11 +356,11 @@ main_core() {
     # 'fromiso' causes us to check md5sums in two places
     [ "$CHECK_MD5" ] && check_md5 $SQFILE_DIR
 
-    [ "$GFX_SAVE" ] && update_gfx_menu "$GFX_SAVE_SCRIPT" "$GFX_SAVE" "$BOOT_MP/boot"
+    # [ "$GFX_SAVE" ] && update_gfx_menu "$GFX_SAVE_SCRIPT" "$GFX_SAVE" "$BOOT_MP/boot"
 
-    # Disable always feature even if update_gfx_menu is not called
-    local gfx_def_file=$BOOT_MP/boot/syslinux/gfxsave.def
-    [ "$GFX_SAVE" != always ] && test -e $gfx_def_file && rm -f $gfx_def_file 2>/dev/null
+    # # Disable always feature even if update_gfx_menu is not called
+    # local gfx_def_file=$BOOT_MP/boot/syslinux/gfxsave.def
+    # [ "$GFX_SAVE" != always ] && test -e $gfx_def_file && rm -f $gfx_def_file 2>/dev/null
 
     [ "$TO_RAM" ] && copy_to_ram "$SQFILE_FULL" $TORAM_MP
 
@@ -4086,8 +4086,11 @@ Initrd_Out
     [ "$REMASTERABLE" ]                      && touch $dir/remasterable
     [ "$PERSIST_ROOT" ]                      && touch $dir/persist-root
     [ "$PERSIST_ROOT" -a -z "$STATIC_ROOT" ] && touch $dir/save-persist
-    [ "$PERSIST_ROOT" -a    "$STATIC_ROOT" ] && touch $dir/static-root
+    [ "$PERSIST_ROOT" -a -n "$STATIC_ROOT" ] && touch $dir/static-root
     [ "$FORCE_PASSWD" ]                      && touch $dir/force-passwd
+    [ "$DB_PLUS"      ]                      && touch $dir/db+
+    [ -n "$GFX_SAVE"  ]                      && echo $GFX_SAVE > $dir/gfxsave
+
     echo "$DISTRO_NAME"                             > $dir/distro
 
     [ "$DID_TORAM" ] && [ "$(stat -c %t $SQFILE_DEV)" = b ] \
