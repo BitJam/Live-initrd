@@ -380,16 +380,16 @@ make_xorg_conf() {
     # FIXME: should I include this or does check for "EFI VGA" below suffice?
     #[ -e /live/config/uefi ]       && no_default=true
 
-    # Check who is creating the framebuffer (in any)
+    # Check who is creating the framebuffer (if any)
     local vga_fb fb_name=none
     read fb_name 2>/dev/null < /sys/class/graphics/fb0/name
 
     case $fb_name in
-            none) ;;
-      "VESA VGA") vga_fb=true ;;
-     "EFI VGA"|*) echo_live "Disabling safe mode because of %s" $(pquote $fb_name framebuffer)
-                  no_default=true
-                  safe_mode= ;;
+                  none) ;;
+     "VESA VGA"|simple) vga_fb=true ;;
+           "EFI VGA"|*) echo_live "Disabling safe mode because of %s" "$(pquote $fb_name framebuffer)"
+                        no_default=true
+                        safe_mode= ;;
     esac
 
     # safe mode from the user over-rides vbox
