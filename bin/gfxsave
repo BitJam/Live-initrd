@@ -27,9 +27,9 @@ main() {
     set_colors "$NO_COLOR" "$LO_COLOR"
 
     case "$gfx_cmd" in
-        always|menus|custom|both|reset) ;;
+        menus|custom|both|reset) ;;
         *)  err "Bad gfxsave parameter $cheat_co$gfx_cmd$CO_ERR. \
-Expected$cheat_co always menus custom both$err_co or$cheat_co reset"
+Expected$cheat_co menus custom both$err_co or$cheat_co reset"
             return ;;
     esac
 
