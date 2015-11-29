@@ -1056,7 +1056,8 @@ coldplug_modules() {
 
 is_usb_or_removable() {
     local short_dev=${1##*/}
-    local dir=/sys/block/${short_dev%%[0-9]*}/
+    local drive=$(echo $short_dev | sed -r 's/[0-9]+$//')
+    local dir=/sys/block/$drive
     [ "$(cat $dir/removable 2>/dev/null)" = 1 ] && return 0
     local devpath=$(readlink -f $dir/device)
     [ "$devpath" ] || return 1
@@ -1401,7 +1402,8 @@ _find_files() {
                     esac
 
                     local short_dev=${dev##*/}
-                    local model=$(cat /sys/block/${short_dev%%[0-9]*}/device/model 2>/dev/null)
+                    local drive=$(echo $short_dev | sed -r 's/[0-9]+$//')
+                    local model=$(cat /sys/block/$drive/device/model 2>/dev/null)
 
                     #. <type> device model: <model-name>
                     [ "$model" ] && vmsg 6 "%s device model: %s" $find_type "$(cq $model)"
