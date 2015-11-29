@@ -2555,8 +2555,8 @@ select_device() {
         esac
 
         case $(stat -c %t $dev) in
-            [38]) ;;
-               *) continue ;;
+            [38]|22|179)   ;;
+            *)    continue ;;
         esac
 
         size_rev=
