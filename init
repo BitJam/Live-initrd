@@ -1074,6 +1074,11 @@ is_usb_or_removable() {
 #
 # See LINUX ALLOCATED DEVICES for device numbers
 # https://www.kernel.org/doc/Documentation/devices.txt
+#
+#   3 block First MFM, RLL and IDE hard disk/CD-ROM interface   hda, hdb
+#   8 block SCSI disk devices (0-15)                            sda, sdb, ... sdp
+#  22 block Second IDE hard disk/CD-ROM interface               hdc, hdd
+# 179 block MMC block devices                                   mmcblk0, mmcblk1, ... mmcblk7
 #------------------------------------------------------------------------------
 from_filter() {
 
