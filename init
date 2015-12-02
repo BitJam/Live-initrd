@@ -176,11 +176,11 @@ main_wrapper() {
     else
         # Evaluate redirects RIGHT TO LEFT:
         #
-        #  stdout  1 -------\        /---> while, sed, tee ---> screen
+        #  stdout  1 -------+        +---> while, sed, tee ---> screen (stdout)
         #                    \      /
-        #  stderr  2 ---\     \----/--------------------------> screen
+        #  stderr  2 ---+     `----/--------------------------> screen (stderr)
         #                \        /
-        #         17      \------/
+        #         17      `------'
 
         main_core  17>&1  1>&2  2>&17  | while read line; do echo "$line" \
             | sed -e "s/^/${yellow}Error: $red/" -e "s/$/$nc_co/" | tee -a $MY_LOG; done
