@@ -1,8 +1,10 @@
 # File: /live/custom/antiX/0.sh
-# antiX Specific /init code
+# MX Specific /init code
 
 LIST_MODULES=true
 CHECK_BOOTCODES=true
+
+MENUS_LIST=ltop
 
 DO_DEB=true
 DO_FSCK=true
