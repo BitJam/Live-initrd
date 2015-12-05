@@ -2458,7 +2458,6 @@ my_select_menu() {
     eval $name=\$menu_value
 }
 
-
 do_menus() {
     local BOOT_MENU_DIR=/live/custom/$DISTRO_NAME/menus
     local BOOT_MENU_WARN=true
