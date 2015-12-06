@@ -1,5 +1,10 @@
 0:none
-1:frugal=root!,home
-2:persist=root!,home
+1:persist=root!,home
+2:persist=root!
 3:persist=root!,home,static
 4:persist=home!
+5:frugal=root!,home
+6:frugal=root!
+7:frugal=root!,home,static
+8:frugal=home!
+9:frugal
