@@ -1,0 +1,5 @@
+_Could_not_find_UUID_of_boot_device_for_remounting_="Kon geen UUID vinden van het bootdevice voor her-koppelen"
+_Could_not_find_boot_device_for_remounting_="Kon geen bootdevice voor her-koppelen"
+_Could_not_remount_boot_device_="Kon het bootdevice niet opnieuw koppelen"
+_Save_X_desktop_Y_="Bewaar %s desktop %s"
+_restore_X_desktop_to_Y_="Herstel %s desktop naar %s"

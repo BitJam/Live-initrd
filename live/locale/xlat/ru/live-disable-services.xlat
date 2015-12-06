@@ -1,0 +1,6 @@
+_Customizing_services_="Настройка служб"
+_Detected_laptop_mobile_device_="Обнаружен ноутбук/мобильное устройство"
+_Disabling_dbus_X_="Отключение dbus %s"
+_Disabling_more_services_X_="Отключение других служб %s"
+_Disabling_network_auto_start_X_="Отключение автостарта сети %s"
+_Disabling_services_X_="Отключение служб %s"
