@@ -69,9 +69,6 @@ set_hwclock() {
 
     #grep -i -q $new $file && return
 
-    # FIXME!
-    return
-
     case $new in
         local) sed -i 's/^UTC\s*$/LOCAL/' $file
                hwclock --hctosys --localtime      ;;
@@ -192,7 +189,7 @@ check_timezone() {
         local ret=$?
         case $ret in
              0) if [ "$orig_tz" != "$TZ" ]; then
-                    echo "echo $TZ > $TZ_FILE"
+                    echo $TZ > $TZ_FILE
                     export TZ
                 fi
                 return 0     ;;
