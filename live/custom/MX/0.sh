@@ -30,7 +30,7 @@ live_param_filter() {
 
         # Our Live params
         hwclock=utc|hwclock=local|xorg|xorg=*|noearlyvid|earlyvid) ;;
-        confont=*|conkeys=*);;
+        confont=*|conkeys=*|conkbd=*);;
         dpi=*|hostname=*|kbd=*|kbopt=*|kbvar=*);;
         lang=*|mirror=*|noloadkeys|noprompt);;
         nosplash|password|password=*|prompt|pw|pw=*|tz=*|ubp=*|ushow=*);;
