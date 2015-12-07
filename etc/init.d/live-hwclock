@@ -239,14 +239,28 @@ yes_no_quit() {
 
         read ans
         case $ans in
-                   3) exit 0              ;;
-                [12]) return $((ans - 1)) ;;
-                  "") return 0            ;;
+                 ""|1) return 0           ;;
+                    2) return 1           ;;
+                    3) ask_really_quit    ;;
         esac
-
-        error "$(printf "%s $ERROR_PARAM_COLOR%s" "You must enter 0, 1, or 2." "Press <enter>")"
-        read ans
+        if [ $ans -ne 3 ]; then
+            error "$(printf "%s $ERROR_PARAM_COLOR%s" "You must enter 0, 1, or 2." "Press <enter>")"
+            read ans
+        fi
     done
+}
+
+ask_really_quit() {
+    local ans fmt="  $GREEN%2s$WHITE) $CYAN%s$NO_COLOR\n"
+    printf "\n$GREEN%s\n"  "Really quit?"
+    printf "$fmt" 1 "yes"
+    printf "$fmt" 2 "no"
+    printf "$GREEN%s \"%s\" >$NO_COLOR " "Please enter a number.  Default is" "no"
+    read ans
+    case $ans in
+        1) exit 0 ;;
+        *) return ;;
+    esac
 }
 
 do_both() {
