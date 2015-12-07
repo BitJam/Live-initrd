@@ -143,18 +143,18 @@ guess_hwclock() {
     echo_live "Help us figure out what time is used by your hardware clock"
     echo_live "by telling us if either setting produces the correct time."
     local select_data=$(cat <<Select_Data
-0:utc
-1:local
-2:neither
-3:both
+1:utc
+2:local
+3:neither
+4:both
 Select_Data
 )
 
     local select_menu=$(cat <<Select_Menu
-  0:   UTC: $(bold $utc_str) is within 10 minutes of the correct time.
-  1: Local: $(bold $loc_str) is within 10 minutes of the correct time.
-  2: Neither are within 10 minutes of the correct time.
-  3: Both are within 10 minutes of the correct time.
+  1:   UTC: $(bold $utc_str) is within 10 minutes of the correct time.
+  2: Local: $(bold $loc_str) is within 10 minutes of the correct time.
+  3: Neither are within 10 minutes of the correct time.
+  4: Both are within 10 minutes of the correct time.
 Select_Menu
 )
 
@@ -232,15 +232,16 @@ yes_no_quit() {
 
     while true; do
         echo -e "$title?"
-        printf "$fmt" 0 "yes"
-        printf "$fmt" 1 "no"
-        printf "$fmt" 2  "quit"
+        printf "$fmt" 1 "yes"
+        printf "$fmt" 2 "no"
+        printf "$fmt" 3  "quit"
         printf "$GREEN%s \"%s\" >$NO_COLOR " "Please enter a number.  Default is" "yes" 
 
         read ans
         case $ans in
-                   2) exit 0           ;;
-            [012]|"") return ${ans:-0} ;;
+                   3) exit 0              ;;
+                [12]) return $((ans - 1)) ;;
+                  "") return 0            ;;
         esac
 
         error "$(printf "%s $ERROR_PARAM_COLOR%s" "You must enter 0, 1, or 2." "Press <enter>")"
