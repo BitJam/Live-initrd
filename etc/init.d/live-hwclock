@@ -265,7 +265,7 @@ ask_really_quit() {
 
 do_both() {
     echo_live "This is an unusual situation."
-    yes_no_quit "Would you like to set the hardware clock manually to UTC or local time" \
+    yes_no_quit "Would you like to manually set the hardware clock to UTC or local time" \
         && manual_set_hwclock
 }
 
