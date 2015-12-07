@@ -296,8 +296,10 @@ Manual_Data
 
     local answer
     my_select_2 "$title" "answer" "" "$manual_data" "$manual_menu"
-    #echo "answer=$answer"
-    set_hwclock $answer
+    case $answer in
+        utc|local) set_hwclock $answer ;;
+                *) exit 0              ;;
+    esac
 }
 
 my_select_menu() {
