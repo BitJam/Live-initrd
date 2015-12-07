@@ -80,7 +80,7 @@ set_hwclock() {
 ask_hwclock() {
     local green=$GREEN white=$WHITE cyan=$CYAN nc_co=$NO_COLOR hi_co=$WHITE
     local bold_co=$AMBER  cheat_co=$WHITE
-    
+
     echo
     check_timezone || return
     check_hwclock
@@ -118,7 +118,7 @@ check_hwclock() {
         echo_live "They both say the current time is %s" "$(pquote $loc_str)"
         yes_no_quit "Would you like to set the hardware clock manually to UTC or localtime" \
             && manual_set_hwclock
-        
+
     elif [ $diff_utc_loc -lt $MARGIN ]; then
         echo_live "Your local timezone and the UTC timezone are currently close but not the same"
         echo_live "They both say the current time is within 15 minutes of %s" "$(pquote $loc_str)"
@@ -134,7 +134,7 @@ check_hwclock() {
     #     true:true) FIXME          ;;
     #             :) do_neither     ;;
     # esac
-}   
+}
 
 guess_hwclock() {
     local utc_str=$1  loc_str=$2
