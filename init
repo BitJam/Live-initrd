@@ -4307,7 +4307,7 @@ prepare_switch_root() {
     ln -s . $new_live/live
 
     test -e /live/README && cp /live/README $new_live/
-    cp -a /bin/shutdown $new_live/
+    # cp -a /bin/shutdown $new_live/
 
     mkdir -p $new_live/oldroot
 
