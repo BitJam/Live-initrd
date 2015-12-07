@@ -165,8 +165,8 @@ Select_Menu
 
     case $answer in
         local|utc) set_hwclock $answer ;;
-          neither)                     ;;
-             both)                     ;;
+          neither) do_neither          ;;
+             both) do_both             ;;
                 *) error "Got a strange answer from guess hwclock menu %s" "$answer" ;;
     esac
 }
@@ -247,6 +247,43 @@ yes_no_quit() {
         error "$(printf "%s $ERROR_PARAM_COLOR%s" "You must enter 0, 1, or 2." "Press <enter>")"
         read ans
     done
+}
+
+do_both() {
+    echo_live "This is an unusual situation."
+    yes_no_quit "Would you like to set the hardware clock manually to UTC or local time" \
+        && manual_set_hwclock
+}
+
+do_neither() {
+    echo_live "Either your timezone is incorrect or your hardware clock is incorrect or both."
+    echo_live "It seems your hardware clock is not set to local time or to UTC time."
+    echo_live "You need to set your system time and then set your hardware clock."
+    echo_live
+    echo_live "Press <enter> to continue"
+    local ans
+    read ans
+}
+
+manual_set_hwclock() {
+    local title="Is your hardware clock set to UTC time or local time?"
+    local manual_menu=$(cat <<Manual_Menu
+ 1) UTC
+ 2) local time
+ 3) Get me out of here!
+Manual_Menu
+)
+    local manual_data=$(cat <<Manual_Data
+1:utc
+2:local
+3:quit
+Manual_Data
+)
+
+    local answer
+    my_select_2 "$title" "answer" "" "$manual_data" "$manual_menu"
+    #echo "answer=$answer"
+    set_hwclock $answer
 }
 
 my_select_menu() {
