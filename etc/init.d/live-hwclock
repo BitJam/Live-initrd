@@ -27,6 +27,7 @@ for param in $CMDLINE; do
                    tz=*) export TZ=$value  ;;
         hwclock=*|hwc=*) CMD_CLOCK=$value  ;;
                  lang=*) CMD_LANG=$value   ;;
+                pretend) PRETEND_MODE=true ;;
     esac
 done
 
@@ -54,6 +55,9 @@ do_start() {
 
    echo_script "Configuring Hardware Clock" $0
 
+   mountpoint -q /live/aufs || PRETEND_MODE=true
+   [ "$PRETEND_MODE" ] && echo_live "${AMBER}Pretend mode enabled"
+
     case $CMD_CLOCK in
         local|utc) set_hwclock $CMD_CLOCK ;;
               ask) ask_hwclock            ;;
@@ -70,10 +74,10 @@ set_hwclock() {
     #grep -i -q $new $file && return
 
     case $new in
-        local) sed -i 's/^UTC\s*$/LOCAL/' $file
-               hwclock --hctosys --localtime      ;;
-          utc) sed -i 's/^LOCAL\s*$/UTC/' $file
-               hwclock --hctosys --utc            ;;
+        local) pretend sed -i 's/^UTC\s*$/LOCAL/' $file
+               pretend hwclock --hctosys --localtime      ;;
+          utc) pretend sed -i 's/^LOCAL\s*$/UTC/' $file
+               pretend hwclock --hctosys --utc            ;;
     esac
 }
 
@@ -97,9 +101,10 @@ check_timezone() {
         yes_no_quit "$LIVE_COLOR$(printf "Is %s your current timezone" "$(pquote $TZ)")"
         local ret=$?
         case $ret in
-             0) if [ "$orig_tz" != "$TZ" ]; then
-                    echo $TZ > $TZ_FILE
+             0)  echo "orig: $orig_tz   new: $TZ"
+                 if [ "$orig_tz" != "$TZ" ]; then
                     export TZ
+                    pretend write_to_file $TZ_FILE $TZ
                 fi
                 return 0     ;;
              1) set_timezone ;;
@@ -122,6 +127,8 @@ set_timezone() {
 
 check_hwclock() {
     # Get current default locale
+    echo_live
+    echo_live "Please wait while we examine the hardware clock ..."
     local locale_file=/etc/default/locale
     test -r $locale_file && . $locale_file
 
@@ -164,7 +171,6 @@ check_hwclock() {
 
 guess_hwclock() {
     local utc_str=$1  loc_str=$2
-    echo_live
     echo_live "Your local time is UTC time %s" $tz_offset2
     echo_live "Help us figure out what time is used by your hardware clock"
     echo_live "by telling us if either setting produces the correct time."
@@ -367,6 +373,13 @@ show_unix() { echo_live "%15s Unix:$START_PARAM %10s" "$1" "$2" ; }
 
 debug() { [ ${#db_hwc} -gt 0 ] && echo "$*"; }
 
+pretend() {
+    if [ "$PRETEND_MODE" ]; then
+        echo "${bold_co}pretend:$nc_co $*"
+    else
+        "$@"
+    fi
+}
 #-------------------------------------------------------------------------------
 #-------------------------------------------------------------------------------
 main "$@" 2>&1 | tee -a $INIT_LOG_FILE
