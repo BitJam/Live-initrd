@@ -2486,7 +2486,6 @@ do_late_menus() {
     echo "$cmdline" >> /live/config/cmdline
 }
 
-
 size_label_m() { _size_label $1   "M G T" ;}
 size_label_k() { _size_label $1 "K M G T" ;}
 
