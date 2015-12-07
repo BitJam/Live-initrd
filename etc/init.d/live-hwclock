@@ -235,7 +235,7 @@ yes_no_quit() {
         printf "$fmt" 1 "yes"
         printf "$fmt" 2 "no"
         printf "$fmt" 3  "quit"
-        printf "$GREEN%s \"%s\" >$NO_COLOR " "Please enter a number.  Default is" "yes" 
+        printf "$GREEN%s \"%s\" >$NO_COLOR " "Please enter a number.  Default is" "yes"
 
         read ans
         case $ans in
