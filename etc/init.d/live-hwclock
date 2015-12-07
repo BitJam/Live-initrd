@@ -89,9 +89,8 @@ ask_hwclock() {
 check_hwclock() {
 
     # Get current default locale
+    local locale_file=/etc/default/locale
     test -r $locale_file && . $locale_file
-    # But let the user over-ride it from the bootloader
-    LANG=${CMD_LANG:-$LANG}
 
     local utc_en=$(get_hwclock --utc)
     local loc_en=$(get_hwclock --localtime)
