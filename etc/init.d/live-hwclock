@@ -56,7 +56,7 @@ do_start() {
    echo_script "Configuring Hardware Clock" $0
 
    mountpoint -q /live/aufs || PRETEND_MODE=true
-   [ "$PRETEND_MODE" ] && echo_live "${AMBER}Pretend mode enabled"
+   [ "$PRETEND_MODE" ] && echo_live "${YELLOW}Pretend mode enabled"
 
     case $CMD_CLOCK in
         local|utc) set_hwclock $CMD_CLOCK ;;
@@ -83,7 +83,7 @@ set_hwclock() {
 
 ask_hwclock() {
     local green=$GREEN white=$WHITE cyan=$CYAN nc_co=$NO_COLOR hi_co=$WHITE
-    local bold_co=$AMBER  cheat_co=$WHITE
+    local bold_co=$YELLOW  cheat_co=$WHITE
 
     echo
     check_timezone || return
