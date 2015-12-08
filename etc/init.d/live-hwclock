@@ -101,10 +101,11 @@ check_timezone() {
         yes_no_quit "$LIVE_COLOR$(printf "Is %s your current timezone" "$(pquote $TZ)")"
         local ret=$?
         case $ret in
-             0)  echo "orig: $orig_tz   new: $TZ"
-                 if [ "$orig_tz" != "$TZ" ]; then
+             0) if [ "$orig_tz" != "$TZ" ]; then
                     export TZ
                     pretend write_to_file $TZ_FILE $TZ
+                    # For localizing repos in live-init
+                    pretend append_file /live/config/cmdline "tz=$TZ"
                 fi
                 return 0     ;;
              1) set_timezone ;;
