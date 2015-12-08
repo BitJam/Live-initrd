@@ -374,6 +374,20 @@ show_unix() { echo_live "%15s Unix:$START_PARAM %10s" "$1" "$2" ; }
 
 debug() { [ ${#db_hwc} -gt 0 ] && echo "$*"; }
 
+write_to_file() {
+    local file=$1
+    local dir=$(dirname $file)
+    mkdir -p $dir
+    echo -e "$*" > $file
+}
+
+append_file() {
+    local file=$1
+    local dir=$(dirname $file)
+    mkdir -p $dir
+    echo -e "$*" >> $file
+}
+
 pretend() {
     if [ "$PRETEND_MODE" ]; then
         echo "${bold_co}pretend:$nc_co $*"
