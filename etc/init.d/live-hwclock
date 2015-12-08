@@ -289,8 +289,8 @@ my_select_menu() {
     [ -z "${menu##*$cheat*}" ] || return
 
     if [ ! -e $dfile -o  ! -e $mfile ]; then
-        [ "$BOOT_MENU_WARN" ] && warn "Missing $dfile or $mfile"
-        return
+        error "Missing $dfile or $mfile"
+        exit 2
     fi
 
     local menu_value
