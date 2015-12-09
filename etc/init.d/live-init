@@ -40,8 +40,10 @@ for param in $CMDLINE; do
                 lang=*)     CMD_LANG=$value ;          DO_XKBD=true ;;
                   tz=*)       CMD_TZ=$value                         ;;
               mirror=*)   CMD_MIRROR=$value                         ;;
-         hwclock=local)    CMD_CLOCK=$value                         ;;
-           hwclock=utc)    CMD_CLOCK=$value                         ;;
+
+# Disable these because we do it in live-hwclock now
+#         hwclock=local)    CMD_CLOCK=$value                         ;;
+#           hwclock=utc)    CMD_CLOCK=$value                         ;;
 
               failsafe)   XORG_ARGS=safe${XORG_ARGS:+,}$XORG_ARGS   ;;
              xorg=safe)   XORG_ARGS=safe${XORG_ARGS:+,}$XORG_ARGS   ;;
