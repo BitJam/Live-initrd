@@ -1,5 +1,10 @@
- 0) none
- 1) frugal
- 2) root
- 3) static
- 4) home
+  1) none
+  2) all persist
+  3) root persist
+  4) static root
+  5) home persist
+  6) frugal/persist
+  7) frugal/root
+  8) frugal/static
+  9) frugal/home
+ 10) only frugal

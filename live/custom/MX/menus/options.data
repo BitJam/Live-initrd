@@ -3,9 +3,10 @@
 3:checkfs
 4:toram
 5:from=usb
-6:hwclock=utc
-7:hwclock=local
-8:private
-9:savestate
-10:nosavestate
-11:nousb2
+6:hwclock=ask
+7:hwclock=utc
+8:hwclock=local
+9:private
+10:savestate
+11:nosavestate
+12:nousb2

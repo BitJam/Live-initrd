@@ -1,15 +1,63 @@
-  1) Default        16) Casablanca        31) Dhaka*
-  2) UTC            17) London*           32) Bangkok
-  3) Honolulu       18) Algiers           33) Krasnoyarsk*
-  4) Anchorage*     19) Berlin*           34) Beijing
-  5) Los Angeles*   20) Johannesburg      35) Irkutsk*
-  6) Phoenix        21) Athens*           36) Tokyo
-  7) Denver*        22) Baghdad           37) Yakutsk*
-  8) Managua        23) Moscow*           38) Darwin
-  9) Chicago*       24) Tehran*           39) Adelaide*
- 10) Bogota         25) Dubai             40) Brisbane
- 11) New York*      26) Baku*             41) Sydney*
- 12) La Paz         27) Karachi           42) Fiji
- 13) Santiago*      28) Yekaterinburg*    43) Auckland*
- 14) Buenos Aires   29) Kolkata           44) Tongatapu
- 15) Sao Paulo*     30) Almaty
+  1) Default          22) London*          43) Dubai
+  2) UTC              23) Paris*           44) Yekaterinburg*
+  3) Honolulu         24) Algiers          45) Karachi
+  4) Anchorage*       25) Amsterdam*       46) Almaty
+  5) Los Angeles*     26) Rome*            47) Kolkata
+  6) Phoenix          27) Berlin*          48) Dhaka*
+  7) Denver*          28) Belgrade*        49) Krasnoyarsk*
+  8) Mexico City*     29) Athens*          50) Bangkok
+  9) Chicago*         30) Helsinki*        51) Irkutsk*
+ 10) Managua          31) Bucharest*       52) Beijing
+ 11) Lima             32) Johannesburg     53) Taipei
+ 12) Bogota           33) Istanbul*        54) Seoul
+ 13) New York*        34) Cairo            55) Yakutsk*
+ 14) Santiago*        35) Jerusalem*       56) Darwin
+ 15) La Paz           36) Moscow*          57) Adelaide*
+ 16) Halifax*         37) Minsk            58) Tokyo
+ 17) Buenos Aires     38) Baghdad          59) Sydney*
+ 18) Sao Paulo*       39) Yerevan          60) Brisbane
+ 19) Reykjavik        40) Tbilisi          61) Auckland*
+ 20) Casablanca       41) Baku*            62) Fiji
+ 21) Dublin*          42) Tehran*          63) Tongatapu
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
