@@ -1,12 +1,12 @@
 #!/live/bin/sh
 
 ### BEGIN INIT INFO
-# Provides:         live-restore-services 
+# Provides:         live-restore-services
 # Required-Start:   live-disable-services
-# Required-Stop:     
-# Should-Start:      
-# Should-Stop:       
-# Default-Start:     S 
+# Required-Stop:
+# Should-Start:
+# Should-Stop:
+# Default-Start:     S
 # Default-Stop:
 # Short-Description: restore service symlinks
 # Description:       restore service symlinks that were temporarily disabled

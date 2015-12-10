@@ -177,7 +177,7 @@ main() {
         echo_live "Disabling dbus %s" "$(paren D, nodbus)"
         disable_services "$NO_DBUS_SERVICES" "rc3.d rc5.d"
     fi
-} 
+}
 
 
 #----------------------------------------------------------------------------
