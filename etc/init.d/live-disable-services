@@ -13,6 +13,15 @@
 
 export PATH=/sbin:/usr/sbin:/bin:/usr/bin:/usr/local/bin
 
+VBOX_SERVICES="
+virtualbox-guest-utils
+virtualbox-guest-x11
+"
+
+NFS_SERVICES="
+nfs-kernel-server
+"
+
 LEAN_SERVICES="
     acpi-fakekey
     acpi-support
@@ -101,16 +110,26 @@ prep_main() {
         esac
     done
 
+    # Sloppy, but can make it elegant later
+    DISABLE_NFS=true
+    export_files="/etc/exports"
+    [ -f /etc/exports ] && grep -q '^[[:space:]]*[^#]*/' $export_files && DISABLE_NFS=
+
     if [ "$antiX_param" ]; then
 
         # If the ## expression matches then the resulting string length is zero
-        [ "${antiX_param##*[lL]*}" ] ||      LEAN=true
-        [ "${antiX_param##*[mM]*}" ] ||      MEAN=true
-        [ "${antiX_param##*[xX]*}" ] || XTRA_LEAN=true
-        [ "${antiX_param##*[dD]*}" ] ||   NO_DBUS=true
+        [ "${antiX_param##*[lL]*}" ] ||          LEAN=true
+        [ "${antiX_param##*[mM]*}" ] ||          MEAN=true
+        [ "${antiX_param##*[xX]*}" ] ||     XTRA_LEAN=true
+        [ "${antiX_param##*[dD]*}" ] ||       NO_DBUS=true
+        [ "${antiX_param##*[vV]*}" ] ||  DISABLE_VBOX=true
+        [ "${antiX_param##*[nN]*}" ] ||   DISABLE_NFS=true
     fi
 
-    [ "$must_run" ] || exit 0
+	test -e /live/config/virtualbox || DISABLE_VBOX=true
+
+    [ -z "$must_run" -o -n "$DISABLE_VBOX" -o -n "$DISABLE_NFS" ] || exit 0
+
     . /live/lib/live-init-utils.sh
 
     start_init_logging
@@ -132,6 +151,16 @@ main() {
 
         echo_live "Disabling services %s" "$(paren L, lean)"
         disable_services "$LEAN_SERVICES" "rc3.d rc5.d"
+    fi
+
+    if [ "$DISABLE_VBOX" ]; then
+        echo_live "Disabling Virtual Box extensions"
+        disable_services "$VBOX_SERVICES"
+    fi
+
+    if [ "$DISABLE_NFS" ]; then
+        echo_live "Disabling NFS kernel server"
+        disable_services "$NFS_SERVICES"
     fi
 
     if [ "$MEAN" ]; then
@@ -170,15 +199,14 @@ disable_services() {
 
     local rc_dir dest name slink moved length
 
-    for rc_dir in $rc_dirs; do
+    for rc_dir in /etc/$rc_dirs; do
 
-        # DISABLED_RC_DIR is defined in the library
-        dest=$DISABLED_RC_DIR/$rc_dir
+        dest=/live/config/disabled-rc.d/${rc_dir#/etc/}
         mkdir -p $dest
 
         for name in $names; do
             [ -z "${name###*}" ]  && continue
-            for slink in /etc/$rc_dir/S*$name; do
+            for slink in /$rc_dir/S*$name; do
                 [ -e "$slink" ] || continue
                 mv -f $slink $dest
 
