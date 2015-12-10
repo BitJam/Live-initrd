@@ -240,6 +240,7 @@ save_state() {
         [ "$FS_TYPE" != "vfat" ] && continue
 
         # Save permission information on vfat LiveUSBs
+        test -e $perm_file || touch $perm_file
         local perm=$(stat -c %a $file)
         grep -q "^$file:$perm$" $perm_file 2>/dev/null && continue
         if grep -q "$file:" $perm_file 2>/dev/null; then
