@@ -14,12 +14,13 @@
 
 export PATH=/sbin:/usr/sbin:/bin:/usr/bin:/usr/local/bin
 
- XSESSION_DIR=/usr/share/xsessions
-     MENU_WMs="fluxbox icewm jwm"
-     FF_PREFS="/etc/skel/.mozilla/firefox/*/prefs.js"
-    AUTOMOUNT=
-    EARLY_VID=
-FOUND_VDRIVER=
+  XSESSION_DIR=/usr/share/xsessions
+      MENU_WMs="fluxbox icewm jwm"
+      FF_PREFS="/etc/skel/.mozilla/firefox/*/prefs.js"
+     AUTOMOUNT=
+     EARLY_VID=
+ FOUND_VDRIVER=
+ VERSION_FILES="/etc/antix-version /live/boot-dev/version"
 
 ALL_VIDEO_MODULES="ast|bochs[_-]drm|cirrus|emgd|gma500[_-]gfx|i810|i915|mga|mgag200|nouveau|nvidia|qxl|r128|radeon|savage|sis|sis[_-]agp|tdfx|vboxvideo|via|via[_-]agp|vmwgfx"
 KMS_VIDEO_MODULES="ast|bochs[_-]drm|cirrus|emgd|gma500[_-]gfx|i915|mgag200|nouveau|qxl|radeon|udl|vboxvideo|vmwgfx"
@@ -90,7 +91,23 @@ main() {
 do_start() {
     echo_script "Localizing/configuring X-Windows" $0
 
-    get_init_param DISTRO "unknown"
+    get_init_param DISTRO ""
+
+    # Try really hard to get the distro name
+    if [ ${#DISTRO} = 0 ]; then
+        local vfile
+        for vfile in $VERSION_FILES; do
+            test -r $vfile || continue
+            DISTRO=$(sed 's/[-_ ].*//' $vfile | head -n1)
+            [ ${#DISTRO} - gt 0 ] && break
+        done
+    fi
+
+    if [ ${#DISTRO} = 0 -a -r /etc/initrd-release ]; then
+        DISTRO="$(sed -n 's/^NAME="//' /etc/initrd-release)"
+        DISTRO=${DISTRO%\"}
+    fi
+
     create_fstab $DISTRO
 
     #-jbb: for debugging
@@ -155,7 +172,7 @@ create_fstab() {
     case $distro in
         antiX) automount_and_fstab;;
       MX|MX-*) add_fstab_swap     ;;
-            *) error 'Unknown_distro %s' "$(pquote $distro)"
+            *) error 'Unknown distro %s' "$(pquote $distro)"
     esac
 }
 
