@@ -25,10 +25,10 @@
 # that you don't want users to be able to adjust.
 
                      ME="initrd init"
-                VERSION="7.20.04"
-           VERSION_DATE="Thu Jun 18 19:39:52 MDT 2015"
+                VERSION="7.21.00"
+           VERSION_DATE="Thu Dec 10 02:42:43 MST 2015"
               DEVELOPER="BitJam"
-  DISTRO_BUG_REPORT_URL="http://antix.freeforums.org"
+         BUG_REPORT_URL="liveboot@mxlinux.org"
 
         RETRY_TIME=10
      PERSIST_RETRY=10
