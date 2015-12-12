@@ -73,16 +73,10 @@ load_translation
 
 main() {
     case "$1" in
-        start)
-            do_start
-            ;;
-        stop)
-            exit 0
-            ;;
-        *)
-            echo "Usage: $0 {start|stop}"
-            exit 1
-            ;;
+        start) do_start ;;
+         stop) exit 0   ;;
+            *) echo "Usage: $0 {start|stop}"
+               exit 1   ;;
     esac
 }
 
