@@ -70,7 +70,7 @@
 
         # Note: adding "crc32c-generic" works around a bug in the kernel:
         # https://github.com/manjaro/packages-core/issues/8
-        LOAD_FIRST="usb-common usbcore ehci-hcd fusbh200-hcd fotg210-hcd battery aufs crc32c-generic"
+        LOAD_FIRST="usb-common usbcore ehci-hcd fusbh200-hcd fotg210-hcd battery aufs overlay crc32c-generic"
 
           VID_NAME=VID
       LINUXFS_NAME=linuxfs
@@ -98,6 +98,8 @@ MKFS_FREE_MARGIN=20
    GFX_SAVE_SCRIPT="/bin/gfxsave"
 
           NO_PLINK=",noplink"
+
+   DEFAULT_UNIONFS="overlayfs"
 
 set_live_dirs() {
     local dir=$1
@@ -273,6 +275,8 @@ main_core() {
     show_bootcodes "$(live_param_filter $UNKNOWN_BOOTCODES)"
     show_integer_errors "$INTEGER_ERRORS"
 
+    check_unionfs
+
     breakpoint 2 "before coldplug"
 
     local orig_fb_name=$(cat /sys/class/graphics/fb0/name 2> /dev/null)
@@ -382,7 +386,7 @@ main_core() {
 
     [ "$STATIC_ROOT" ] && log_cmd umount $AUFS_RAM_MP
 
-    mount_aufs "$AUFS_MP" "$SQFS_MP" "$AUFS_RAM_MP" "$ROOTFS_MP"
+    mount_unionfs "$AUFS_MP" "$SQFS_MP" "$AUFS_RAM_MP" "$ROOTFS_MP"
 
     SYSTEM_D=
     local sbin_init=$(readlink $NEW_ROOT/sbin/init)
@@ -1781,6 +1785,60 @@ mount_aufs_ram() {
     mount_tmpfs $aufs_ram_mp $AUFS_RAM_SIZE 'aufs ram' || fatal "Create %s failed" 'aufs tmpfs'
 }
 
+check_unionfs() {
+    test -d /sys/module/aufs    && AUFS_OKAY=true
+    test -d /sys/module/overlay && OVERLAY_OKAY=true
+    [ "$AUFS_OKAY" ]    && vmsg 5 "Found %s" aufs
+    [ "$OVERLAY_OKAY" ] && vmsg 5 "Found %s" overlay
+
+    case $AUFS_OKAY:$OVERLAY_OKAY in
+            :) fatal "Neither %s nor %s is available" aufs overlayfs ;;
+    esac
+}
+
+mount_unionfs() {
+    aufs_ram_mp=$3
+    case $AUFS_OKAY:$OVERLAY_OKAY in
+        true:) mount_aufs      "$@" ; return   ;;
+        :true) mount_overlayfs "$@" ; return   ;;
+    esac
+
+    case $DEFAULT_UNIONFS in
+        overlayfs) mount_overlayfs "$@"  ; return   ;;
+                *) mount_aufs      "$@"  ; return   ;;
+    esac
+}
+
+mount_overlayfs() {
+    local  upper_mp  aufs_mp=$1  sqfs_mp=$2  aufs_ram_mp=$3  rootfs_mp=$4
+
+    if [ -n "$PERSIST_ROOT" -a -n "$STATIC_ROOT" ]; then
+        #. Enable <type> persistence
+        msg "Enable %s persistence" "$(pq static rootfs)"
+        upper_mp=$rootfs_mp
+    else
+        STATIC_ROOT=
+        upper_mp=$aufs_ram_mp
+    fi
+
+    local upper=$upper_mp/upper work=$upper_mp/work
+    mkdir -p $aufs_mp $upper $work
+
+    # Do the actual mount
+    vmsg 5 "Mount %s at %s" 'overlayfs' "$(fq $aufs_mp)"
+
+    log_cmd mount -t overlay overlay -o "lowerdir=$sqfs_mp,upperdir=$upper,workdir=$work" $aufs_mp \
+        || fatal "Could not mount %s" overlayfs
+
+    # Grab what we need from /etc before it gets nuked
+    cp -a /etc/mtab $aufs_mp/etc/
+
+    # Always a good idea
+    mkdir -p   $aufs_mp/tmp $aufs_mp/var/tmp
+    chmod 1777 $aufs_mp/tmp $aufs_mp/var/tmp
+}
+
+
 mount_aufs() {
     local  aufs_arg  aufs_mp=$1  sqfs_mp=$2  aufs_ram_mp=$3  rootfs_mp=$4
 
@@ -1796,7 +1854,7 @@ mount_aufs() {
     fi
 
     # Do the actual aufs mount
-    vmsg 6 "Mount %s at %s" 'aufs' "$(fq $aufs_mp)"
+    vmsg 5 "Mount %s at %s" 'aufs' "$(fq $aufs_mp)"
 
     log_cmd mount -t aufs -o "br:$aufs_arg",noatime $aufs_mp $aufs_mp \
         || fatal "Could not mount %s" aufs
