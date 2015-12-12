@@ -110,9 +110,12 @@ prep_main() {
         esac
     done
 
-    # Sloppy, but can make it elegant later
     DISABLE_NFS=true
-    export_files="/etc/exports"
+    local file export_files="/etc/exports"
+    for file in /etc/exports.d/*.exports ; do
+		[ -f "$file" ] && export_files="$export_files $file"
+	done
+
     [ -f /etc/exports ] && grep -q '^[[:space:]]*[^#]*/' $export_files && DISABLE_NFS=
 
     if [ "$antiX_param" ]; then
