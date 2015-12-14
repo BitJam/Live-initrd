@@ -99,7 +99,8 @@ MKFS_FREE_MARGIN=20
 
           NO_PLINK=",noplink"
 
-   DEFAULT_UNIONFS="aufs"
+   # FIXME: change to "aufs" after testing
+   DEFAULT_UNIONFS="overlay"
 
 set_live_dirs() {
     local dir=$1
