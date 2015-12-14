@@ -1808,36 +1808,53 @@ check_unionfs() {
            aufs) want_unionfs "$AUFS_OKAY"     aufs    overlay ;;
         overlay) want_unionfs "$OVERLAY_OKAY"  overlay aufs    ;;
     esac
+
+    [ "$USE_UNIONFS" ] && return
+
+    case  $AUFS_OKAY:$OVERLAY_OKAY in
+        true:) USE_UNIONFS=aufs              ;;
+        :true) USE_UNIONFS=overlay           ;;
+    true:true) USE_UNIONFS=$DEFAULT_UNIONFS  ;;
+    esac
 }
 
 want_unionfs() {
-    local flag=$1  this=$2  other=$3
-    [ "$flag" ] && return
-    WANT_UNIONFS=
-    non_fatal "The %s filesystem is not available.  Using %s" "$this" "$other"
+    local okay=$1  this=$2  other=$3
+    if [ "$okay" ]; then
+        USE_UNIONFS=$this
+    else
+        USE_UNIONFS=$other
+        non_fatal "The %s filesystem is not available.  Using %s" "$this" "$other"
+    fi
+}
+
+need_unionfs() {
+    local okay=$1  this=$2
+    if [ "$okay" ]; then
+        [ "$USE_UNIONFS" != "$this" ] && warn "Forcing use of %s to match exiting rootfs file" $(pqw $this)
+        USE_UNIONFS=$this
+    else
+        fatal "The %s filesystem is not available. Can't use this %s file" "$this" "rootfs"
+    fi
+}
+
+check_existing_unionfs() {
+    local mp=$1  type
+    if test -d $mp/etc; then
+        need_unionfs "$AUFS_OKAY" aufs
+    elif test -d $mp/upper; then
+        need_unionfs "$OVERLAY_OKAY" overlay
+    fi
+
+    case $USE_UNIONFS in
+           aufs) ROOTFS_BASE=$ROOTFS_MP                        ;;
+        overlay) ROOTFS_BASE=$ROOTFS_MP/upper                  ;;
+              *) fatal "Unknown unionfs type: $USE_UNIONFS"    ;;
+    esac
 }
 
 mount_unionfs() {
-    aufs_ram_mp=$3
-
-    case $WANT_UNIONFS in
-        overlayfs) mount_overlayfs "$@"  ; return   ;;
-                *) mount_aufs      "$@"  ; return   ;;
-    esac
-
-    case $AUFS_OKAY:$OVERLAY_OKAY in
-        true:) mount_aufs      "$@" ; return   ;;
-        :true) mount_overlayfs "$@" ; return   ;;
-    esac
-
-    case $DEFAULT_UNIONFS in
-        overlayfs) mount_overlayfs "$@"  ; return   ;;
-                *) mount_aufs      "$@"  ; return   ;;
-    esac
-}
-
-mount_overlayfs() {
-    local  upper_mp  aufs_mp=$1  sqfs_mp=$2  aufs_ram_mp=$3  rootfs_mp=$4
+    local upper_mp aufs_mp=$1  aufs_ram_mp=$3  rootfs_mp=$4
 
     if [ -n "$PERSIST_ROOT" -a -n "$STATIC_ROOT" ]; then
         #. Enable <type> persistence
@@ -1848,14 +1865,11 @@ mount_overlayfs() {
         upper_mp=$aufs_ram_mp
     fi
 
-    local upper=$upper_mp/upper work=$upper_mp/work
-    mkdir -p $aufs_mp $upper $work
-
-    # Do the actual mount
-    vmsg 5 "Mount %s at %s" 'overlayfs' "$(fq $aufs_mp)"
-
-    log_cmd mount -t overlay overlay -o "lowerdir=$sqfs_mp,upperdir=$upper,workdir=$work" $aufs_mp \
-        || fatal "Could not mount %s" overlayfs
+    case $USE_UNIONFS in
+        overlay) mount_overlayfs "$1" "$2" $upper_mp  ;;
+           aufs) mount_aufs      "$1" "$2" $upper_mp  ;;
+              *) fatal "Unknown unionfs type: $USE_UNIONFS"
+    esac
 
     # Grab what we need from /etc before it gets nuked
     cp -a /etc/mtab $aufs_mp/etc/
@@ -1865,33 +1879,31 @@ mount_overlayfs() {
     chmod 1777 $aufs_mp/tmp $aufs_mp/var/tmp
 }
 
+mount_overlayfs() {
+    local  aufs_mp=$1  sqfs_mp=$2  upper_mp=$3
+
+    local upper=$upper_mp/upper work=$upper_mp/work
+    mkdir -p $aufs_mp $upper $work
+
+    # Do the actual mount
+    vmsg 5 "Mount %s at %s" 'overlayfs' "$(fq $aufs_mp)"
+
+    log_cmd mount -t overlay overlay -o "lowerdir=$sqfs_mp,upperdir=$upper,workdir=$work" $aufs_mp \
+        || fatal "Could not mount %s" overlayfs
+}
+
 
 mount_aufs() {
-    local  aufs_arg  aufs_mp=$1  sqfs_mp=$2  aufs_ram_mp=$3  rootfs_mp=$4
+    local  aufs_arg  aufs_mp=$1  sqfs_mp=$2  upper_mp=$3
 
     mkdir -p $aufs_mp
-
-    if [ -n "$PERSIST_ROOT" -a -n "$STATIC_ROOT" ]; then
-        #. Enable <type> persistence
-        msg "Enable %s persistence" "$(pq static rootfs)"
-        aufs_arg="$rootfs_mp:$sqfs_mp=ro$NO_PLINK"
-    else
-        STATIC_ROOT=
-        aufs_arg="$aufs_ram_mp:$sqfs_mp=ro$NO_PLINK"
-    fi
+    local aufs_arg="br:$upper_mp:$sqfs_mp=ro$NO_PLINK"
 
     # Do the actual aufs mount
     vmsg 5 "Mount %s at %s" 'aufs' "$(fq $aufs_mp)"
 
-    log_cmd mount -t aufs -o "br:$aufs_arg",noatime $aufs_mp $aufs_mp \
+    log_cmd mount -t aufs -o "$aufs_arg",noatime $aufs_mp $aufs_mp \
         || fatal "Could not mount %s" aufs
-
-    # Grab what we need from /etc before it gets nuked
-    cp -a /etc/mtab $aufs_mp/etc/
-
-    # Always a good idea
-    mkdir -p   $aufs_mp/tmp $aufs_mp/var/tmp
-    chmod 1777 $aufs_mp/tmp $aufs_mp/var/tmp
 }
 
 link_top_dirs() {
@@ -2975,7 +2987,7 @@ dir_has_param() {
 #------------------------------------------------------------------------------
 # Function: get_vid <file>
 #------------------------------------------------------------------------------
-get_vid()   { [ -r "$1" ] && grep ^=== $1 | tail -n 1   ;}
+get_vid()   { [ -r "$1" ] && grep ^=== $1 | tail -n 1 ;}
 
 vid_error() {
     VID_ERROR=$(printf "$@")
@@ -2991,10 +3003,15 @@ vid_error() {
 #------------------------------------------------------------------------------
 
 check_vid() {
-    local sqfs_vid=$1  mp=$2  fname=$3  vid_file="$2$VID_DIR/$3.ver"
+    local sqfs_vid=$1  base=$2  fname=$3
+
+    local vid_file=$base$VID_DIR/$fname
+    msg "vid_file: $vid_file"
+
     breakpoint v "before check VID"
 
-    local rootfs_vid=$(get_vid $vid_file)
+    local rootfs_vid
+    [ "$vid_file" ] && rootfs_vid=$(get_vid $vid_file)
 
     if [ -n "$sqfs_vid" -a -n "$rootfs_vid" ]; then
 
@@ -3011,11 +3028,11 @@ check_vid() {
     elif [ "$sqfs_vid" ]; then
 
         # Pass test and create new rootfs version file if rootfs is empty
-        if ! ls $mp | egrep -q 'etc|bin|lib|var|usr'; then
+        if ! ls $base | egrep -q 'etc|bin|lib|var|usr'; then
             msg "Copy %s to empty %s" "$LINUXFS_NAME $VID_NAME" rootfs
 
-            log_cmd mkdir -p "$mp$VID_DIR"      || return 1
-            log_cmd cp $SQFS_VID_FILE $vid_file || return 2
+            log_cmd mkdir -p $(dirname $vid_file)  || return 1
+            log_cmd cp $SQFS_VID_FILE $vid_file    || return 2
             sync
             return 0
 
@@ -3749,12 +3766,14 @@ mount_and_copy_rootfs() {
 
 _mount_and_copy_rootfs() {
     mount_persist_file rootfs "$ROOTFS_MP" root "$WANT_ROOTFS" "$NEED_ROOTFS" || return 1
+    check_existing_unionfs $ROOTFS_MP
     PERSIST_ROOT_FULL="$PERSIST_FULL_PATH/rootfs"
-    check_vid "$SQFS_VID" "$ROOTFS_MP" rootfs                                 || return 1
+    check_vid "$SQFS_VID" "$ROOTFS_BASE" rootfs.ver                           || return 1
     [ "$STATIC_ROOT" ] || copy_persist_to_ram                                 || return 1
 
     return 0
 }
+
 
 #------------------------------------------------------------------------------
 # Function: copy_persist_to_ram
