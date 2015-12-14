@@ -268,7 +268,13 @@ main_core() {
     breakpoint 1 "before welcome"
 
     # These ones must be loaded before the others
-    echo $LOAD_FIRST | xargs modprobe -q -a 2>/dev/null
+    # Add a cheap black-lister
+    if [ ${#BLACK_LIST} -gt 0 ]; then
+        local bl_regex=${BLACK_LIST//,/|}
+        echo $LOAD_FIRST | tr " " "\n" | sed -r "s/\<($bl_regex)/>//g" | xargs modprobe -q -a 2>/dev/null
+    else
+        echo $LOAD_FIRST | xargs modprobe -q -a 2>/dev/null
+    fi
 
     [ "$DO_HOTPLUG" ] && start_hotplug  $TRACE_LOAD
 
