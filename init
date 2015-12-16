@@ -273,8 +273,10 @@ main_core() {
     # These ones must be loaded before the others
     # Add a cheap black-lister
     if [ ${#BLACK_LIST} -gt 0 ]; then
-        local bl_regex=${BLACK_LIST//,/|}
-        echo $LOAD_FIRST | tr " " "\n" | sed -r "s/\<($bl_regex)/>//g" | xargs modprobe -q -a 2>/dev/null
+        local bl_regex=${BLACK_LIST#,}
+        bl_regex=${bl_regex%,}
+        bl_regex=${bl_regex//,/|}
+        echo $LOAD_FIRST | tr " " "\n" | egrep -v "^($bl_regex)$" | xargs modprobe -q -a 2>/dev/null
     else
         echo $LOAD_FIRST | xargs modprobe -q -a 2>/dev/null
     fi
