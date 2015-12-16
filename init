@@ -3051,7 +3051,11 @@ check_vid() {
 
     elif [ "$sqfs_vid" ]; then
 
+        # This is a hack but it prevents a warning message from the ls command
+        mkdir -p $base
         # Pass test and create new rootfs version file if rootfs is empty
+        # This is funky but if we don't do it here then there will be problems
+        # when "toram" is used.
         if ! ls $base | egrep -q 'etc|bin|lib|var|usr'; then
             msg "Copy %s to empty %s" "$LINUXFS_NAME $VID_NAME" rootfs
 
