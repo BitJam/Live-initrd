@@ -806,8 +806,7 @@ start_hotplug() {
     # Set up file for recording sequence of kernel events sent to mdev
     echo > /dev/mdev.seq
 
-    if true; then
-    #if ! test -e $targ; then
+    if ! test -e $targ; then
         msg "Hotplugging was disabled in the kernel"
         HOTPLUG_DISABLED=true
         return
