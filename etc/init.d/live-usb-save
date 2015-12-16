@@ -286,8 +286,13 @@ restore_state() {
         [ "$dir2" ] || return
         for file in $MSTATE_FILES; do
             test -f $file || continue
-            echo_live "delete state file %s" $(pquote $file)
-            echo_cmd rm -f $file
+            if [ "$file" = /etc/adjtime ]; then
+                echo_live "Reset file %s" $(pquote $file)
+                reset_adjtime $file
+            else
+                echo_live "delete state file %s" $(pquote $file)
+                echo_cmd rm -f $file
+            fi
         done
     fi
 }
@@ -360,6 +365,12 @@ mach_id() {
     fi
     echo "$data" | md5sum | cut -d" " -f1 ;
     return 0
+}
+
+reset_adjtime() {
+    local file=$1
+
+    echo_cmd sed -i -e "1 s/.*/0.0 0 0.0/" -e "2 s/.*/0/" $file
 }
 
 state_files() { echo "$1" | grep -v "^\s*#" | sed "s/\s*#.*//" ;}
