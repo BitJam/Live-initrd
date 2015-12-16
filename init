@@ -1856,7 +1856,7 @@ want_unionfs() {
 need_unionfs() {
     local okay=$1  this=$2
     if [ "$okay" ]; then
-        [ "$USE_UNIONFS" != "$this" ] && warn "Forcing use of %s to match exiting rootfs file" $(pqw $this)
+        [ "$USE_UNIONFS" != "$this" ] && warn "Forcing use of %s to match existing rootfs file" $(pqw $this)
         USE_UNIONFS=$this
     else
         fatal "The %s filesystem is not available. Can't use this %s file" "$this" "rootfs"
@@ -1951,6 +1951,7 @@ try_mount() {
     [ "$type" ] || return 1
     local opts=$rw,noatime
     local winops=$opts,umask=000,dmask=002,fmask=113
+
     case $type in
         ext[234]) log_cmd mount -t $type -o $opts                    $dev "$mp" 2>/dev/null ;;
             vfat) log_cmd mount -t vfat -o shortname=winnt,$winopts  $dev "$mp" 2>/dev/null ;;
