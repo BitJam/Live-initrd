@@ -3032,8 +3032,6 @@ check_vid() {
     local sqfs_vid=$1  base=$2  fname=$3
 
     local vid_file=$base$VID_DIR/$fname
-    msg "vid_file: $vid_file"
-
     breakpoint v "before check VID"
 
     local rootfs_vid
