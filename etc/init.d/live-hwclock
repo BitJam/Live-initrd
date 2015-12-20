@@ -18,6 +18,9 @@ TZ_FILE=/etc/timezone
 
 MARGIN=$((15 * 60))   # 15 Minutes
 
+. /live/lib/live-init-utils.sh
+start_init_logging
+load_translation
 
 #-jbb For debugging
 : ${CMDLINE:=$(cat /proc/cmdline /live/config/cmdline)}
@@ -48,12 +51,9 @@ main() {
 do_start() {
     [ ${#CMD_CLOCK} -gt 0 ] || return
 
-    . /live/lib/live-init-utils.sh
-
-    start_init_logging
-    load_translation
-
    echo_script "Configuring Hardware Clock" $0
+
+   check_rtc || exit 2
 
    mountpoint -q /live/aufs || PRETEND_MODE=true
    [ "$PRETEND_MODE" ] && echo_live "${YELLOW}Pretend mode enabled"
@@ -61,7 +61,7 @@ do_start() {
     case $CMD_CLOCK in
         local|utc) set_hwclock $CMD_CLOCK ;;
               ask) ask_hwclock            ;;
-                *)  error "Unknown %s option: %s" hwclock $(pquote $CMD_CLOCK) ;;
+                *)  error "Unknown %s option: %s" hwclock $(wq $CMD_CLOCK) ;;
     esac
 }
 
