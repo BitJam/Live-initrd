@@ -73,11 +73,32 @@ set_hwclock() {
     #grep -i -q $new $file && return
 
     case $new in
-        local) pretend sed -i 's/^UTC\s*$/LOCAL/' $file
-               pretend hwclock --hctosys --localtime      ;;
-          utc) pretend sed -i 's/^LOCAL\s*$/UTC/' $file
-               pretend hwclock --hctosys --utc            ;;
+        local) set_adjtime LOCAL
+               pretend hwclock --hctosys     ;;
+          utc) set_adjtime UTC
+               pretend hwclock --hctosys     ;;
     esac
+}
+
+set_adjtime() {
+    local file=/etc/adjtime type=$1
+    if test -e $file; then
+        pretend sed -i "3 s/.*/$type/" $file
+    else
+        if [ "$PRETEND_MODE" ]; then
+       cat<<Adjtime
+0.0 0 0.0
+0
+$type
+Adjtime
+        else
+       cat<<Adjtime > $file
+0.0 0 0.0
+0
+$type
+Adjtime
+        fi
+    fi
 }
 
 ask_hwclock() {
