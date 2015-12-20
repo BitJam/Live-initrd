@@ -77,7 +77,11 @@ XTRA_LEAN_SERVICES="
 
 MEAN_SERVICES="
     networking
+    network-manager
+    ntp
     resolvconf
+    smbd
+    nfs-kernel-server
 "
 
 NO_DBUS_SERVICES="
