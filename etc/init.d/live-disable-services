@@ -134,10 +134,6 @@ prep_main() {
         [ "${antiX_param##*[nN]*}" ] ||   DISABLE_NFS=true
     fi
 
-	test -e /live/config/virtualbox || DISABLE_VBOX=true
-
-    [ -z "$must_run" -o -n "$DISABLE_VBOX" -o -n "$DISABLE_NFS" ] || exit 0
-
     . /live/lib/live-init-utils.sh
 
     start_init_logging
@@ -148,6 +144,18 @@ main() {
     # Prevent other messages stepping on ours
     # sleep 2
     echo_script "Customizing services" $0
+
+    if test -e /live/config/virtualbox; then
+        echo_live "Enabling %s services" "$(pquote Virtual Box)"
+        update-rc.d virtualbox-guest-utils defaults
+        update-rc.d virtualbox-guest-x11   defaults
+    else
+        echo_live "Disabling %s services" "$(pquote Virtual Box)"
+        update-rc.d virtualbox-guest-utils remove
+        update-rc.d virtualbox-guest-x11   remove
+    fi
+
+    [ -z "$must_run" -o -n "$DISABLE_NFS" ] || exit 0
 
     if [ "$LEAN" ]; then
 
