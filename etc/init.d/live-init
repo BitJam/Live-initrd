@@ -504,9 +504,10 @@ detect_kms_driver() {
 detect_sisimedia_driver() {
     local video_modules=$1  xorg_driver=sisimedia
     echo "$video_modules" | egrep -q "^($SISIMEDIA_K_DRIVERS)$" || return
-    echo_live "Found sis kernel modules ..."
+    #. Found <type> kernel modules ...
+    echo_live "Found %s kernel modules ..." sis
     test -e $XORG_DRIVER_DIR/${xorg_driver}_drv.so || return
-    echo_live "found $xorg_driver xorg driver"
+    echo_live "Found %s xorg driver" $xorg_driver
 
     # Add "default" only if there is no previous XORG_ARGS
     # Always add the "sisimedia" driver
