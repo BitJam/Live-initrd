@@ -193,11 +193,15 @@ check_hwclock() {
         yes_no_quit "Would you like to set the hardware clock manually to UTC or localtime" \
             && manual_set_hwclock
 
+        exit 0
+
     elif [ $diff_utc_loc -lt $MARGIN ]; then
         echo_live "Your local timezone and the UTC timezone are currently close but not the same"
         echo_live "They both say the current time is within 15 minutes of %s" "$(pquote $loc_str)"
         yes_no_quit "Would you like to set the hardware clock manually to UTC or localtime" \
             && manual_set_hwclock
+
+        exit 0
     else
         guess_hwclock "$utc_str" "$loc_str"
     fi
