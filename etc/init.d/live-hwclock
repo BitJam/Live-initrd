@@ -406,13 +406,29 @@ pqe()    { echo "$bold_co$*$err_co"       ;}
 
 get_hwclock() { LANG=en_US.UTF-8 hwclock --show $* | sed 's/  .*//'; }
 
-show_time() { echo_live "%12s:$START_PARAM %s" "$1" "$2"; }
-show_unix() { echo_live "%15s Unix:$START_PARAM %10s" "$1" "$2" ; }
+show_time() { echo_live '%12s:%s %s" "$1' $START_PARAM "$2"; }
+show_unix() { echo_live '%15s Unix:%s %10s' "$1" $START_PARAM "$2" ; }
 
 debug() { [ ${#db_hwc} -gt 0 ] && echo "$*"; }
 
+
+check_rtc() {
+    find_rtc && return 0
+    modprobe rtc-cmos
+    find_rtc && return 0
+    error "The realtime clock is not enabled.  Can't check hardware clock"
+    return 2
+}
+
+find_rtc() {
+    for x in "" 0 1 2 3; do
+        test -e $(readlink -f /dev/rtc$x) && return 0
+    done
+    return 1
+}
 write_to_file() {
     local file=$1
+    shift
     local dir=$(dirname $file)
     mkdir -p $dir
     echo -e "$*" > $file
@@ -420,6 +436,7 @@ write_to_file() {
 
 append_file() {
     local file=$1
+    shift
     local dir=$(dirname $file)
     mkdir -p $dir
     echo -e "$*" >> $file
@@ -432,6 +449,12 @@ pretend() {
         "$@"
     fi
 }
+
+fatal() {
+    error "$@"
+    exit 2
+}
+
 #-------------------------------------------------------------------------------
 #-------------------------------------------------------------------------------
 main "$@" 2>&1 | tee -a $INIT_LOG_FILE
