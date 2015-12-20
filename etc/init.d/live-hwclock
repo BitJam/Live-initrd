@@ -220,11 +220,11 @@ guess_hwclock() {
 Select_Data
 )
 
-    local select_menu=$(cat <<Select_Menu
-  1:   UTC: $(bold $utc_str) is within 10 minutes of the correct time.
-  2: Local: $(bold $loc_str) is within 10 minutes of the correct time.
-  3: Neither are within 10 minutes of the correct time.
-  4: Both are within 10 minutes of the correct time.
+    local select_menu=$(cat <<Select_Menu | sed -r -e "s/( [0-9]+)(\))/$green\1$white\2$nc_co/"
+   1)   UTC: $(bold $utc_str) is within 10 minutes of the correct time.
+   2) Local: $(bold $loc_str) is within 10 minutes of the correct time.
+   3) Neither are within 10 minutes of the correct time.
+   4) Both are within 10 minutes of the correct time.
 Select_Menu
 )
 
