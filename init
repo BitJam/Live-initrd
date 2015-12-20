@@ -2940,6 +2940,13 @@ cp_rm_dest() {
 # Function: cp_dir <sorc> <dest>
 #------------------------------------------------------------------------------
 cp_dir() {
+    local from=$1  to=$2
+    mkdir -p "$to"
+    [ -z "$(ls $from)" ] && return 0
+    time_cmd cp -a $from/* $to
+}
+
+old_cp_dir() {
     mkdir -p "$2"
     echo -n $hi_co
     local tar=$LIVE_BIN/tar
