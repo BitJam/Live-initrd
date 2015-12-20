@@ -99,6 +99,7 @@ prep_main() {
                exit 1   ;;
     esac
 
+    local must_run
     : ${CMDLINE:=$(cat /proc/cmdline)}
     for param in $CMDLINE; do
         case "$param" in
