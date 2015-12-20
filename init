@@ -216,6 +216,11 @@ main_wrapper() {
     run_init_scripts $NEW_ROOT $LIVE_SCRIPTS
     PATH=$LIVE_BIN
 
+    test -r /late-umount.sh && . /late-umount.sh
+    sync
+    late_umount $PERSIST_DEVICE
+    late_umount $SQFILE_DEV
+
     #free -m >> $MY_LOG
     echo 3 > /proc/sys/vm/drop_caches
     vmsg 6 'drop caches'
@@ -450,9 +455,9 @@ main_core() {
     # before or after we run the init scripts!  But we lose some of the variables
     # when not run inside of main_core().
 
-    sync
-    late_umount $PERSIST_DEVICE
-    late_umount $SQFILE_DEV
+    #sync
+    #late_umount $PERSIST_DEVICE
+    #late_umount $SQFILE_DEV
 
     breakpoint 7 "before prepare switch_root"
 
@@ -461,6 +466,14 @@ main_core() {
     write_ntfs_pids $FINAL_DIR/aufs/run/sendsigs.omit.d/initrd-ntfs-3g
 
     echo $LAST_BP_TIME > /LAST_BP_TIME
+
+    cat<<Late_Umount > late-umount.sh
+PERSIST_DEVICE="$PERSIST_DEVICE"
+SQFILE_DEV="$SQFILE_DEV"
+HOMEFS_DEV="$HOMEFS_DEV"
+ROOTFS_DEV="$ROOTFS_DEV"
+LINUXFS_DEV="$LINUXFS_DEV"
+Late_Umount
 }
 
 #------------------------------------------------------------------------------
