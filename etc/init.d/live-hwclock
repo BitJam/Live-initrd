@@ -116,6 +116,7 @@ check_timezone() {
     read orig_tz 2>/dev/null <$TZ_FILE
     : ${TZ:=$orig_tz}
     [ ${#TZ} -eq 0 ] && fatal "No timezone found in file %s" $(pquote $TZ_FILE)
+    export TZ
 
     while true ; do
         yes_no_quit "$LIVE_COLOR$(printf "Is %s your current timezone" "$(pquote $TZ)")"
@@ -123,18 +124,30 @@ check_timezone() {
         case $ret in
              0) if [ "$orig_tz" != "$TZ" ]; then
                     export TZ
-                    pretend write_to_file $TZ_FILE $TZ
-                    # For localizing repos in live-init
-                    pretend append_file /live/config/cmdline "tz=$TZ"
+                    set_timezone $TZ
                 fi
-                return 0     ;;
-             1) set_timezone ;;
-             2) return 1     ;;
+                return 0        ;;
+             1) select_timezone ;;
+             2) return 1        ;;
         esac
     done
 }
 
 set_timezone() {
+    local tz=$1
+    local zone_file=$(readlink -f /usr/share/zoneinfo/$tz)
+    if test -f $zone_file; then
+        echo_live "Setting timezone and localtime to %s" "$(pquote $tz)"
+        pretend write_to_file $TZ_FILE $tz
+        pretend cp -f $(readlink -f $zone_file) /etc/localtime
+        # For localizing repos in live-init
+        pretend append_file /live/config/cmdline "tz=$tz"
+    else
+        error "Unknown time zone %s" "$(wq $tz)"
+    fi
+}
+
+select_timezone() {
     local DISTRO distro_file=/live/config/distro
     test -r distro_file && read DISTRO 2>/dev/null $distro_file
     : ${DISTRO:=MX}
