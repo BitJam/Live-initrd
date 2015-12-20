@@ -899,9 +899,13 @@ do_welcome() {
 
     [ "$NO_CLEAR" ] || clear   # Clear and reset screen
 
-    local pretty_name=$1 version=$2  v_date=$3
+    local pretty_name=$1 version=$2  v_date=$3  arch
+    case $(uname -m) in
+          i686) arch=" 32-bit" ;;
+        x86_64) arch=" 64-bit" ;;
+    esac
 
-    vmsg 2 "Welcome to %s" "$(pq $(uname -m) $pretty_name)!"
+    vmsg 2 "Welcome to %s" "$(pq $pretty_name$arch)!"
 
     if lspci -n | grep -q " 80ee:beef"; then
         msg 'VirtualBox detected'
