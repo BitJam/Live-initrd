@@ -167,33 +167,33 @@ main() {
             LEAN_SERVICES="$LEAN_SERVICES $LAPTOP_SERVICES"
         fi
 
-        echo_live "Disabling services %s" "$(paren L, lean)"
-        disable_services "$LEAN_SERVICES" "rc3.d rc5.d"
+        echo_live "Disabling some services %s" "$(paren L, lean)"
+        disable_services "$LEAN_SERVICES"
     fi
 
     if [ "$DISABLE_VBOX" ]; then
-        echo_live "Disabling Virtual Box extensions"
+        echo_live "Disabling %s services %s" "Virtual Box" "$(paren v)"
         disable_services "$VBOX_SERVICES"
     fi
 
     if [ "$DISABLE_NFS" ]; then
-        echo_live "Disabling NFS kernel server"
+        echo_live "Disabling %s services" "NFS kernel server"
         disable_services "$NFS_SERVICES"
     fi
 
     if [ "$MEAN" ]; then
-        echo_live "Disabling network auto start %s" "$(paren M, mean)"
-        disable_services "$MEAN_SERVICES" "rcS.d"
+        echo_live "Disabling network services %s" "$(paren M, mean)"
+        disable_services "$MEAN_SERVICES"
     fi
 
     if [ "$XTRA_LEAN" ]; then
         echo_live "Disabling more services %s" "$(paren X, Xtralean)"
-        disable_services "$XTRA_LEAN_SERVICES" "rcS.d"
+        disable_services "$XTRA_LEAN_SERVICES"
     fi
 
     if [ "$NO_DBUS" ]; then
-        echo_live "Disabling dbus %s" "$(paren D, nodbus)"
-        disable_services "$NO_DBUS_SERVICES" "rc3.d rc5.d"
+        echo_live "Disabling %s services %s" "debus" "$(paren D, nodbus)"
+        disable_services "$NO_DBUS_SERVICES"
     fi
 }
 
