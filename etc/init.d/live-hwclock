@@ -38,11 +38,10 @@ umask 022
 
 main() {
     case "$1" in
-        start)
-            do_start ;;
-        *)
-            echo "Usage: $0 {start}"
-            exit 1 ;;
+                start) do_start ;;
+        ask|utc|local) CMD_CLOCK=$1 ;  do_start ;;
+                    *) echo "Usage: $0 {start|ask|utc|local}"
+                       exit 1 ;;
     esac
 }
 
