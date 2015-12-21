@@ -135,16 +135,23 @@ time_it() {
 
 load_translation() {
     local file=${1:-$(basename $0)}.xlat
-    local lang full
+    local lang full found
+
+    full=$INIT_XLAT_DIR/en/$file
+    if [ -r $full ]; then
+        . $full
+        found=true
+    fi
 
     if [ "$LIB_CMD_LANG" ]; then
         lang=${LIB_CMD_LANG%_*}
         full=$INIT_XLAT_DIR/$lang/$file
-        [ -r $full ] && . $full && return 0
+        if [ -r $full ]; then
+            . $full
+            found=true
+        fi
     fi
-
-    full=$INIT_XLAT_DIR/en/$file
-    [ -r $full ] && . $full && return 0
+    [ "$found" ] && return
     echo "${RED}ERROR:$NO_COLOR Could not find xlat file for $(basename $0)!" 1>&2
 }
 
