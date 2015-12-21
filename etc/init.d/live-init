@@ -318,12 +318,20 @@ localize_repo() {
         mirror=
     fi
 
+    case $tz in
+        */UTC|UTC) tz=$lang_tz ;;
+    esac
+
     local arg=$mirror         # cheat mirror=xx overides all else
     : ${arg:=$tz}             # next come tz=xxx/yyy cheat (or via tz menu)
     : ${arg:=$lang_tz}        # The lang based timezone
     : ${arg:=$lang_mirror}    # The lang based mirror should never be needed
 
     [ "$arg" ] || return
+
+    case $arg in
+        */UTC|UTC) return ;;
+    esac
 
     sources_dir=/etc/apt/sources.list.d
     first_write $sources_dir || [ "$mirror" -o "$tz" ] || return
