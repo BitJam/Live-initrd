@@ -195,6 +195,8 @@ main_wrapper() {
 
     read LAST_BP_TIME < /LAST_BP_TIME
 
+    start_hotplug
+
     # Nota Bene: when error log is enabled, main_core() runs in a subshell
     # so it cannot affect our variables.
 
@@ -285,7 +287,7 @@ main_core() {
         echo $LOAD_FIRST | xargs modprobe -q -a 2>/dev/null
     fi
 
-    [ "$DO_HOTPLUG" ] && start_hotplug  $TRACE_LOAD
+    start_hotplug
 
     do_welcome "$DISTRO_PRETTY_NAME" "$VERSION" "$VERSION_DATE"
     show_bootcodes "$(live_param_filter $UNKNOWN_BOOTCODES)"
@@ -461,6 +463,8 @@ main_core() {
     #sync
     #late_umount $PERSIST_DEVICE
     #late_umount $SQFILE_DEV
+
+    stop_hotplug
 
     breakpoint 7 "before prepare switch_root"
 
@@ -810,13 +814,27 @@ valid_int() {
 }
 
 coldplug_delay() {
-    [ "$HOTPLUG_DISABLED" ] || return
-    msg "Waiting %s seconds for buses to settle ..."  $COLDPLUG_DELAY
+    [ "$COLDPLUG_DELAY" ] || return
+    msg "Waiting %s seconds for buses to settle ..."  $(nq $COLDPLUG_DELAY)
     sleep $COLDPLUG_DELAY
-    coldplug_modules
 }
 
 start_hotplug() {
+    [ "$DO_HOTPLUG" ] || return
+    hotplug_loop &>/dev/null 17>/dev/null &
+    HOTPLUG_PID=$!
+    vmsg 6 'Hotplug pid: %s' $(nq $HOTPLUG_PID)
+    echo $HOTPLUG_PID > /HOTPLUG_PID
+}
+
+hotplug_loop() {
+    while : ; do
+        find /sys/devices -name modalias -print0 | xargs -0 sort -u | xargs modprobe -a -q -b 2>/dev/null
+        sleep 0.2
+    done
+}
+
+old_start_hotplug() {
     local trace_load=$1  targ=/proc/sys/kernel/hotplug
 
     # Set up file for recording sequence of kernel events sent to mdev
@@ -835,6 +853,14 @@ start_hotplug() {
 }
 
 stop_hotplug() {
+    test -r /HOTPLUG_PID || return
+    read HOTPLUG_PID < /HOTPLUG_PID
+    vmsg 6 'kill hotplug pid: %s' $(nq $HOTPLUG_PID)
+    rm /HOTPLUG_PID
+    kill -9 $HOTPLUG_PID
+}
+
+old_stop_hotplug() {
     local targ=/proc/sys/kernel/hotplug
     test -e $targ && echo | tee $targ &>/dev/null
 }
