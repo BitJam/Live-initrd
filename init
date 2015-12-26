@@ -947,6 +947,10 @@ do_welcome() {
         x86_64) arch=" 64-bit" ;;
     esac
 
+    case $(uname -r) in
+        *[pP][aA][eE]) arch="$arch pae" ;;
+    esac
+
     vmsg 2 "Welcome to %s" "$(pq $pretty_name$arch)!"
 
     if lspci -n | grep -q " 80ee:beef"; then
