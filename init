@@ -2690,9 +2690,9 @@ select_device() {
     local line pretty skip data display
     local free_rev type_rev name_rev size_rev
     #local format="$green%3s $lt_cyan%-5s $magenta%8s $yellow%8s $lt_blue%10s $lt_gray%9s $white%-16s $lt_gray%s\n"
-    local format="$green%3s $lt_cyan%s%-5s$nc_co $magenta%s%8s$nc_co $yellow%s%8s$nc_co $lt_blue%s%10s$nc_co $lt_gray%10s  $white%-16s $lt_gray%s\n"
-    local head_fmt="${hi_co}%3s %-5s %8s %8s %10s %10s  %-16s %s\n"
-    local header=$(printf "$head_fmt" "" Name Size Free FS-type Removable Label Model)
+    local format="$green%3s $lt_cyan%s%-9s$nc_co $magenta%s%5s$nc_co $yellow%s%5s$nc_co $lt_blue%s%10s$nc_co $lt_gray%6s $lt_gray%-16s $white%s\n"
+    local head_fmt="${hi_co}%3s %-9s %5s %5s %10s %6s %-16s %s\n"
+    local header=$(printf "$head_fmt" "" Name Size Free FS-type Remove Model Label)
     local title="$title\n$header"
 
     mkdir -p $mp
@@ -2783,7 +2783,8 @@ select_device() {
         [ "$remove" = 1 ] && rtype="yes"
 
         pretty=$(printf "$format" "$cnt_lab" "$name_rev" "$name" "$size_rev" "$size_lab" \
-            "$free_rev" "$free_lab" "$type_rev" "$type" "$rtype" "$label" "$model")
+            "$free_rev" "$free_lab" "$type_rev" "$type" "$rtype" "$model" "$label")
+
 
         local display="${display}$pretty\n"
 
