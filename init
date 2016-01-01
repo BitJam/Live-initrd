@@ -2366,6 +2366,7 @@ time_cmd() {
     local pid=$!
     "$@"
     local ret=$?
+    sync
     local t1=$(get_time)
     local secs=$(get_seconds $((t1 - t0)))
     kill -9 $pid
