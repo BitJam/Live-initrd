@@ -1288,7 +1288,7 @@ _find_files() {
         partition=${device_id##name=}
         partition=/dev/${partition##*/}
         root_device=${partition%[0-9]}
-        root_device=${root_device%[0-9]}
+        root_device=${root_device%[p0-9]}
     fi
 
     unset FOUND_DEV FOUND_MP
