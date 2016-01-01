@@ -2707,20 +2707,23 @@ select_device() {
 
         local name=${line%%:*}
         name=${name##*/}
-        [ ${#name} -eq 0 -o ${#name} -gt 8 ] && continue
+        [ ${#name} -eq 0 -o ${#name} -gt 10 ] && continue
         #case $name in sd?[0-9]*) ;; *) continue ;; esac
 
         local type=$(echo "$line" | sed -n -r 's/.* TYPE="([^"]*)"$/\1/p' | tail -n 1)
         #uuid=$(echo "$line" | sed -n -r -e 's/" (UUID=|TYPE=)".*//' -e 's/[^:]*: LABEL="//p')
         local label=$(echo "$line" | sed -n -r -e 's/" (UUID=|TYPE=)".*//' -e 's/[^:]*: LABEL="//p')
 
-        local drive_name=${name%%[0-9]*}/
-        local model=$(cat  /sys/block/$drive_name/device/model 2>/dev/null)
-        local remove=$(cat /sys/block/$drive_name/removable    2>/dev/null)
-        local reado=$(cat  /sys/block/$drive_name/$name/ro     2>/dev/null)
-        local size=$(cat   /sys/block/$drive_name/$name/size   2>/dev/null)
-        size=$((size / 2 / 1024))
+        local drive_name=${name%[0-9]}
+        local drive_name=${drive_name%[p0-9]}
+        local sys_dir=/sys/block/$drive_name
+        local model=$(head -c 16  $sys_dir/device/model 2>/dev/null)
+        local remove=$(cat        $sys_dir/removable    2>/dev/null)
+        local reado=$(cat         $sys_dir/$name/ro     2>/dev/null)
+        local size=$(cat          $sys_dir/$name/size   2>/dev/null)
 
+        [ -z "$size" ] && continue
+        size=$((size / 2 / 1024))
         local dev=/dev/$name
 
         [ "$reado" = 1 ] && continue
