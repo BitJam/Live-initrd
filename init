@@ -2886,8 +2886,7 @@ uuid_to_dev() {
     local dev line id
     while read dev line; do
         id=$(echo "$line" | sed -n -r 's/(^|.* )UUID="([^"]*)"( |$).*/\2/p')
-        [ ${#id} -eq 0 ] && continue
-        [ -n "$id" -a -z "${id##$uuid}" ] && devices="$devices${devices:+ }$dev"
+        [ ${#id} -gt 0 -a -z "${id##$uuid}" ] && devices="$devices${devices:+ }$dev"
     done <<EOT
 $(blkid)
 EOT
