@@ -71,7 +71,7 @@
 
         # Note: adding "crc32c-generic" works around a bug in the kernel:
         # https://github.com/manjaro/packages-core/issues/8
-        LOAD_FIRST="usb-common usbcore ehci-hcd fusbh200-hcd fotg210-hcd battery aufs overlay crc32c-generic"
+        LOAD_FIRST="usb-common usbcore ehci-hcd fusbh200-hcd fotg210-hcd battery aufs overlay crc32c-generic mmc-block"
 
           VID_NAME=VID
       LINUXFS_NAME=linuxfs
