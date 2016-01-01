@@ -1191,7 +1191,7 @@ from_filter() {
         case $(stat -c %t $dev) in
 
             b) cd_devs="$cd_devs $dev" ;;
-   3|8|22|179) if is_usb_or_removable $dev; then
+    3|8|22|b3) if is_usb_or_removable $dev; then
                     usb_devs="$usb_devs $dev"
                 else
                     hd_devs="$hd_devs $dev"
@@ -2729,8 +2729,8 @@ select_device() {
         esac
 
         case $(stat -c %t $dev) in
-            [38]|22|179)   ;;
-            *)    continue ;;
+             [38]|22|179|b3) ;;
+             *)    continue  ;;
         esac
 
         size_rev=
