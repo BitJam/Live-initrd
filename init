@@ -2864,7 +2864,7 @@ label_device() {
         yes_NO "Give %s the label %s" $(pq $dev) "$(pq "$new")" || return
     fi
 
-    log_cmd ld_path $pre "$new" $post || return
+    log_cmd ld_path $pre "$new" $post 2>&1 || return
 
     msg "Label updated to %s" $(pq $new)
 }
