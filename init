@@ -3544,7 +3544,7 @@ mount_persist_device() {
     if [ -z "$from_persist" -a -z "$PERSIST_ID" ]; then
 
         case $(stat -c %t $SQFILE_DEV) in
-         [38]|22|179) ;;
+         [38]|22|b3) ;;
             *) warn "Can't use %s as a persistence device" $(pqw $SQFILE_DEV)
                return 20 ;;
         esac
