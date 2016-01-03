@@ -1816,15 +1816,21 @@ linuxfs_error() {
 }
 
 check_kernel_version() {
-    local mp=$1
+    local mp=${1%/}  fatal=$2
     local kversion=$(uname -r)
     local mod_dir=/lib/modules/$kversion
 
     [ -d $mp$mod_dir ] && return
 
-    _non_fatal "Kernel version mismatch" \
-        "$(printf "Kernel version %s" $(pqh $kversion))" \
-        "$(printf "The module directory %s is missing" $(pqh $mp$mod_dir))"
+    if [ "$fatal" ]; then
+        _fatal "Kernel version mismatch" \
+            "$(printf "Kernel version %s" $(pqh $kversion))" \
+            "$(printf "The module directory %s is missing" $(pqh $mp$mod_dir))"
+    else
+        _non_fatal "Kernel version mismatch" \
+            "$(printf "Kernel version %s" $(pqh $kversion))" \
+            "$(printf "The module directory %s is missing" $(pqh $mp$mod_dir))"
+    fi
 }
 
 #==============================================================================
@@ -1881,7 +1887,8 @@ check_unionfs() {
     [ "$OVERLAY_OKAY" ] && vmsg 6 "Found %s" overlay
 
     case $AUFS_OKAY:$OVERLAY_OKAY in
-            :) fatal "Neither %s nor %s is available" aufs overlayfs ;;
+            :)  check_kernel_version / fatal
+                fatal "Neither %s nor %s is available" aufs overlayfs ;;
     esac
 
     case $WANT_UNIONFS in
