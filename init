@@ -2716,40 +2716,36 @@ select_device() {
     (bogo_meter)&
     local pid=$!
 
-    while read -r line ; do
+    local name
+    while read -r name line ; do
 
-        local name=${line%%:*}
-        name=${name##*/}
         [ ${#name} -eq 0 -o ${#name} -gt 10 ] && continue
         #case $name in sd?[0-9]*) ;; *) continue ;; esac
 
         local type=$(echo "$line" | sed -n -r 's/.* TYPE="([^"]*)"$/\1/p' | tail -n 1)
         #uuid=$(echo "$line" | sed -n -r -e 's/" (UUID=|TYPE=)".*//' -e 's/[^:]*: LABEL="//p')
-        local label=$(echo "$line" | sed -n -r -e 's/" (UUID=|TYPE=)".*//' -e 's/[^:]*: LABEL="//p')
-
-        local drive_name=${name%[0-9]}
-        local drive_name=${drive_name%[p0-9]}
-        local sys_dir=/sys/block/$drive_name
-        local model=$(head -c 16  $sys_dir/device/model 2>/dev/null)
-        local remove=$(cat        $sys_dir/removable    2>/dev/null)
-        local reado=$(cat         $sys_dir/$name/ro     2>/dev/null)
-        local size=$(cat          $sys_dir/$name/size   2>/dev/null)
-
-        [ -z "$size" ] && continue
-        size=$((size / 2 / 1024))
-        local dev=/dev/$name
-
-        [ "$reado" = 1 ] && continue
-
         case $type in
             ""|udf|iso9660|swap|squashfs) continue
         esac
 
+        local disk_name  dev=/dev/$name
         case $(stat -c %t $dev) in
-             [38]|22|179|b3) ;;
-             *)    continue  ;;
+            [38]|22)  disk_name=${name%[0-9]};  disk_name=${disk_name%[0-9]} ;;
+             179|b3)  disk_name=${name%p[0-9]}                               ;;
+                  *)  continue                                               ;;
         esac
 
+        local sys_dir=/sys/block/$disk_name
+        local model=$(head -c 16  $sys_dir/device/model 2>/dev/null)
+        local remove=$(cat        $sys_dir/removable    2>/dev/null)
+        local reado=$(cat         $sys_dir/$name/ro     2>/dev/null)
+        local size=$(cat          $sys_dir/$name/size   2>/dev/null)
+        [ "$reado" = 1 ] && continue
+        [ -z "$size" ] && continue
+        size=$((size / 2 / 1024))
+
+
+        local label=$(echo "$line" | sed -n -r -e 's/" (UUID=|TYPE=)".*//' -e 's/[^:]*: LABEL="//p')
         size_rev=
         name_rev=
         free_rev=
@@ -2810,7 +2806,7 @@ select_device() {
         cnt=$((cnt + 1))
 
     done <<Blkid
-$(blkid | sed -r -e 's=^(/dev/sd.[0-9][0-9]):=\1+\1:=' -e 's=^(/dev/sd.)([0-9]):=\10\2+\1\2:=' | sort)
+$(sorted_blkid)
 Blkid
     kill -9 $pid
     echo
@@ -2836,6 +2832,19 @@ Blkid
     my_select_2 "$title" $var "0" "$data" "$display"
     echo -e "$display" >> $MY_LOG
     return 0
+}
+
+#------------------------------------------------------------------------------
+# sort blkid output by device name, including a numerical sort when the sd
+# partition numbers have two-digits.  Strip off leading "/dev/" and the ":".
+#------------------------------------------------------------------------------
+sorted_blkid() {
+    blkid | sed -r \
+            -e 's=^/dev/==' \
+            -e 's=^(sd.[0-9][0-9]):=\1+\1:=' \
+            -e 's=^(sd.)([0-9]):=\10\2+\1\2:=' \
+        | sort \
+        | sed -e 's/^sd.[0-9][0-9]+//' -e 's/://'
 }
 
 label_device() {
