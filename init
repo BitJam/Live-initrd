@@ -2942,16 +2942,16 @@ label_error() {
     err "No device with %s was found" "$name $(cqe $value)"
 
     vmsg_nc 3 "Valid %s" "${name}s:"
-    local val
-    while read val; do
-        [ "$val" ] && echo "$white  $param=$val$nc_co"
+    local dev val
+    while read dev val; do
+        [ "$val" ] && printf "  %-10s $white $param=$val$nc_co\n" $dev
     done <<Label_Error
 $(
 case $name in
     label)
-        blkid | sed -n -r -e 's/" (UUID=|TYPE=)".*//' -e 's/[^:]*: LABEL="//p' ;;
+        sorted_blkid | sed -n -r -e 's/" (UUID=|TYPE=)".*//' -e 's/ LABEL="/ /p' ;;
      uuid)
-        blkid | sed -n -r 's/.* UUID="([^"]*)"( |$).*/\1/p' ;;
+        sorted_blkid | sed -n -r 's/^([^ ]*).* UUID="([^"]*)"( |$).*/\1 \2/p' ;;
 esac
 )
 Label_Error
