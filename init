@@ -1282,13 +1282,19 @@ _find_files() {
         short_files=$files
     fi
 
-    local last_list root_device partition partition_error
+    local last_list disk_device partition partition_error
 
+    # Find disk device if we are looking for a named partition.
+    # This lets us bail early if the disk is found but the partition is not.
     if [ -n "$device_id" -a -z "${device_id##name=*}" ]; then
         partition=${device_id##name=}
-        partition=/dev/${partition##*/}
-        root_device=${partition%[0-9]}
-        root_device=${root_device%[p0-9]}
+        partition=${partition##*/}
+        case $partition in
+            mmcblk*) disk_device=${partition%p[0-9]}                                    ;;
+                  *) disk_device=${partition%[0-9]}  ; disk_device=${disk_device%[0-9]} ;;
+        esac
+        disk_device=/dev/$disk_device
+        partition=/dev/$partition
     fi
 
     unset FOUND_DEV FOUND_MP
@@ -1402,12 +1408,12 @@ _find_files() {
             # Give up early if the root device is found but the partition is not
             # But wait a second in case there is a delay for the partitions to show
             if [ "$partition_error" ]; then
-                warn "Found root device %s but not partition %s" "$(pqw $root_device)" "$(pqw $partition)"
+                warn "Found root device %s but not partition %s" "$(pqw $disk_device)" "$(pqw $partition)"
                 sleep 1
                 final_try=true
             fi
 
-            [ "$root_device" -a -e "$root_device" -a ! -e $partition ] && partition_error=true
+            [ "$disk_device" -a -e "$disk_device" -a ! -e $partition ] && partition_error=true
 
             find_device "$find_type" "$try" "$final_try" "$device_id" || return $?
             if [ -z "$DEVICE_LIST" ]; then
