@@ -226,11 +226,6 @@ main_wrapper() {
 
     confile remasterable && run_init_scripts $NEW_ROOT live-usb-storage
 
-    #free -m >> $MY_LOG
-    echo 3 > /proc/sys/vm/drop_caches
-    vmsg 6 'drop caches'
-    #free -m >> $MY_LOG
-
     breakpoint 9 "right before starting init"
 
     stop_hotplug
@@ -246,6 +241,11 @@ main_wrapper() {
 
     # re-enable console screen blanking at 15 minutes
     [ "$VT_BLANK" ] && printf "\e[9;$VT_BLANK]\e[14;$VT_BLANK]"
+
+    #free -m >> $MY_LOG
+    echo 3 > /proc/sys/vm/drop_caches
+    vmsg 6 'drop caches'
+    #free -m >> $MY_LOG
 
     if find_init_prog INIT_PROG $NEW_ROOT; then
 
