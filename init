@@ -646,7 +646,8 @@ read_cmdline_params()
                         noplink) NO_PLINK=,noplink                               ;;
                           plink) NO_PLINK=                                       ;;
 
-                      vfatuid=*) valid_int USER_UID $param
+                       fatuid=*) any_int USER_UID $param                         ;;
+
         #----- Some known codes -------------------------
 
         [sS1-6]|BOOT_IMAGE=*);;
