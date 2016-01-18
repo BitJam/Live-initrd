@@ -224,6 +224,8 @@ main_wrapper() {
     late_umount $PERSIST_DEVICE
     late_umount $SQFILE_DEV
 
+    confile remasterable && run_init_scripts $NEW_ROOT live-usb-storage
+
     #free -m >> $MY_LOG
     echo 3 > /proc/sys/vm/drop_caches
     vmsg 6 'drop caches'
