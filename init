@@ -544,7 +544,7 @@ read_cmdline_params()
                       overlayfs) WANT_UNIONFS=overlay                            ;;
                           menus) DO_MENUS=${MENUS_LIST:-ltopd}                   ;;
                         menus=*) DO_MENUS=$DO_MENUS$value                        ;;
-            rootdelay=*|delay=*) valid_int COLDPLUG_DELAY $param                 ;;
+            rootdelay=*|delay=*) small_int COLDPLUG_DELAY $param                 ;;
                 hwclock=*|hwc=*) DO_HWCLOCK=true                                 ;;
                        old-conf) NO_NEW_OUTPUT=true                              ;;
                        new-conf) NO_OLD_OUTPUT=true                              ;;
@@ -557,7 +557,7 @@ read_cmdline_params()
              bootuuid=*|buuid=*) BOOT_ID=uuid=$value                             ;;
                bootdev=*|bdev=*) BOOT_ID=name=$value                             ;;
 
-                  try=*|retry=*) valid_int RETRY_TIME $param                     ;;
+                  try=*|retry=*) small_int RETRY_TIME $param                     ;;
 
             persistdir=*|pdir=*) PERSIST_PATH=${value#/}                         ;;
 
@@ -565,7 +565,7 @@ read_cmdline_params()
           persistuuid=*|puuid=*) PERSIST_ID=uuid=$value   ;  SET_PERSIST=true    ;;
             persistdev=*|pdev=*) PERSIST_ID=name=$value   ;  SET_PERSIST=true    ;;
 
- persistretry=*|pretry=*|ptry=*) valid_int PERSIST_RETRY $param                  ;;
+ persistretry=*|pretry=*|ptry=*) small_int PERSIST_RETRY $param                  ;;
 
                           dbv=*) DBV=$value                                      ;;
                         fneed=*) FRUGAL_NEEDED=$value                            ;;
@@ -588,7 +588,7 @@ read_cmdline_params()
                        sqname=*) SQFILE_NAME=${value#/}                          ;;
                            sq=*) SQFILE_FILE=$value                              ;;
 
-           verbose=*|verb=*|v=*) valid_int VERBOSE $param                        ;;
+           verbose=*|verb=*|v=*) small_int VERBOSE $param                        ;;
                            bp=*) BREAK_POINTS=$BREAK_POINTS,$value               ;;
                            pk=*) PRINTK=$value                                   ;;
 
@@ -637,7 +637,7 @@ read_cmdline_params()
                       errtest=*) TEST_FATAL=$value                               ;;
                         noerr=*) NO_ERROR=$value                                 ;;
 
-                      vtblank=*) valid_int VT_BLANK $param                       ;;
+                      vtblank=*) small_int VT_BLANK $param                       ;;
 
                livedir=*|ldir=*) FINAL_DIR=$value                                ;;
         pw|passwd|pw=*|passwd=*) FORCE_PASSWD=true                               ;;
@@ -645,6 +645,8 @@ read_cmdline_params()
                       bootchart) INIT_COMMAND=/sbin/bootchartd                   ;;
                         noplink) NO_PLINK=,noplink                               ;;
                           plink) NO_PLINK=                                       ;;
+
+                      vfatuid=*) valid_int USER_UID $param
         #----- Some known codes -------------------------
 
         [sS1-6]|BOOT_IMAGE=*);;
@@ -805,7 +807,7 @@ read_cmdline_params()
     done
 }
 
-valid_int() {
+small_int() {
     local var=$1 val=${2#*=} name=${2%%=*} param=$2
 
     case $val in
@@ -813,6 +815,16 @@ valid_int() {
         [0-9]|[0-9][0-9]) eval $var=\$val;  return ;;
 
     esac
+    INTEGER_ERRORS="$INTEGER_ERRORS $param"
+}
+
+any_int() {
+    local var=$1 val=${2#*=} name=${2%%=*} param=$2
+
+    if echo $val | egrep -q "^[0-9]+$"; then
+        eval $var=\$val
+        return
+    fi
     INTEGER_ERRORS="$INTEGER_ERRORS $param"
 }
 
