@@ -184,9 +184,9 @@ main_wrapper() {
     else
         # Evaluate redirects RIGHT TO LEFT:
         #
-        #  stdout  1 -------+        +---> while, sed, tee ---> screen (stdout)
+        #  stdout  1 -------.        .---> while, sed, tee ---> screen (stdout)
         #                    \      /
-        #  stderr  2 ---+     `----/--------------------------> screen (stderr)
+        #  stderr  2 ---.     `--- / -------------------------> screen (stderr)
         #                \        /
         #         17      `------'
 
