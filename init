@@ -68,6 +68,7 @@
         DO_HOTPLUG=true
        DO_COLDPLUG=true
     COLDPLUG_DELAY=
+          USER_UID=1000
 
         # Note: adding "crc32c-generic" works around a bug in the kernel:
         # https://github.com/manjaro/packages-core/issues/8
@@ -2016,16 +2017,17 @@ try_mount() {
     local type=$(blkid $dev | sed -n -r 's/.* TYPE="([^"]*)"$/\1/p' | tail -n 1)
     [ "$type" ] || return 1
     local opts=$rw,noatime
-    local winops=$opts,umask=000,dmask=002,fmask=113
+    local winopts=$opts,umask=000,dmask=002,fmask=113
+    local fatopts=$winopts,shortname=winnt,uid=$USER_UID
 
     case $type in
-        ext[234]) log_cmd mount -t $type -o $opts                    $dev "$mp" 2>/dev/null ;;
-            vfat) log_cmd mount -t vfat -o shortname=winnt,$winopts  $dev "$mp" 2>/dev/null ;;
-         iso9660) log_cmd mount -t iso9660 -o ro                     $dev "$mp" 2>/dev/null ;;
-             udf) log_cmd mount -t udf -o ro                         $dev "$mp" 2>/dev/null ;;
-            ntfs) log_cmd ntfs-3g -o force,$winopts                  $dev "$mp" 2>/dev/null 17>/dev/null || \
-                  log_cmd mount -t ntfs -o umask=000,ro              $dev "$mp" 2>/dev/null ;;
-               *) log_cmd mount -t $type -o $opts                    $dev "$mp" 2>/dev/null ;;
+        ext[234]) log_cmd mount -t $type   -o $opts           $dev "$mp" 2>/dev/null ;;
+            vfat) log_cmd mount -t vfat    -o $fatopts        $dev "$mp" 2>/dev/null ;;
+         iso9660) log_cmd mount -t iso9660 -o ro              $dev "$mp" 2>/dev/null ;;
+             udf) log_cmd mount -t udf     -o ro              $dev "$mp" 2>/dev/null ;;
+            ntfs) log_cmd ntfs-3g          -o force,$winopts  $dev "$mp" 2>/dev/null 17>/dev/null || \
+                  log_cmd mount -t ntfs    -o umask=000,ro    $dev "$mp" 2>/dev/null ;;
+               *) log_cmd mount -t $type   -o $opts           $dev "$mp" 2>/dev/null ;;
     esac
     return $?
 }
@@ -4305,6 +4307,7 @@ SQFS_MP="$SQFS_MP"
 SQFS_VID_FILE="$SQFS_VID_FILE"
 STATIC_ROOT="$STATIC_ROOT"
 TORAM_MP="$TORAM_MP"
+USER_UID="$USER_UID"
 VID_ERROR="$VID_ERROR"
 VID_FILE="$VID_FILE"
 Initrd_Out
