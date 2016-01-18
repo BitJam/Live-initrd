@@ -57,7 +57,7 @@
            MOD_DIR="/lib/modules/$(uname -r)"
 
          FROM_TYPE="usb,cd"
-     FROM_TYPE_ALL="usb,cd,hd"
+     FROM_TYPE_ALL="usb,cd,mmc,hd"
 
       FRUGAL_FILES="linuxfs linuxfs.md5 vmlinuz vmlinuz.md5 initrd.gz initrd.gz.md5 xtra xtra.tgz ../boot"
 
@@ -1185,13 +1185,14 @@ from_filter() {
     esac
 
     # First segregate devices by type
-    local dev cd_devs hd_devs usb_devs
+    local dev cd_devs hd_devs usb_devs mmc_devs
     for dev; do
         [ -b "$dev" ] || continue
         case $(stat -c %t $dev) in
 
             b) cd_devs="$cd_devs $dev" ;;
-    3|8|22|b3) if is_usb_or_removable $dev; then
+           b3) mmc_devs="$mmc_devs $dev" ;;
+       3|8|22) if is_usb_or_removable $dev; then
                     usb_devs="$usb_devs $dev"
                 else
                     hd_devs="$hd_devs $dev"
@@ -1206,11 +1207,14 @@ from_filter() {
             cd) FILTERED_LIST="$FILTERED_LIST$cd_devs"
                 cd_devs= ;;
 
-            usb) FILTERED_LIST="$FILTERED_LIST$usb_devs"
+           usb) FILTERED_LIST="$FILTERED_LIST$usb_devs"
                 usb_devs= ;;
 
             hd) FILTERED_LIST="$FILTERED_LIST$hd_devs"
                 hd_devs= ;;
+
+           mmc) FILTERED_LIST="$FILTERED_LIST$mmc_devs"
+                mmc_devs= ;;
 
            "") ;;
 
@@ -1221,7 +1225,7 @@ from_filter() {
     #. Invalid <parameter-name> value(s) <bad values>
     [ "$invalid_scan" ] \
         && _fatal "$(printf "Invalid %s values(s) %s" "$(pqh from=)" "$(pqh $invalid_scan)")" \
-        "$(printf "Valid values are %s" "$(cq cd hd usb all)")"
+        "$(printf "Valid values are %s" "$(cq cd hd mmc usb all)")"
 
     [ "$FILTERED_LIST" ]
 
