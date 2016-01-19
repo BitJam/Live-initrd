@@ -36,6 +36,7 @@ live_param_filter() {
         nosplash|password|password=*|prompt|pw|pw=*|tz=*|ubp=*|ushow=*);;
         uverb=*|xres=*|noxorg);;
         nosavestate|savestate|dbsavestate) ;;
+        norepo) ;;
 
         *) printf "$param " ;;
         esac
