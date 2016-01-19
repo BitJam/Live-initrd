@@ -4144,8 +4144,10 @@ fancy_prompt() {
         db_msg 'fancy prompts were already enabled'
     else
         db_msg 'Enable fancy prompts'
-        echo "[ -r $fp_prog ] && source $fp_prog" >> $bashrc
+        # FIXME: use here-string and write only once
+        echo "[ -r $fp_prog ] && source $fp_prog"   >> $bashrc
         echo "[ -n \"\$(alias $cmd)\" ] && $prompt" >> $bashrc
+        echo 'PATH=$PATH:/live/bin'                 >> $bashrc
     fi
 
     local file full_file
