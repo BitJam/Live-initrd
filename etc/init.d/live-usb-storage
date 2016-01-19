@@ -1,0 +1,159 @@
+#!/live/bin/sh
+
+### BEGIN INIT INFO
+# Provides:          live-usb-storage
+# Required-Start:
+# Required-Stop:
+# Should-Start:
+# Default-Start:     3 4 5
+# Default-Stop:      0 1 6
+# Short-Description:
+# Description:       Create symlink to storage space directly on LiveUSB
+### END INIT INFO
+
+STORAGE_BIND=Storage
+STORAGE_DIR=LiveUSB-Storage
+
+export PATH=/sbin:/usr/sbin:/bin:/usr/bin:/usr/local/bin
+
+. /live/lib/live-init-utils.sh
+start_init_logging
+
+main() {
+    case $1 in
+        start) do_start   ;;
+         stop) do_stop    ;;
+            *) echo "Usage: $0 {start|stop}" ;;
+    esac
+    exit 0
+}
+
+do_start() {
+
+    test -e /live/config/remasterable || exit 0
+
+    . /live/config/initrd.out
+
+    echo_script "Configure LiveUSB Storage" $0
+
+    read_cmdline
+
+    DEF_USER=$(find_def_user)
+
+    eval "USER_HOME=~$DEF_USER"
+
+    if [ -z "$DEF_USER" -o -z "${USER_HOME##~*}" ]; then
+        echo_live "No default user %s found on the system." "$(pquote $DEF_USER)"
+        USER_HOME=
+    fi
+
+    if [ "$DISABLE" ]; then
+        echo_live "Disabling LiveUSB storage"
+        rmdir /root/$STORAGE_BIND $USER_HOME/$STORAGE_BIND 2>/dev/null
+        return
+    fi
+
+    local store_dir=$BOOT_MP/$STORAGE_DIR
+    create_storage "$DEF_USER" "$USER_HOME"  $store_dir
+    create_storage root        /root         $store_dir
+}
+
+do_stop() {
+
+    test -e /live/config/remasterable || exit 0
+
+    echo_script "Disable LiveUSB Storage" $0
+
+    read_cmdline
+
+    DEF_USER=$(find_def_user)
+
+    eval "USER_HOME=~$DEF_USER"
+
+    if [ -z "$DEF_USER" -o -z "${USER_HOME##~*}" ]; then
+        echo_live "No default user %s found on the system." "$(pquote $DEF_USER)"
+        USER_HOME=
+    fi
+
+    local dir bind_dir
+    for dir in /root $USER_HOME; do
+        bind_dir=$dir/$STORAGE_BIND
+        test -d "$bind_dir" || continue
+        mountpoint -q $bind_dir && umount $bind_dir
+        rmdir $bind_dir
+    done
+}
+
+create_storage() {
+    local user=$1  home=$2  store_dir=$3/$1  from_dir=$2/$STORAGE_BIND
+
+    if ! test -d "$home"; then
+        echo_live "Home directory for user %s not found" "$(pquote $user)"
+        return
+    fi
+
+    local uid=$(getent passwd $user | cut -d: -f3)
+    local gid=$(getent passwd $user | cut -d: -f4)
+
+    if [ ${#uid} -le 0 -o ${#gid} -le 0 ]; then
+        echo_live "Could not find UID or GUID for user %s" "$(pquote $user)"
+        return
+    fi
+
+    if ! echo $uid$gid | egrep -q "^[0-9]+$"; then
+        echo_live "Found non-numeric UID or GUID for user %s: %s" "$(pquote $user)"  $uid:$gid
+        return
+    fi
+
+    if [ "$BOOT_FSTYPE" = vfat -a $uid -ne 0 -a $uid -ne $USER_UID ]; then
+        echo_live "Can only use %s storage with UID of %s" "$(pquote vfat LiveUSB)" "$(pquote $USER_UID)"
+        return
+    fi
+
+    mountpoint -q "$BOOT_MP" || DISABLE=true
+
+    test -e $from_dir || mkdir -p $from_dir
+
+    if ! test -d $from_dir; then
+        echo_live "The file % is not a directory" "$(pquote $from_dir)"
+        return
+    fi
+
+    chown $uid:$gid $from_dir
+
+    mkdir -p $store_dir
+    [ "$BOOT_FSTYPE" != vfat ] && chown $uid:$gid $store_dir
+
+    if mountpoint -q $from_dir; then
+        echo_live "Directory %s is already a mountpoint" "$(pquote $from_dir)"
+        return
+    fi
+    echo_live "Enable LiveUSB storage at %s" "$(pquote $from_dir)"
+    mount --bind $store_dir $from_dir
+}
+
+find_def_user() {
+    local user=$(sed -r -n 's/^\s*default_user\s+//p' /etc/slim.conf 2>/dev/null | tail -n1)
+    : ${user:=$(sed -r -n 's/^\s*autologin-user=//p' /etc/lightdm/lightdm.conf 2>/dev/null | tail -n1)}
+    : ${user:=$(getent passwd 1000 | cut -d: -f1)}
+    : ${user:=demo}
+    echo ${user%% *}
+}
+
+read_cmdline() {
+    : ${CMDLINE:=$(cat /proc/cmdline /live/config/cmdline)}
+    local param
+    for param in $CMDLINE; do
+        value=${param#*=}
+        case $param in
+              nostore)  DISABLE=true       ;;
+        esac
+    done
+}
+
+
+main "$@" 2>&1 | tee -a $INIT_LOG_FILE
+
+sync
+
+exit 0
