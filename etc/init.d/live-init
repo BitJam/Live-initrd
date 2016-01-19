@@ -61,6 +61,7 @@ automount=off|amnt=off)                          AUTOMOUNT_OFF=true ;;
                 splash) SPLASH_PARAM=v                              ;;
               splash=*) SPLASH_PARAM=$value                         ;;
            desktheme=*) DESK_THEME=$value                           ;;
+                norepo) NO_REPO=true                                ;;
     esac
 done
 
@@ -108,7 +109,7 @@ do_start() {
     unset COUNTRY WM_LANG KEYBOARDS KEYTABLE LANG MIRROR TZ XKBLAYOUT CONSOLE_FONT
 
     get_init_lang "$CMD_LANG" error
-    localize_repo "$CMD_MIRROR" "$CMD_TZ" "$MIRROR" "$TZ"
+    [ "$NO_REPO" ] || localize_repo "$CMD_MIRROR" "$CMD_TZ" "$MIRROR" "$TZ"
     localize_skel $WM_LANG
 
     # Always create keyboard file in non-perisistent system even with no X
