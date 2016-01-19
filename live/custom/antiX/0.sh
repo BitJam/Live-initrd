@@ -37,7 +37,7 @@ live_param_filter() {
         uverb=*|xres=*|noxorg);;
         desktheme=*) ;;
         nosavestate|savestate|dbsavestate) ;;
-        norepo) ;;
+        norepo|nostore) ;;
 
         *) printf "$param " ;;
         esac
