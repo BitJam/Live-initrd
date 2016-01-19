@@ -574,9 +574,8 @@ create_home() {
     mkdir -p $home
     cp -a /etc/skel/* /etc/skel/.[!.]* $home 2>/dev/null # Avoid error msgs for ".../* not found"
 
-    local group=users
-    grep -q "^$user:" /etc/group && group=$user
-    chown -R $user:$group $home
+    local uid_gid=$(getent passwd $user | cut -d: -f3,4)
+    chown -R $uid_gid $home
 }
 
 set_default_desktop() {
