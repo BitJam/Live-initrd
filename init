@@ -4134,7 +4134,7 @@ AutoLogin
 }
 
 fancy_prompt() {
-    local prompt=$1  dir=$2
+    local prompt=${1:-prompt-fancy}  dir=$2
     local bashrc=$dir/etc/skel/.bashrc  fp_prog=/usr/local/bin/fancy-prompts.bash
 
     local cmd=${prompt%%\ *}
