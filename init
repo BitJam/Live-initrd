@@ -69,6 +69,7 @@
        DO_COLDPLUG=true
     COLDPLUG_DELAY=
           USER_UID=1000
+          USER_GID=1000
 
         # Note: adding "crc32c-generic" works around a bug in the kernel:
         # https://github.com/manjaro/packages-core/issues/8
@@ -647,6 +648,7 @@ read_cmdline_params()
                           plink) NO_PLINK=                                       ;;
 
                        fatuid=*) any_int USER_UID $param                         ;;
+                       fatgid=*) any_int USER_GID $param                         ;;
 
         #----- Some known codes -------------------------
 
@@ -2033,7 +2035,7 @@ try_mount() {
     [ "$type" ] || return 1
     local opts=$rw,noatime
     local winopts=$opts,umask=000,dmask=002,fmask=113
-    local fatopts=$winopts,shortname=winnt,uid=$USER_UID
+    local fatopts=$winopts,shortname=winnt,uid=$USER_UID,gid=$USER_GID
 
     case $type in
         ext[234]) log_cmd mount -t $type   -o $opts           $dev "$mp" 2>/dev/null ;;
@@ -4325,6 +4327,7 @@ SQFS_VID_FILE="$SQFS_VID_FILE"
 STATIC_ROOT="$STATIC_ROOT"
 TORAM_MP="$TORAM_MP"
 USER_UID="$USER_UID"
+USER_GID="$USER_GID"
 VID_ERROR="$VID_ERROR"
 VID_FILE="$VID_FILE"
 Initrd_Out
