@@ -100,9 +100,9 @@ MKFS_FREE_MARGIN=20
 
    GFX_SAVE_SCRIPT="/bin/gfxsave"
 
-          NO_PLINK=",noplink"
+          NO_PLINK=""
 
-   DEFAULT_UNIONFS="aufs"
+   DEFAULT_UNIONFS="overlay"
 
 set_live_dirs() {
     local dir=$1
