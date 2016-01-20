@@ -11,8 +11,8 @@
 # Description:       Create symlink to storage space directly on LiveUSB
 ### END INIT INFO
 
-STORAGE_BIND=Storage
-STORAGE_DIR=LiveUSB-Storage
+STORAGE_BIND=LiveUSB-Storage
+ STORAGE_DIR=LiveUSB-Storage
 
 export PATH=/sbin:/usr/sbin:/bin:/usr/bin:/usr/local/bin
 
