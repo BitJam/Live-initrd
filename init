@@ -4145,11 +4145,16 @@ fancy_prompt() {
     if grep -q $cmd $bashrc; then
         db_msg 'fancy prompts were already enabled'
     else
-        db_msg 'Enable fancy prompts'
-        # FIXME: use here-string and write only once
-        echo "[ -r $fp_prog ] && source $fp_prog"   >> $bashrc
-        echo "[ -n \"\$(alias $cmd)\" ] && $prompt" >> $bashrc
-        echo 'PATH=$PATH:/live/bin'                 >> $bashrc
+        db_msg 'Enable fancy prompts and other goodies'
+
+        cat << Fancy_Stuff >> $bashrc
+
+#----- Added by live initrd init script
+[ -r $fp_prog ] && source $fp_prog
+[ -n "\$(alias $cmd)" ] && $prompt
+echo \$PATH | grep -q /live/bin || PATH=\$PATH:/live/bin
+Fancy_Stuff
+
     fi
 
     local file full_file
