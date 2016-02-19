@@ -10,6 +10,9 @@ main() {
     test -e $vmlinuz || error "Could not find file $vmlinuz"
     test -r $vmlinuz || error "Could not read file $vmlinuz"
 
+    magic=$(dd if=$vmlinuz count=4 skip=514 bs=1 2>/dev/null)
+    [ "$magic" = "HdrS" ] || error "$vmlinuz is not a vmlinuz file"
+
     hex_offset=$(dd if=$vmlinuz count=2 skip=526 bs=1 2>/dev/null | hexdump \
         | head -n1 | cut -d" " -f2)
 
