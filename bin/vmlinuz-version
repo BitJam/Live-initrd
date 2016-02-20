@@ -10,20 +10,22 @@ usage() {
     cat <<Usage
 Usage:  $ME [options] file1 file2 ...
 
-List all of the vmlinuz image files from the input list along
-with their Linux version strings. Silently ignore files that
-are not vmlinuz files.
+List all of the vmlinuz image files from the input list along with their Linux
+version strings. Silently ignore files that are not vmlinuz files.  Ignore
+legit vmlinuz files that don't have a /lib/modules/\$VERSION directory.
 
 Options:
   -d, --delimit=<s>     Use string <s> as the output delimiter
+  -f, --from=<dir>      Check for /lib/modules/\$VERSION directory under <dir>
   -h, --help            Show this usage
   -n, --noheadings      Don't print headings
+  -N, --nocheck         Don't check for /lib/modules/\$VERSION directory
   -r, --reverse         Print the version strings first
   -R, --raw             Don't send version strings through "cat -v"
   -t, --tabs            Use tab as the output delimiter
   -v, --verbose         Explain processing on stderr
 
-If an out delimiter is give then the headings are automatically turned off.
+If an output delimiter is give then the headings are automatically turned off.
 Usage
 
     exit $ret
@@ -34,8 +36,11 @@ eval_argument() {
         case $arg in
            -delimit|d) DELIMIT=$val       ;;
        -delimit=*|d=*) DELIMIT=$val       ;;
+              -from|f) FROM_DIR=$val      ;;
+          -from=*|f=*) FROM_DIR=$val      ;;
               -help|h) usage              ;;
         -noheadings|n) SHOW_HEADER=       ;;
+           -nocheck|N) NO_CHECK=true      ;;
                -raw|R) CAT_OPT=""         ;;
            -reverse|r) REVERSE=true       ;;
               -tabs|t) DELIMIT="\t"       ;;
@@ -46,29 +51,31 @@ eval_argument() {
 
 takes_param() {
     case $1 in
-        -exclude|-major-num|-min-size|[emM]) return 0 ;;
+        -delimit|-from|[df]) return 0 ;;
     esac
     return 1
 }
 
 main() {
-    local SHIFT SHORT_STACK="dhnrRtv"
-    local CAT_OPT="-v" DELIMIT REVERSE VERBOSE SHOW_HEADER=true
+    local SHIFT SHORT_STACK="dfhnNrRtv"
+    local CAT_OPT="-v" DELIMIT REVERSE VERBOSE NO_CHECK FROM_DIR=/ SHOW_HEADER=true
 
     [ $# -eq 0 ] && usage
 
     # This loop allows complete intermingling of files and options
+    local fcnt=0
     while [ $# -gt 0 ]; do
         read_params "$@"
         shift $SHIFT
 
-        [ $# -gt 0 ] || fatal "Expected at least one filename"
-
         while [ $# -gt 0 -a ${#1} -gt 0 -a -n "${1##-*}" ]; do
             files="$files$1\n"
             shift
+            fcnt=$((fcnt + 1))
         done
     done
+
+    [ $fcnt -lt 1 ] && fatal "Expected at least one filename"
 
     #[ $# -gt 0 ] && fatal "Too much intermingling of files and options"
 
@@ -82,6 +89,12 @@ main() {
          test_magic $file || vsay "$file" "Not a vmlinuz file"    || continue
 
          vm_version=$(vm_version $file)
+
+         if [ -z "$NO_CHECK" -a ! -d "$FROM_DIR/lib/modules/$vm_version" ]; then
+            vsay "$file" "Could not file module directory for %s" "$vm_version"
+            continue
+         fi
+
          list="$list$vm_version $file\n"
 
          [ ${#file}       -gt $f_width ] && f_width=${#file}
