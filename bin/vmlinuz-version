@@ -4,30 +4,195 @@
 
 ME=${0##*/}
 
+usage() {
+    local ret=${1:-0}
+
+    cat <<Usage
+Usage:  $ME [options] file1 file2 ...
+
+List all of the vmlinuz image files from the input list along
+with their Linux version strings. Silently ignore files that
+are not vmlinuz files.
+
+Options:
+  -d, --delimit=<s>     Use string <s> as the output delimiter
+  -h, --help            Show this usage
+  -n, --noheadings      Don't print headings
+  -r, --reverse         Print the version strings first
+  -R, --raw             Don't send version strings through "cat -v"
+  -t, --tabs            Use tab as the output delimiter
+  -v, --verbose         Explain processing on stderr
+
+If an out delimiter is give then the headings are automatically turned off.
+Usage
+
+    exit $ret
+}
+
+eval_argument() {
+    local arg=$1 val=$2
+        case $arg in
+           -delimit|d) DELIMIT=$val       ;;
+       -delimit=*|d=*) DELIMIT=$val       ;;
+              -help|h) usage              ;;
+        -noheadings|n) SHOW_HEADER=       ;;
+               -raw|R) CAT_OPT=""         ;;
+           -reverse|r) REVERSE=true       ;;
+              -tabs|t) DELIMIT="\t"       ;;
+           -verbose|v) VERBOSE=true       ;;
+                    *) fatal "Unknown parameter -$arg"
+    esac
+}
+
+takes_param() {
+    case $1 in
+        -exclude|-major-num|-min-size|[emM]) return 0 ;;
+    esac
+    return 1
+}
+
 main() {
-    vmlinuz=$1
+    local SHIFT SHORT_STACK="dhnrRtv"
+    local CAT_OPT="-v" DELIMIT REVERSE VERBOSE SHOW_HEADER=true
 
-    test -e $vmlinuz || error "Could not find file $vmlinuz"
-    test -r $vmlinuz || error "Could not read file $vmlinuz"
+    [ $# -eq 0 ] && usage
 
-    magic=$(dd if=$vmlinuz count=4 skip=514 bs=1 2>/dev/null)
-    [ "$magic" = "HdrS" ] || error "$vmlinuz is not a vmlinuz file"
+    # This loop allows complete intermingling of files and options
+    while [ $# -gt 0 ]; do
+        read_params "$@"
+        shift $SHIFT
 
-    hex_offset=$(dd if=$vmlinuz count=2 skip=526 bs=1 2>/dev/null | hexdump \
-        | head -n1 | cut -d" " -f2)
+        [ $# -gt 0 ] || fatal "Expected at least one filename"
 
-    #echo $hex_offset
+        while [ $# -gt 0 -a ${#1} -gt 0 -a -n "${1##-*}" ]; do
+            files="$files$1\n"
+            shift
+        done
+    done
 
-    dec_offset=$(awk "BEGIN{ print 0x$hex_offset + 0x200 }")
+    #[ $# -gt 0 ] && fatal "Too much intermingling of files and options"
 
-    #echo $dec_offset
+    local file magic vm_version list f_width=4 v_width=7
 
-    dd if=$vmlinuz count=40 skip=$dec_offset bs=1 2>/dev/null | cut -d" " -f1
+    #SEP="\t"
+
+    while read file; do
+         test -e $file    || vsay "$file" "Could not find file"   || continue
+         test -r $file    || vsay "$file" "Could not read file"   || continue
+         test_magic $file || vsay "$file" "Not a vmlinuz file"    || continue
+
+         vm_version=$(vm_version $file)
+         list="$list$vm_version $file\n"
+
+         [ ${#file}       -gt $f_width ] && f_width=${#file}
+         [ ${#vm_version} -gt $v_width ] && v_width=${#vm_version}
+    done<<Files
+$(echo -e "$files")
+Files
+
+    local format
+    if [ ${#DELIMIT} -gt 0 ]; then
+        format="%s$DELIMIT%s"
+    elif [ "$REVERSE" ]; then
+        format="%-${v_width}s  %s"
+        [ "$SHOW_HEADER" ] && printf "$format\n" Version File
+    else
+        format="%-${f_width}s  %s"
+        [ "$SHOW_HEADER" ] && printf "$format\n" File Version
+    fi
+
+    while read vm_version file; do
+        if [ "$REVERSE" ]; then
+            printf "$format\n" "$vm_version" "$file"
+        else
+            printf "$format\n" "$file" "$vm_version"
+        fi
+    done <<Output
+$(echo -e "$list")
+Output
     exit 0
 }
 
-error() {
-    echo "$ME: $*" >&2
+test_magic() {
+    local file=$1
+    magic=$(dd if=$file count=4 skip=514 bs=1 2>/dev/null)
+    [ x"$magic" = x"HdrS" ]
+    return $?
+}
+
+vm_version() {
+    local file=$1
+    hex_offset=$(dd if=$file count=2 skip=526 bs=1 2>/dev/null | hexdump \
+        | head -n1 | cut -d" " -f2)
+    #echo $hex_offset
+    dec_offset=$(awk "BEGIN{ print 0x$hex_offset + 0x200 }")
+    #echo $dec_offset
+    vsay "$file" "hex offset: %5s  decimal offset: %5s" $hex_offset $dec_offset
+    dd if=$file count=40 skip=$dec_offset bs=1 2>/dev/null | cut -d" " -f1 | cat $CAT_OPT
+}
+
+vsay() {
+    [ "$VERBOSE" ] || return 1
+    local file=$1 format=$2
+    shift 2
+    printf "$file: $format\n" "$@" >&2
+    return 1
+}
+#-------------------------------------------------------------------------------
+# Send "$@".  Expects
+#
+#   SHORT_STACK               variable, list of single chars that stack
+#   fatal(msg)                routine,  fatal("error message")
+#   takes_param(arg)          routine,  true if arg takes a value
+#   eval_argument(arg, [val]) routine,  do whatever you want with $arg and $val
+#
+# Sets "global" variable SHIFT to the number of arguments that have been read.
+#-------------------------------------------------------------------------------
+read_params() {
+    # Most of this code is boiler-plate for parsing cmdline args
+    SHIFT=0
+    # These are the single-char options that can stack
+
+    local arg val
+
+    # Loop through the cmdline args
+    while [ $# -gt 0 -a ${#1} -gt 0 -a -z "${1##-*}" ]; do
+        arg=${1#-}
+        shift
+        SHIFT=$((SHIFT + 1))
+
+        # Expand stacked single-char arguments
+        case $arg in
+            [$SHORT_STACK][$SHORT_STACK]*)
+                if echo "$arg" | grep -q "^[$SHORT_STACK]\+$"; then
+                    local old_cnt=$#
+                    set -- $(echo $arg | sed -r 's/([a-zA-Z])/ -\1 /g') "$@"
+                    SHIFT=$((SHIFT - $# + old_cnt))
+                    continue
+                fi;;
+        esac
+
+        # Deal with all options that take a parameter
+        if takes_param "$arg"; then
+            [ $# -lt 1 ] && fatal "Expected a parameter after: -$arg"
+            val=$1
+            [ -n "$val" -a -z "${val##-*}" ] \
+                && fatal "Suspicious argument after -$arg: $val"
+            SHIFT=$((SHIFT + 1))
+            shift
+        else
+            case $arg in
+                *=*)  val=${arg#*=} ;;
+                  *)  val="???"     ;;
+            esac
+        fi
+
+        eval_argument "$arg" "$val"
+    done
+}
+
+fatal() {
+    echo "$ME fatal error: $*"
     exit 2
 }
 
