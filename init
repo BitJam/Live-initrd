@@ -227,6 +227,8 @@ main_wrapper() {
 
     confile remasterable && run_init_scripts $NEW_ROOT live-usb-storage
 
+    chmod 700 $NEW_ROOT/live
+
     breakpoint 9 "right before starting init"
 
     stop_hotplug
