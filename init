@@ -877,11 +877,11 @@ old_start_hotplug() {
 }
 
 stop_hotplug() {
-    test -r /HOTPLUG_PID || return
-    read HOTPLUG_PID < /HOTPLUG_PID
-    vmsg 6 'kill hotplug pid: %s' $(nq $HOTPLUG_PID)
-    rm /HOTPLUG_PID
-    kill -9 $HOTPLUG_PID
+    test -r /COLDPLUG_LOOP_PID || return
+    read COLDPLUG_LOOP_PID < /COLDPLUG_LOOP_PID
+    vmsg 6 'kill hotplug pid: %s' $(nq $COLDPLUG_LOOP_PID)
+    rm /COLDPLUG_LOOP_PID
+    kill -9 $COLDPLUG_LOOP_PID
 }
 
 old_stop_hotplug() {
