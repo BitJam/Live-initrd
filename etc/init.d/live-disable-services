@@ -63,7 +63,7 @@ XTRA_LEAN_SERVICES="
     hwclockfirst.sh
     ifupdown-clean
     lm-sensors
-    #lvm2
+    lvm2
     mountnfs-bootclean.sh
     mountoverflowtmp
     nfs-common
