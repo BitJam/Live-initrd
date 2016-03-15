@@ -2685,11 +2685,11 @@ do_menus() {
     my_select_menu 'Select Language' 'Languages are listed alphabetically'           l lang
     [ "$lang" ] && read_xlat init ${lang##*=}
     msg "lang: ${lang##*=}"
-    my_select_menu "Select Timezone"           "Timezones are listed geographically" t timezone
+    my_select_menu "Select Timezone"           "Timezones are sorted by longitude"   t timezone
     my_select_menu "Select Option"             "Only one option can be selected"     o options
     my_select_menu "Select Persistence Option" ""                                    p persist
     vmsg 6 "cmdline:$white $cmdline"
-    echo "$cmdline" > /live/config/cmdline
+    [ ${#cmdline} -gt 0 ] && echo "$cmdline" > /live/config/cmdline
     read_cmdline_params "$cmdline"
 }
 
@@ -2700,7 +2700,12 @@ do_late_menus() {
     local cmdline
     my_select_menu "Select Desktop" "" d desktop
     vmsg 6 "cmdline:$white $cmdline"
-    echo "$cmdline" >> /live/config/cmdline
+    [ ${#cmdline} -gt 0 ] && echo "$cmdline" > /live/config/cmdline
+
+    BOOT_MENU_DIR=/live/custom/$DISTRO_NAME/menus
+    my_select_menu "Save these changes" "" s save
+    vmsg 6 "cmdline:$white $cmdline"
+    [ ${#cmdline} -gt 0 ] && echo "$cmdline" > /live/config/cmdline
 }
 
 size_label_m() { _size_label $1   "M G T" ;}
