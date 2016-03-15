@@ -71,6 +71,8 @@
           USER_UID=1000
           USER_GID=1000
 
+   PLUG_LOOP_DELAY=50   # In 100ths of a second
+
         # Note: adding "crc32c-generic" works around a bug in the kernel:
         # https://github.com/manjaro/packages-core/issues/8
         LOAD_FIRST="usb-common usbcore ehci-hcd fusbh200-hcd fotg210-hcd battery aufs overlay crc32c-generic mmc-block"
@@ -841,16 +843,18 @@ coldplug_delay() {
 
 start_hotplug() {
     [ "$DO_HOTPLUG" ] || return
-    hotplug_loop &>/dev/null 17>/dev/null &
-    HOTPLUG_PID=$!
-    vmsg 6 'Hotplug pid: %s' $(nq $HOTPLUG_PID)
-    echo $HOTPLUG_PID > /HOTPLUG_PID
+    coldplug-loop $PLUG_LOOP_DELAY &>/dev/null 17>/dev/null &
+    COLDPLUG_LOOP_PID=$!
+    vmsg 6 'Hotplug pid: %s' $(nq $COLDPLUG_LOOP_PID)
+    echo $COLDPLUG_LOOP_PID > /COLDPLUG_LOOP_PID
 }
 
 hotplug_loop() {
+    local delay=${1:=500}
+    local micro_s=$((delay * 10000))
     while : ; do
         find /sys/devices -name modalias -print0 | xargs -0 sort -u | xargs modprobe -a -q -b 2>/dev/null
-        sleep 0.2
+        usleep $micro_s
     done
 }
 
