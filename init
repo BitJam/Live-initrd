@@ -4613,6 +4613,10 @@ prepare_switch_root() {
         cp -a $old/* $new
     done
 
+    local new_config=$new_root/etc/live/config
+    mkdir -p $new_config
+    mount --bind $new_live/config $new_config
+
     system_mount $new_root
 
     umount /dev/pts
