@@ -4509,6 +4509,15 @@ run_init_scripts() {
     #-jbb chroot $new_root $persist_save --cli --nolog --quiet
 }
 
+# Copy src to dest if they are different
+update_file() {
+    local src=$1  dest=$2  if_exists=$3
+    [ ${#if_exists} -gt 0 -a ! -e $dest ] && return
+    test -e $src || return
+    diff -q $src $dest &>/dev/null && return
+    cp -a $src $dest
+}
+
 late_umount() {
     local dev=$1
     [ "$dev" ] || return
