@@ -16,8 +16,8 @@ legit vmlinuz files that don't have a /lib/modules/\$VERSION directory.
 
 Options:
   -d, --delimit=<s>     Use string <s> as the output delimiter
-  -f, --from=<dir>      Check for /lib/modules/\$VERSION directory under <dir>
   -h, --help            Show this usage
+  -m, --mod-dir=<dir>   Check for /lib/modules/\$VERSION directory under <dir>
   -n, --noheadings      Don't print headings
   -N, --nocheck         Don't check for /lib/modules/\$VERSION directory
   -r, --reverse         Print the version strings first
@@ -36,8 +36,8 @@ eval_argument() {
         case $arg in
            -delimit|d) DELIMIT=$val       ;;
        -delimit=*|d=*) DELIMIT=$val       ;;
-              -from|f) FROM_DIR=$val      ;;
-          -from=*|f=*) FROM_DIR=$val      ;;
+           -mod-dir|m) MOD_DIR=$val       ;;
+       -mod-dir=*|m=*) MOD_DIR=$val       ;;
               -help|h) usage              ;;
         -noheadings|n) SHOW_HEADER=       ;;
            -nocheck|N) NO_CHECK=true      ;;
@@ -51,18 +51,18 @@ eval_argument() {
 
 takes_param() {
     case $1 in
-        -delimit|-from|[df]) return 0 ;;
+        -delimit|-mod-dir|[dm]) return 0 ;;
     esac
     return 1
 }
 
 main() {
     local SHIFT SHORT_STACK="dfhnNrRtv"
-    local CAT_OPT="-v" DELIMIT REVERSE VERBOSE NO_CHECK FROM_DIR=/ SHOW_HEADER=true
+    local CAT_OPT="-v" DELIMIT REVERSE VERBOSE NO_CHECK MOD_DIR=/ SHOW_HEADER=true
 
     [ $# -eq 0 ] && usage
 
-    # This loop allows complete intermingling of files and options
+    # This loop allows complete intermingling of filenames and options
     local fcnt=0
     while [ $# -gt 0 ]; do
         read_params "$@"
@@ -90,7 +90,7 @@ main() {
 
          vm_version=$(vm_version $file)
 
-         if [ -z "$NO_CHECK" -a ! -d "$FROM_DIR/lib/modules/$vm_version" ]; then
+         if [ -z "$NO_CHECK" -a ! -d "$MOD_DIR/lib/modules/$vm_version" ]; then
             vsay "$file" "Could not file module directory for %s" "$vm_version"
             continue
          fi
