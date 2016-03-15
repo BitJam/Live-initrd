@@ -262,6 +262,7 @@ do_umountfs() {
     vmsg 8 "runlevel:$white $runlevel"
 
     breakpoint 4 "Before pivot"
+    sync
 
     # undo previous bind mount
     umount ./aufs
