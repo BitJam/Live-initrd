@@ -227,9 +227,20 @@ main_wrapper() {
     late_umount $PERSIST_DEVICE
     late_umount $SQFILE_DEV
 
-    confile remasterable && run_init_scripts $NEW_ROOT live-usb-storage
+    #if confile remasterable; then
+        if detect_old_persist_scripts $NEW_ROOT; then
+            DISABLE_STORE=true
+            warn "%s disabled due to outdated persistence scripts and libraries" "$(pqw LiveUSB-Storage)"
+        else
+            confile remasterable && run_init_scripts $NEW_ROOT live-usb-storage
 
-    chmod 700 $NEW_ROOT/live
+            local new_config=$NEW_ROOT/etc/live/config
+            mkdir -p $new_config
+            mount --bind $NEW_LIVE/config $new_config
+
+            chmod 700 $NEW_ROOT/live
+        fi
+    #fi
 
     breakpoint 9 "right before starting init"
 
@@ -4518,6 +4529,22 @@ update_file() {
     cp -a $src $dest
 }
 
+detect_old_persist_scripts() {
+    local root=$1
+    local lib_file=$root/usr/local/lib/antiX/antiX-common.sh
+    local enabled_file=$root/usr/local/bin/persist-enabled
+
+    if [ -e $lib_file ]; then
+        head -n 20 $lib_file | grep -q /etc/live/config || return 0
+    fi
+
+    if [ -e $enabled_file ]; then
+        grep -q /etc/live/config $enabled_file || return 0
+    fi
+
+    return 1
+}
+
 late_umount() {
     local dev=$1
     [ "$dev" ] || return
@@ -4612,10 +4639,6 @@ prepare_switch_root() {
         mkdir -p $new
         cp -a $old/* $new
     done
-
-    local new_config=$new_root/etc/live/config
-    mkdir -p $new_config
-    mount --bind $new_live/config $new_config
 
     system_mount $new_root
 
