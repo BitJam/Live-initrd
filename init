@@ -230,13 +230,13 @@ main_wrapper() {
     #if confile remasterable; then
         if detect_old_persist_scripts $NEW_ROOT; then
             DISABLE_STORE=true
-            warn "%s disabled due to outdated persistence scripts and libraries" "$(pqw LiveUSB-Storage)"
+            warn "%s disabled due to outdated persistence scripts and libs" "$(pqw LiveUSB-Storage)"
         else
             confile remasterable && run_init_scripts $NEW_ROOT live-usb-storage
 
             local new_config=$NEW_ROOT/etc/live/config
             mkdir -p $new_config
-            mount --bind $NEW_LIVE/config $new_config
+            mount --bind /live/aufs/live/config $new_config
 
             chmod 700 $NEW_ROOT/live
         fi
