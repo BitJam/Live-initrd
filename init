@@ -324,7 +324,7 @@ main_core() {
     load_kernel_modules "$MODULE_LIST"
     set_fbcondecor "$SPLASH_PARAM" "$orig_fb_name"
 
-    touch /live/config/cmdline
+    initialize_cmdline
 
     if [ "$DO_MENUS" ]; then
         do_menus
@@ -664,6 +664,8 @@ read_cmdline_params()
 
                        fatuid=*) any_int USER_UID $param                         ;;
                        fatgid=*) any_int USER_GID $param                         ;;
+
+                       nosysv=*) NOSYSV="$NOSYSV$value"                          ;;
 
         #----- Some known codes -------------------------
 
@@ -2661,6 +2663,21 @@ my_select_2() {
         eval $var=\$val
         break
     done
+}
+
+# Note: we use cmdline2 for non-menu cmdline additions so they don't get used
+# by the grub2-save program and inserted into grub.cfg.
+initialize_cmdline() {
+    touch /live/config/cmdline /live/config/cmdline2
+
+    local cmdline
+    if [ ${#NOSYSV} -gt 0 ]; then
+        [ -z "${NOSYSV##*S*}" ] && cmdline="$cmdline${cmdline:+ }nostore"
+        [ -z "${NOSYSV##*s*}" ] && cmdline="$cmdline${cmdline:+ }nosavestate"
+        [ -z "${NOSYSV##*r*}" ] && cmdline="$cmdline${cmdline:+ }norepo"
+        [ -z "${NOSYSV##*k*}" ] && cmdline="$cmdline${cmdline:+ }noloadkeys conkbd=us"
+        [ "$cmdline" ] && echo "$cmdline" >> /live/config/cmdline2
+    fi
 }
 
 my_select_menu() {
