@@ -28,7 +28,7 @@ SISIMEDIA_K_DRIVERS="sis|sis[_-]agp"
 XORG_DRIVER_DIR="/usr/lib/xorg/modules/drivers"
 
 #-jbb For debugging
-: ${CMDLINE:=$(cat /proc/cmdline /live/config/cmdline)}
+: ${CMDLINE:=$(cat /proc/cmdline /live/config/cmdline /live/config/cmdline2)}
 for param in $CMDLINE; do
     value=${param#*=}
     case "$param" in

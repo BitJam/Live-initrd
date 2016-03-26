@@ -337,7 +337,7 @@ mount_boot_dev() {
 }
 
 read_cmdline() {
-    : ${CMDLINE:=$(cat /proc/cmdline /live/config/cmdline)}
+    : ${CMDLINE:=$(cat /proc/cmdline /live/config/cmdline /live/config/cmdline2)}
     local param
     for param in $CMDLINE; do
         value=${param#*=}
