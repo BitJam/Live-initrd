@@ -100,11 +100,11 @@ MKFS_FREE_MARGIN=20
 
       LAST_BP_TIME=0
 
-   GFX_SAVE_SCRIPT="/bin/gfxsave"
-
           NO_PLINK=""
 
    DEFAULT_UNIONFS="overlay"
+
+   OPTIONS_ENTRIES="checkmd5|checkfs|toram|from=usb|hwclock=*|private|nostore|savestate|nosavestate|nousb2"
 
 set_live_dirs() {
     local dir=$1
@@ -216,7 +216,7 @@ main_wrapper() {
     # Do this after the above so the changes aren't saved until after a "real" persist-save
     confile systemd      || LIVE_SCRIPTS="$LIVE_SCRIPTS live-disable-services"
     confile toram-eject  && LIVE_SCRIPTS="$LIVE_SCRIPTS live-toram-eject"
-    confile gfxsave      && LIVE_SCRIPTS="$LIVE_SCRIPTS live-gfxsave"
+    confile bootsave     && LIVE_SCRIPTS="$LIVE_SCRIPTS live-bootsave"
     unset CMDLINE
     PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin
     run_init_scripts $NEW_ROOT $LIVE_SCRIPTS
@@ -408,12 +408,6 @@ main_core() {
     # 'fromiso' causes us to check md5sums in two places
     [ "$CHECK_MD5" ] && check_md5 $SQFILE_DIR
 
-    # [ "$GFX_SAVE" ] && update_gfx_menu "$GFX_SAVE_SCRIPT" "$GFX_SAVE" "$BOOT_MP/boot"
-
-    # # Disable always feature even if update_gfx_menu is not called
-    # local gfx_def_file=$BOOT_MP/boot/syslinux/gfxsave.def
-    # [ "$GFX_SAVE" != always ] && test -e $gfx_def_file && rm -f $gfx_def_file 2>/dev/null
-
     [ "$TO_RAM" ] && copy_to_ram "$SQFILE_FULL" $TORAM_MP
 
     check_kernel_version $SQFS_MP
@@ -535,15 +529,8 @@ read_distro_release() {
     eval $(sed -r -n 's/^\s*([A-Z0-9_]+=)/DISTRO_\1/p' $file)
 }
 
-#------------------------------------------------------------------------------
-# Function read_cmdline_params
-#
-# Gather all boot codes
-#------------------------------------------------------------------------------
-read_cmdline_params()
-{
-    local ev param value cmdline=${1:-$(cat /proc/cmdline)}
-
+clear_env() {
+    local ev
     # unset almost all env variables
     for ev in $(printenv | sed 's/=.*//'); do
         case $ev in
@@ -551,6 +538,16 @@ read_cmdline_params()
         esac
         unset $ev
     done
+}
+
+#------------------------------------------------------------------------------
+# Function read_cmdline_params
+#
+# Gather all boot codes
+#------------------------------------------------------------------------------
+read_cmdline_params()
+{
+    local param value cmdline=${1:-$(cat /proc/cmdline)}
 
     for param in $cmdline; do
         value=${param#*=}
@@ -630,7 +627,10 @@ read_cmdline_params()
                          lang=*) LANG=$value                                     ;;
 
                         noclear) NO_CLEAR=true                                   ;;
-                      gfxsave=*) GFX_SAVE=$value                                 ;;
+
+                      gfxsave=*) GFX_SAVE=$value ; BOOT_SAVE=true                ;;
+                        gfxsave) GFX_SAVE=both   ; BOOT_SAVE=true                ;;
+                       bootsave) BOOT_SAVE=true                                  ;;
 
                         checkfs) FORCE_FSCK=true                                 ;;
                       nocheckfs) DO_FSCK=                                        ;;
@@ -2653,7 +2653,7 @@ my_select_2() {
             continue
         fi
 
-        val=$(echo -e "$data" | sed -n "s/^$input://p")
+        val=$(echo -e "$data" | sed -n "s/^$input://p" | cut -d: -f1)
 
         if [ -z "$val" ]; then
             err_msg=$(printf "The number <%s> is out of range" "$(pqe $input)")
@@ -2684,7 +2684,7 @@ my_select_menu() {
     local dir=$BOOT_MENU_DIR menu=$DO_MENUS
     [ "$menu" ] || return
 
-    local title=$1 blurb=$2 cheat=$3  name=$4 dfile=$dir/$4.data mfile=$dir/$4.menu default=${5:-1}
+    local title=$1 blurb=$2 cheat=$3  name=$4 dfile=$dir/$4.data mfile=$dir/$4.menu fields=$5
 
     [ -z "${menu##*$cheat*}" ] || return
 
@@ -2693,11 +2693,15 @@ my_select_menu() {
         return
     fi
 
-    local menu_value
+    local menu_value def_value
     local data=$(cat $dfile)
-    local menu=$(cat $mfile | sed -r -e "s/( [0-9]+)(\))/$green\1$white\2$cyan/g")
-    [ "$blurb" ] && title="$title\n$blurb"
-    my_select_2 "$title" menu_value $default "$data" "$menu"
+    local menu=$(cat $mfile | sed -r -e "s/( [0-9]+)(\))/$green\1$white\2$cyan/g" -e "s/\*/$bold_co*$cyan/g")
+
+    [ "$blurb"     ] && title="$title\n$blurb"
+    [ "$fields"    ] && def_value=$(get_default_value "$fields" $dfile)
+    [ "$def_value" ] && title="$title\nCurrent default:$bold_co $def_value"
+
+    my_select_2 "$title" menu_value 1 "$data" "$menu"
     case $menu_value in
         default|none) ;;
                    *) cmdline="$cmdline $menu_value";;
@@ -2705,17 +2709,35 @@ my_select_menu() {
     eval $name=\$menu_value
 }
 
+get_default_value() {
+    local fields=$1 file=$2
+    local cheat=$(filter_cmdline "$fields")
+    [ -n "$cheat" -o -z "$file" ] || return
+    value=$(egrep "^[0-9]+:$cheat[: ]" $file | cut -d: -f3)
+    echo ${value:-$cheat}
+}
+
+filter_cmdline() {
+    local p fields=$1
+
+    [ "$fields" ] || return
+    for p in $(cat /proc/cmdline); do
+        eval "case $p in
+        $fields) echo $p; break ;;
+        esac"
+    done
+}
+
 do_menus() {
     local BOOT_MENU_DIR=/live/custom/$DISTRO_NAME/menus
     local BOOT_MENU_WARN=true
     local lang time_zone option persist desktop
     local cmdline
-    my_select_menu 'Select Language' 'Languages are listed alphabetically'           l lang
+    my_select_menu 'Select Language' 'Languages are listed alphabetically'           l lang     "lang=*"
     [ "$lang" ] && read_xlat init ${lang##*=}
-    msg "lang: ${lang##*=}"
-    my_select_menu "Select Timezone"           "Timezones are sorted by longitude"   t timezone
-    my_select_menu "Select Option"             "Only one option can be selected"     o options
-    my_select_menu "Select Persistence Option" ""                                    p persist
+    my_select_menu "Select Timezone"           "Timezones are listed by longitude"   t timezone "tz=*"
+    my_select_menu "Select Option"             "Only one option can be selected"     o options  "$OPTIONS_ENTRIES"
+    my_select_menu "Select Persistence Option" ""                                    p persist  "persist=*|frugal|frugal=*"
     vmsg 6 "cmdline:$white $cmdline"
     [ ${#cmdline} -gt 0 ] && echo "$cmdline" >> /live/config/cmdline
     read_cmdline_params "$cmdline"
@@ -2726,10 +2748,14 @@ do_late_menus() {
     local BOOT_MENU_WARN=
     local lang time_zone option persist desktop
     local cmdline
-    my_select_menu "Select Desktop" "" d desktop
+    my_select_menu "Select Desktop" "" d desktop "desktop=*|desktheme=*"
 
-    BOOT_MENU_DIR=/live/custom/$DISTRO_NAME/menus
-    my_select_menu "Save these changes" "" s save
+    if [ "$REMASTERABLE" ]; then
+        BOOT_MENU_DIR=/live/custom/$DISTRO_NAME/menus
+        my_select_menu "Save these changes" "" s save
+        echo "$cmdline" | grep -q bootsave && BOOT_SAVE=true
+    fi
+
     vmsg 6 "cmdline:$white $cmdline"
     [ ${#cmdline} -gt 0 ] && echo "$cmdline" >> /live/config/cmdline
 }
@@ -4045,46 +4071,12 @@ remaster_rootfs() {
     fi
 }
 
-
-#------------------------------------------------------------------------------
-#  Update bootloader menu if asked and able
-#------------------------------------------------------------------------------
-update_gfx_menu() {
-    local script=$1  param=$2  dir=$3
-    msg
-    heading 'GFX Boot Menu Update'
-
-    if ! [ -x "$script" ]; then
-        err "Could not find script %s" "$script"
-        return
-    fi
-
-    if ! [ "$REMASTERABLE" ]; then
-        if [ "$DB_PLUS" ]; then
-            local tdir=$LIVE_DIR/test
-            mkdir -p $tdir
-            msg "Use $tdir to test $script"
-            cp -r $dir/* $tdir
-            dir=$tdir
-        else
-            err "Can't update %s on read-only boot media" "$(pqe gfx boot)"
-            return
-        fi
-    fi
-
-    env VERBOSE=$VERBOSE NO_COLOR=$NO_COLOR LOW_COLOR=$LOW_COLOR \
-        GFX_LOG_FILE=/live/config/gfxsave.log /bin/sh $script $dir $param
-
-    vmsg_nc 6 $tbar
-}
-
 copy_homefs() {
     local homefs=$1/homefs
 
     [ -e "$homefs.new" ] || return
 
     _copy_homefs "$homefs"  || mv $homefs.new $homefs.bad
-
 }
 
 _copy_homefs() {
@@ -4384,7 +4376,7 @@ Initrd_Out
     [ "$PERSIST_ROOT" -a -n "$STATIC_ROOT" ] && touch $dir/static-root
     [ "$FORCE_PASSWD" ]                      && touch $dir/force-passwd
     [ "$DB_PLUS"      ]                      && touch $dir/db+
-    [ -n "$GFX_SAVE"  ]                      && echo $GFX_SAVE > $dir/gfxsave
+    [ -n "$BOOT_SAVE" ]                      && touch $dir/bootsave
 
     echo "$DISTRO_NAME"                             > $dir/distro
 
