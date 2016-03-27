@@ -4,7 +4,7 @@
 LIST_MODULES=true
 CHECK_BOOTCODES=true
 
-MENUS_LIST=ltopd
+MENUS_LIST=ltopds
 
 DO_DEB=true
 DO_FSCK=true
