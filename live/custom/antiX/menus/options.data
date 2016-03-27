@@ -7,6 +7,7 @@
 7:hwclock=utc
 8:hwclock=local
 9:private
-10:savestate
-11:nosavestate
-12:nousb2
+10:nostore
+11:savestate
+12:nosavestate
+13:nousb2
