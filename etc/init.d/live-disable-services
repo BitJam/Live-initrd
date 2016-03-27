@@ -82,6 +82,7 @@ MEAN_SERVICES="
     resolvconf
     smbd
     nfs-kernel-server
+    wicd
 "
 
 NO_DBUS_SERVICES="
