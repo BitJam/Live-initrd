@@ -1,17 +1,17 @@
 #!/live/bin/sh
 
 ### BEGIN INIT INFO
-# Provides:          live-gfxsave
+# Provides:          live-bootsave
 # Required-Start:
 # Required-Stop:
 # Should-Start:
-# Default-Start:     
+# Default-Start:
 # Default-Stop:      0 1 6
 # Short-Description:
-# Description:       save live menu selections
+# Description:       save live boot options
 ### END INIT INFO
 
-export PATH=/sbin:/usr/sbin:/bin:/usr/bin:/usr/local/bin
+export PATH=/sbin:/usr/sbin:/bin:/usr/bin:/usr/local/bin:/live/bin
 
 
 main() {
@@ -26,16 +26,22 @@ main() {
 do_start() {
 
     : ${CMDLINE:=$(cat /proc/cmdline /live/config/cmdline)}
-    local gfx_cmd
+    local gfx_cmd boot_save
     for param in $CMDLINE; do
         case $param in
-            gfxsave=*) gfx_cmd=${param#*=};;
+            gfxsave=*) gfx_cmd=${param#*=} ;;
+              gfxsave) gfx_cmd=both        ;;
+              bootsave) boot_save=true     ;;
         esac
     done
 
-    [ -z "$gfx_cmd" ] && return
-
     . /live/lib/live-init-utils.sh
+
+    [ -n "$gfx_cmd"   ] && do_gfxsave
+    [ -n "$boot_save" ] && do_boot_save
+}
+
+do_gfxsave() {
 
     export CMDLINE
     export GFX_LOG_FILE=/var/log/live/gfxsave.log
@@ -59,6 +65,25 @@ do_start() {
     $script $dir $gfx_cmd
 }
 
+do_boot_save() {
+    . /live/config/initrd.out
 
+    if [ "$BOOT_FSTYPE" = vfat ]; then
+        grub2-save $BOOT_MP
+    fi
+
+    local uuid uuid_file=$SQFILE_DIR/esp-uuid
+    test -r  $uuid_file || return
+    read uuid 2>/dev/null <$uuid_file
+    [ -n "$uuid" ]      || return
+
+    local esp_mp=/live/esp
+    mkdir -p $esp_mp
+    mount --uuid $uuid $esp_mp
+    mountpoint -q $esp_mp || return
+    grub2-save $esp_mp
+    sync
+    umount $esp_mp
+}
 
 main "$@"
