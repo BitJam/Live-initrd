@@ -13,6 +13,9 @@
 
 export PATH=/sbin:/usr/sbin:/bin:/usr/bin:/usr/local/bin:/live/bin
 
+. /live/lib/live-init-utils.sh
+start_init_logging
+
 
 main() {
     case $1 in
@@ -34,8 +37,7 @@ do_start() {
               bootsave) boot_save=true     ;;
         esac
     done
-
-    . /live/lib/live-init-utils.sh
+    echo_script "Possibly saving boot parameters" $0
 
     [ -n "$gfx_cmd"   ] && do_gfxsave
     [ -n "$boot_save" ] && do_boot_save
@@ -86,4 +88,6 @@ do_boot_save() {
     umount $esp_mp
 }
 
-main "$@"
+main "$@" 2>&1 | tee -a $INIT_LOG_FILE
+
+exit 0
