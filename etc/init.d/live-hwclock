@@ -23,7 +23,7 @@ start_init_logging
 load_translation
 
 #-jbb For debugging
-: ${CMDLINE:=$(cat /proc/cmdline /live/config/cmdline)}
+: ${CMDLINE:=$(cat /live/config/proc-cmdline /live/config/cmdline)}
 for param in $CMDLINE; do
     value=${param#*=}
     case "$param" in

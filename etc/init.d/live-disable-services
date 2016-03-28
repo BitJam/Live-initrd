@@ -101,7 +101,7 @@ prep_main() {
     esac
 
     local must_run
-    : ${CMDLINE:=$(cat /proc/cmdline)}
+    : ${CMDLINE:=$(cat /live/config/proc-cmdline)}
     for param in $CMDLINE; do
         case "$param" in
             antiX=*|aX=*) antiX_param=${param#*=}; must_run=true ;;

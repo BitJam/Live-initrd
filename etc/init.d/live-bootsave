@@ -28,7 +28,7 @@ main() {
 
 do_start() {
 
-    : ${CMDLINE:=$(cat /proc/cmdline /live/config/cmdline)}
+    : ${CMDLINE:=$(cat /live/config/proc-cmdline /live/config/cmdline)}
     local gfx_cmd boot_save
     for param in $CMDLINE; do
         case $param in

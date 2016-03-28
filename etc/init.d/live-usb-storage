@@ -141,7 +141,7 @@ find_def_user() {
 }
 
 read_cmdline() {
-    : ${CMDLINE:=$(cat /proc/cmdline /live/config/cmdline2)}
+    : ${CMDLINE:=$(cat /live/config/proc-cmdline /live/config/cmdline2)}
     local param
     for param in $CMDLINE; do
         value=${param#*=}
