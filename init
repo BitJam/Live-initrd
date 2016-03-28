@@ -2649,7 +2649,7 @@ my_select() {
 
         [ "$lab" = "quit" ] && lab=$bold_co$lab$nc_co
         [ $cnt = "$default" ] && lab=$(printf "%${width}s (%s)" "$lab" "$(cq "default")")
-        display="${display}$(printf "%2d) %${width}s" $dcnt "$lab")\n"
+        display="${display}$(printf "%green%2d$white)$cyan %${width}s" $dcnt "$lab")\n"
     done
 
     my_select_2 "$title" $var "$default" "$data" "$display"
@@ -2663,8 +2663,9 @@ my_select_2() {
     while [ -z "$val" ]; do
 
         echo -e "$hi_co$title$nc_co"
-        printf "$display\n" | sed -r -e "s/(^|\t)( ?[0-9]+)(\))/\t$green\2$white\3$cyan/g" -e "s/$/$nc_co/"
+        #printf "$display\n" | sed -r -e "s/(^|\t)( ?[0-9]+)(\))/\t$green\2$white\3$cyan/g" -e "s/$/$nc_co/"
         #printf "$display" | sed -r -e "s/(^|\t| )( ?[0-9]+)(\))/\t$green\2$white\3$cyan/g" -e "s/$/$nc_co/"
+        printf "$display\n" | sed "s/$/$nc_co/"
         [ "$err_msg" ] && printf "$err_co%s$nc_co\n" "$err_msg"
         [ "$default" ] && printf "$m_co%s$nc_co\n" "$def_prompt"
         echo -n "$green>$nc_co "
