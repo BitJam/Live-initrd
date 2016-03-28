@@ -2694,7 +2694,7 @@ my_select_2() {
 
 # Note: we use cmdline2 for non-menu cmdline additions so they don't get used
 # by the grub2-save program and inserted into grub.cfg.
-initialize_cmdline() {
+initialize_cmdline2() {
     touch /live/config/cmdline /live/config/cmdline2
 
     local cmdline
@@ -2726,25 +2726,37 @@ my_select_menu() {
 
     [ "$blurb"     ] && title="$title\n$blurb"
     [ "$fields"    ] && def_value=$(get_default_value "$fields" $dfile)
-    [ "$def_value" ] && title="$title\nCurrent default:$bold_co $def_value"
+
+    if [ "$def_value" ]; then
+        title="$title\nCurrent default:$bold_co $def_value"
+        data="0:reset\n$data"
+        menu="  ${green}0$white)$cyan Reset\n$menu"
+    fi
 
     my_select_2 "$title" menu_value 1 "$data" "$menu"
+
     case $menu_value in
-        default|none) ;;
-                   *) cmdline="$cmdline $menu_value";;
+        default|none|reset) ;;
+                         *) cmdline="$cmdline $menu_value";;
     esac
+
+    case $menu_value in
+        default) ;;
+              *) PROC_CMDLINE=$(filter_cmdline "$fields" $PROC_CMDLINE)
+    esac
+
     eval $name=\$menu_value
 }
 
 get_default_value() {
     local fields=$1 file=$2
-    local cheat=$(filter_cmdline "$fields")
+    local cheat=$(extract_from_cmdline "$fields")
     [ -n "$cheat" -o -z "$file" ] || return
     value=$(egrep "^[0-9]+:$cheat[: ]" $file | cut -d: -f3)
     echo ${value:-$cheat}
 }
 
-filter_cmdline() {
+extract_from_cmdline() {
     local p fields=$1
 
     [ "$fields" ] || return
@@ -2755,7 +2767,24 @@ filter_cmdline() {
     done
 }
 
-do_menus() {
+filter_cmdline() {
+    local p fields=$1
+    shift
+
+    if [ -z "$fields" ]; then
+        echo "$*"
+        return
+    fi
+
+    for p; do
+        eval "case $p in
+        $fields) ;;
+              *) echo \$p ;;
+        esac"
+    done
+}
+
+do_early_menus() {
     local BOOT_MENU_DIR=/live/custom/$DISTRO_NAME/menus
     local BOOT_MENU_WARN=true
     local lang time_zone option persist desktop
@@ -2767,7 +2796,6 @@ do_menus() {
     my_select_menu "Select Persistence Option" ""                                    p persist  "persist=*|frugal|frugal=*"
     vmsg 6 "cmdline:$white $cmdline"
     [ ${#cmdline} -gt 0 ] && echo "$cmdline" >> /live/config/cmdline
-    read_cmdline_params "$cmdline"
 }
 
 do_late_menus() {
