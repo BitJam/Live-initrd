@@ -1,4 +1,4 @@
-  1) none
+  1) Default
   2) checkmd5        Check integrity of the install media
   3) checkfs         Check LiveUSB ext2/3/4 and persistent file systems
   4) toram           Copy the compressed file system to RAM

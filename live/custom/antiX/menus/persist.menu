@@ -1,4 +1,4 @@
-  1) none
+  1) Default
   2) all persist     Both root and home persistence
   3) root persist    Only root persistence (uses persist-save)
   4) static root     Only root persistence (slow but no persist-save)

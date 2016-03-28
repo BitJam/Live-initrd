@@ -1,4 +1,4 @@
-1:none
+1:default
 2:persist=root!,home:all persist
 3:persist=root!:root persist
 4:persist=root!,home,static:static root
