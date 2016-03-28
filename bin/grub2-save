@@ -151,8 +151,8 @@ Read_File
     # local tmp_file=$(backup_name $file .tmp)
     echo -e "$out" | sed -r "s/(default=)%DEFAULT%/\1$default_entry/" > $file
 
-    printf "Updated file %s\n" $file
-    printf "With: %s" "$params"
+    printf "    Updated file %s\n" $file
+    printf "    With: %s\n" "$params"
     sleep 1
 }
 
