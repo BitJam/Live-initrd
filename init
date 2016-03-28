@@ -324,11 +324,12 @@ main_core() {
     load_kernel_modules "$MODULE_LIST"
     set_fbcondecor "$SPLASH_PARAM" "$orig_fb_name"
 
-    initialize_cmdline
+    initialize_cmdline2
 
-    if [ "$DO_MENUS" ]; then
-        do_menus
-    fi
+    PROC_CMDLINE=$(cat /proc/cmdline)
+    [ "$DO_MENUS" ]; do_early_menus
+
+    read_late_cmdline_params "$PROC_CMDLINE $(cat /live/config/cmdline)"
 
     clean_xlat
 
@@ -540,6 +541,31 @@ clear_env() {
     done
 }
 
+read_late_cmdline_params() {
+    vmsg 6 "read_late_cmdline_params: $*"
+    local param value cmdline=${1:-$(cat /proc/cmdline)}
+
+    for param in $cmdline; do
+        value=${param#*=}
+
+        case $param in
+                         frugal) FRUGAL_ID=label=$DISTRO_NAME-Frugal ; FRUGAL=true                   ;;
+                       frugal=*) FRUGAL_ID=label=$DISTRO_NAME-Frugal ; FRUGAL=true  ; PERSIST=$value ;;
+                hwclock=*|hwc=*) DO_HWCLOCK=true                                 ;;
+                         from=*) FROM_TYPE=$value     ; ALWAYS_SCAN=true         ;;
+                  persist=*|p=*) PERSIST=$PERSIST,$value                         ;;
+                        persist) PERSIST=$PERSIST,root,home                      ;;
+                         lang=*) LANG=$value                                     ;;
+                   md5|checkmd5) CHECK_MD5=true                                  ;;
+                        checkfs) FORCE_FSCK=true                                 ;;
+
+                  nousb2|noehci) NO_EHCI=true                                    ;;
+              private|private=*) FORCE_PASSWD=true                               ;;
+                          toram) TO_RAM=true                                     ;;
+        esac
+    done
+}
+
 #------------------------------------------------------------------------------
 # Function read_cmdline_params
 #
@@ -558,7 +584,6 @@ read_cmdline_params()
                           menus) DO_MENUS=${MENUS_LIST:-ltopds}                  ;;
                         menus=*) DO_MENUS=$DO_MENUS$value                        ;;
             rootdelay=*|delay=*) small_int COLDPLUG_DELAY $param                 ;;
-                hwclock=*|hwc=*) DO_HWCLOCK=true                                 ;;
                        old-conf) NO_NEW_OUTPUT=true                              ;;
                        new-conf) NO_OLD_OUTPUT=true                              ;;
                          splash) SPLASH_PARAM=v                                  ;;
@@ -583,19 +608,12 @@ read_cmdline_params()
                           dbv=*) DBV=$value                                      ;;
                         fneed=*) FRUGAL_NEEDED=$value                            ;;
                          fforce) FORCE_FRUGAL=true                               ;;
-                         frugal) FRUGAL_ID=label=$DISTRO_NAME-Frugal ; FRUGAL=true                   ;;
-                       frugal=*) FRUGAL_ID=label=$DISTRO_NAME-Frugal ; FRUGAL=true  ; PERSIST=$value ;;
                          flab=*) FRUGAL_ID=label=$value         ; FRUGAL=        ;;
                          fdev=*) FRUGAL_ID=name=$value          ; FRUGAL=        ;;
                         fuuid=*) FRUGAL_ID=uuid=$value          ; FRUGAL=        ;;
 
                 iso=*|fromiso=*) ISO_FILE=${value/#}                             ;;
                     iso|fromiso) FROM_ISO=true                                   ;;
-
-                         from=*) FROM_TYPE=$value     ; ALWAYS_SCAN=true         ;;
-
-                  persist=*|p=*) PERSIST=$PERSIST,$value                         ;;
-                        persist) PERSIST=$PERSIST,root,home                      ;;
 
                         sqext=*) SQFILE_EXT=$value                               ;;
                        sqname=*) SQFILE_NAME=${value#/}                          ;;
@@ -605,7 +623,6 @@ read_cmdline_params()
                            bp=*) BREAK_POINTS=$BREAK_POINTS,$value               ;;
                            pk=*) PRINTK=$value                                   ;;
 
-             check|md5|checkmd5) CHECK_MD5=true                                  ;;
                  hico|highcolor) LOW_COLOR=                                      ;;
                   loco|lowcolor) LOW_COLOR=true                                  ;;
                    noco|nocolor) NO_COLOR=true                                   ;;
@@ -619,7 +636,6 @@ read_cmdline_params()
             fancyprompt|fprompt) DO_FANCY=true                                   ;;
                autologin|alogin) DO_AUTO_LOGIN=true                              ;;
 
-                          toram) TO_RAM=true                                     ;;
                     #toram-eject) TO_RAM=true ; TO_RAM_EJECT=true                 ;;
 
                      noremaster) NO_REMASTER=true                                ;;
@@ -632,7 +648,6 @@ read_cmdline_params()
                         gfxsave) GFX_SAVE=both   ; BOOT_SAVE=true                ;;
                        bootsave) BOOT_SAVE=true                                  ;;
 
-                        checkfs) FORCE_FSCK=true                                 ;;
                       nocheckfs) DO_FSCK=                                        ;;
 
                        failsafe) MODULE_LIST=all; BLACK_LIST=$BLACK_LIST,VIDEO; FROM_TYPE=all ;;
@@ -646,8 +661,6 @@ read_cmdline_params()
 
                          init=*) INIT_PROG=$value                                ;;
 
-                  nousb2|noehci) NO_EHCI=true                                    ;;
-
                        noerrlog) NO_ERR_LOG=true                                 ;;
                         errtest) TEST_ERRORS=true                                ;;
                       errtest=*) TEST_FATAL=$value                               ;;
@@ -657,7 +670,6 @@ read_cmdline_params()
 
                livedir=*|ldir=*) FINAL_DIR=$value                                ;;
         pw|passwd|pw=*|passwd=*) FORCE_PASSWD=true                               ;;
-              private|private=*) FORCE_PASSWD=true                               ;;
                       bootchart) INIT_COMMAND=/sbin/bootchartd                   ;;
                         noplink) NO_PLINK=,noplink                               ;;
                           plink) NO_PLINK=                                       ;;
@@ -666,6 +678,20 @@ read_cmdline_params()
                        fatgid=*) any_int USER_GID $param                         ;;
 
                        nosysv=*) NOSYSV="$NOSYSV$value"                          ;;
+
+        #----- These get interpreted late but we don't want them to be unknown
+                hwclock=*|hwc=*)  ;;
+                         frugal)  ;;
+                       frugal=*)  ;;
+                         from=*)  ;;
+                  persist=*|p=*)  ;;
+                        persist)  ;;
+                         lang=*)  ;;
+                   md5|checkmd5)  ;;
+                        checkfs)  ;;
+                  nousb2|noehci)  ;;
+              private|private=*)  ;;
+                          toram)  ;;
 
         #----- Some known codes -------------------------
 
