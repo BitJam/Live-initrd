@@ -844,9 +844,9 @@ read_cmdline_params()
         nomodeset|*.modeset=*);;
         nosplash|splash=*|fbcon=*);;
 
-        #----------------------------------------------------------------------
-        # NOTE: see /live/custom/$DISTRO_NAME/1.sh for distro specific boot codes
-        #----------------------------------------------------------------------
+        #------------------------------------------------------------------------
+        # NOTE: see /live/custom/$DISTRO_NAME/0.sh for distro specific boot codes
+        #------------------------------------------------------------------------
 
         *) UNKNOWN_BOOTCODES="$UNKNOWN_BOOTCODES $param"
         esac
