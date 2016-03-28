@@ -2739,8 +2739,9 @@ my_select_menu() {
     my_select_2 "$title" menu_value 1 "$data" "$menu"
 
     case $menu_value in
-        default|none|reset) ;;
-                         *) cmdline="$cmdline $menu_value";;
+        default|none)                                  ;;
+               reset) [ "$cheat" = lang ] && read_xlat ;;
+                   *) cmdline="$cmdline $menu_value"   ;;
     esac
 
     case $menu_value in
