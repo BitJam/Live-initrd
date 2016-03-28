@@ -545,7 +545,7 @@ clear_env() {
 }
 
 read_late_cmdline_params() {
-    vmsg 6 "read_late_cmdline_params: $*"
+    #vmsg 6 "read_late_cmdline_params: $*"
     local param value cmdline=${1:-$(cat /proc/cmdline)}
 
     for param in $cmdline; do
@@ -2805,7 +2805,7 @@ do_early_menus() {
     my_select_menu "Select Timezone"           "Timezones are listed by longitude"   t Timezone "tz=*"
     my_select_menu "Select Option"             "Only one option can be selected"     o Options  "$OPTIONS_ENTRIES"
     my_select_menu "Select Persistence Option" ""                                    p Persist  "persist=*|frugal|frugal=*"
-    vmsg 6 "cmdline:$white $cmdline"
+    #vmsg 6 "cmdline:$white $cmdline"
     [ ${#cmdline} -gt 0 ] && echo "$cmdline" >> /live/config/cmdline
 }
 
@@ -2822,7 +2822,7 @@ do_late_menus() {
         echo "$cmdline" | grep -q bootsave && BOOT_SAVE=true
     fi
 
-    vmsg 6 "cmdline:$white $cmdline"
+    #vmsg 6 "cmdline:$white $cmdline"
     [ ${#cmdline} -gt 0 ] && echo "$cmdline" >> /live/config/cmdline
 }
 
