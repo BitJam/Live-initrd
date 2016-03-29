@@ -7,4 +7,4 @@
   7) frugal-root     Frugal with only root persistence
   8) frugal-static   Frugal with only static root persistence
   9) frugal-home     Frugal with onl home persistence
- 10) only-frugal     Only Frugal, no persistence
+ 10) frugal-only     Only Frugal, no persistence
