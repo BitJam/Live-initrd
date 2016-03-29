@@ -548,6 +548,7 @@ read_late_cmdline_params() {
     #vmsg 6 "read_late_cmdline_params: $*"
     local param value cmdline=${1:-$(cat /proc/cmdline)}
 
+    local frugal_id=label="$DISTRO_NAME-Frugal"
     for param in $cmdline; do
         value=${param#*=}
 
@@ -567,15 +568,16 @@ read_late_cmdline_params() {
                           toram) TO_RAM=true                                     ;;
 
         # Convenience short cuts from our menus
-                    all-persist) PERSIST=root!,home                              ;;
-                   root-persist) PERSIST=root!                                   ;;
-                    static-root) PERSIST=root!,home,static                       ;;
-                   home-persist) PERSIST=home!                                   ;;
-                 frugal-persist) FRUGAL_ID=label=$DISTRO_NAME-Frugal ; FRUGAL=true ; PERSIST=root!,home        ;;
-                    frugal-root) FRUGAL_ID=label=$DISTRO_NAME-Frugal ; FRUGAL=true ; PERSIST=root!             ;;
-                  frugal-static) FRUGAL_ID=label=$DISTRO_NAME-Frugal ; FRUGAL=true ; PERSIST=root!,home,static ;;
-                    frugal-home) FRUGAL_ID=label=$DISTRO_NAME-Frugal ; FRUGAL=true ; PERSIST=home!             ;;
-                    only-frugal) FRUGAL_ID=label=$DISTRO_NAME-Frugal ; FRUGAL=true                             ;;
+                    all-persist) PERSIST="root!,home"                            ;;
+                   root-persist) PERSIST="root!"                                 ;;
+                    static-root) PERSIST="root!,home,static"                     ;;
+                   home-persist) PERSIST="home!"                                 ;;
+
+                 frugal-persist) FRUGAL_ID=$frugal_id ; FRUGAL=true ; PERSIST="root!,home"        ;;
+                    frugal-root) FRUGAL_ID=$frugal_id ; FRUGAL=true ; PERSIST="root!"             ;;
+                  frugal-static) FRUGAL_ID=$frugal_id ; FRUGAL=true ; PERSIST="root!,home,static" ;;
+                    frugal-home) FRUGAL_ID=$frugal_id ; FRUGAL=true ; PERSIST="home!"             ;;
+                    only-frugal) FRUGAL_ID=$frugal_id ; FRUGAL=true                               ;;
         esac
     done
 }
