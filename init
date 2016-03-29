@@ -2676,7 +2676,7 @@ my_select() {
 
         [ "$lab" = "quit" ] && lab=$bold_co$lab$nc_co
         [ $cnt = "$default" ] && lab=$(printf "%${width}s (%s)" "$lab" "$(cq "default")")
-        display="${display}$(printf "%green%2d$white)$cyan %${width}s" $dcnt "$lab")\n"
+        display="${display}$(printf "$green%2d$white)$cyan %${width}s" $dcnt "$lab")\n"
     done
 
     my_select_2 "$title" $var "$default" "$data" "$display"
