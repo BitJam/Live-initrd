@@ -577,7 +577,7 @@ read_late_cmdline_params() {
                     frugal-root) FRUGAL_ID=$frugal_id ; FRUGAL=true ; PERSIST="root!"             ;;
                   frugal-static) FRUGAL_ID=$frugal_id ; FRUGAL=true ; PERSIST="root!,home,static" ;;
                     frugal-home) FRUGAL_ID=$frugal_id ; FRUGAL=true ; PERSIST="home!"             ;;
-                    only-frugal) FRUGAL_ID=$frugal_id ; FRUGAL=true                               ;;
+                    frugal-only) FRUGAL_ID=$frugal_id ; FRUGAL=true                               ;;
         esac
     done
 }
