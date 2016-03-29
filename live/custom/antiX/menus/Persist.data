@@ -1,10 +1,10 @@
 1:default
-2:persist=root!,home:all persist
-3:persist=root!:root persist
-4:persist=root!,home,static:static root
-5:persist=home!:home persist
-6:frugal=root!,home:frugal/persist
-7:frugal=root!:frugal/root
-8:frugal=root!,home,static:frugal/static
-9:frugal=home!:frugal/home
-10:frugal:only frugal
+2:all-persist:all-persist
+3:root-persist:root-persist
+4:static-root:static-root
+5:home-persist:home-persist
+6:frugal-persist:frugal-persist
+7:frugal-root:frugal-root
+8:frugal-static:frugal-static
+9:frugal-home:frugal-home
+10:only-frugal:only-frugal
