@@ -568,10 +568,10 @@ read_late_cmdline_params() {
                           toram) TO_RAM=true                                     ;;
 
         # Convenience short cuts from our menus
-                    all-persist) PERSIST="root!,home"                            ;;
-                   root-persist) PERSIST="root!"                                 ;;
-                    static-root) PERSIST="root!,home,static"                     ;;
-                   home-persist) PERSIST="home!"                                 ;;
+                    persist-all) PERSIST="root!,home"                            ;;
+                   persist-root) PERSIST="root!"                                 ;;
+                persist-statict) PERSIST="root!,home,static"                     ;;
+                   persist-home) PERSIST="home!"                                 ;;
 
                  frugal-persist) FRUGAL_ID=$frugal_id ; FRUGAL=true ; PERSIST="root!,home"        ;;
                     frugal-root) FRUGAL_ID=$frugal_id ; FRUGAL=true ; PERSIST="root!"             ;;
@@ -710,15 +710,15 @@ read_cmdline_params()
                           toram)  ;;
 
         # Convenience short cuts from our menus
-                    all-persist)  ;;
-                   root-persist)  ;;
-                    static-root)  ;;
-                   home-persist)  ;;
+                    persist-all)  ;;
+                   persist-root)  ;;
+                 persist-static)  ;;
+                   persist-home)  ;;
                  frugal-persist)  ;;
                     frugal-root)  ;;
                   frugal-static)  ;;
                     frugal-home)  ;;
-                    only-frugal)  ;;
+                    frugal-only)  ;;
 
         #----- Some known codes -------------------------
 
