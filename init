@@ -163,6 +163,7 @@ main_wrapper() {
 
     custom_code 0 'before reading boot codes'
 
+    clear_env
     read_cmdline_params
     select_breakpoints
 
