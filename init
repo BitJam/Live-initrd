@@ -1008,24 +1008,24 @@ clean_xlat() {
 }
 
 read_xlat() {
-    local prog=$1  lang=$2
+    local prog=$1  lang=${2%%_*}
     local xdir=$LOCALE_DIR/xlat
     local fdir=$LOCALE_DIR/fonts
 
     local xlat=$xdir/en/$prog.xlat
     [ -r $xlat ] && . $xlat
 
-    [ "$lang" ] || return
+    # Always load a font
+    local font=$fdir/${lang:-default}
+    [ -e "$font" ] && log_cmd setfont $font -C $(tty)
 
-    lang=$(echo $lang | sed 's/_.*//')
+    [ "$lang" ] || return
 
     xlat=$xdir/$lang/$prog.xlat
     [ -r "$xlat" ] || return
     . $xlat
     vmsg 7 'Translate to %s' $lang
 
-    local font=$fdir/$lang
-    [ -e "$font" ] && log_cmd setfont $font -C $(tty)
 }
 
 do_welcome() {
