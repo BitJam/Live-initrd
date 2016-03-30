@@ -2737,20 +2737,24 @@ initialize_cmdline2() {
 
 my_select_menu() {
     local dir=$BOOT_MENU_DIR menu=$DO_MENUS
+    unset MENU_VALUE
     [ "$menu" ] || return
 
     local title=$1 blurb=$2 cheat=$3  name=$4 dfile=$dir/$4.data mfile=$dir/$4.menu fields=$5
 
     [ -z "${menu##*$cheat*}" ] || return
 
+    local def_label
+    local data=$(cat $dfile)
+    mfile=$(xlat_mfile "$mfile" $LANG)
+
     if [ ! -e $dfile -o  ! -e $mfile ]; then
         [ "$BOOT_MENU_WARN" ] && warn "Missing $dfile or $mfile"
         return
     fi
 
-    local menu_value def_label
-    local data=$(cat $dfile)
-    local menu=$(cat $mfile | sed -r -e "s/( [0-9]+)(\))/$green\1$white\2$cyan/g" -e "s/\*/$bold_co*$cyan/g")
+    local menu=$(cat $mfile | sed -r -e "s/( [0-9]+)(\))/$green\1$white\2$cyan/g" \
+        -e "s/\*/$bold_co*$cyan/g" -e "s/\(([^)]+)\)/$nc_co(\1)$cyan/g")
 
     [ "$blurb"     ] && title="$title\n$blurb"
     [ "$fields"    ] && def_label=$(get_default_label "$fields" $dfile)
@@ -2761,27 +2765,22 @@ my_select_menu() {
         menu="  ${green}0$white)$cyan Reset\n$menu"
     fi
 
-    my_select_2 "$title" menu_value 1 "$data" "$menu"
+    my_select_2 "$title" MENU_VALUE 1 "$data" "$menu"
 
     local new_label
-    [ "$menu_value" ] && new_label=$(egrep "^[0-9]+:$menu_value[: ]" $dfile | cut -d: -f3)
+    [ "$MENU_VALUE" ] && new_label=$(egrep "^[0-9]+:$MENU_VALUE[: ]" $dfile | cut -d: -f3)
 
-    case $menu_value in
+    case $MENU_VALUE in
         default) [ -n "$def_label" ] && msg "Keeping default %s" "$(bq $def_label)"          ;;
               *) [ -n "$def_label" ] && msg "Previous default %s erased" "$(bq $def_label)"
                  PROC_CMDLINE=$(filter_cmdline "$fields" $PROC_CMDLINE)                      ;;
     esac
 
-    case $menu_value in
-        default|none)                                  ;;
-               reset) [ "$name" = lang ] && read_xlat  ;;
-
+    case $MENU_VALUE in
+        default|none|reset)                            ;;
                    *) [ -n "$new_label" ] && msg "%s set to %s" "$name" "$(bq $new_label)"
-                      cmdline="$cmdline $menu_value"   ;;
+                      cmdline="$cmdline $MENU_VALUE"   ;;
     esac
-
-
-    eval $name=\$menu_value
 }
 
 get_default_label() {
@@ -2820,16 +2819,33 @@ filter_cmdline() {
     done
 }
 
+xlat_mfile() {
+    local file=$1 lang=${2%%_*}
+    echo "xlat_mfile: $lang $file" >> /mfile.log
+    test -e $file.$lang && echo found >> /mfile.log
+    if [ -n "$lang" -a -e $file.$lang ]; then
+        echo $file.$lang
+        return
+    fi
+    echo $file
+}
+
 do_early_menus() {
     local BOOT_MENU_DIR=/live/custom/$DISTRO_NAME/menus
-    local BOOT_MENU_WARN=true
+    local MENU_VALUE BOOT_MENU_WARN=true
     local lang time_zone option persist desktop
     local cmdline
-    my_select_menu 'Select Language' 'Languages are listed alphabetically'           l Language "lang=*"
-    [ "$lang" ] && read_xlat init ${lang##*=}
-    my_select_menu "Select Timezone"           "Timezones are listed by longitude"   t Timezone "tz=*"
-    my_select_menu "Select Option"             "Only one option can be selected"     o Options  "$OPTIONS_ENTRIES"
-    my_select_menu "Select Persistence Option" ""                                    p Persist  "persist=*|frugal|frugal=*"
+    my_select_menu 'Select Language'           'Languages are listed alphabetically'   l Language "lang=*"
+
+    case $MENU_VALUE in
+        lang=*) LANG=${MENU_VALUE#lang=}
+                read_xlat init $LANG       ;;
+         reset) read_xlat                  ;;
+    esac
+
+    my_select_menu "Select Timezone"           "Timezones are listed by longitude"     t Timezone "tz=*"
+    my_select_menu "Select Option"             "Only one option can be selected"       o Options  "$OPTIONS_ENTRIES"
+    my_select_menu "Select Persistence Option" ""                                      p Persist  "persist-*|frugal-*"
     #vmsg 6 "cmdline:$white $cmdline"
     [ ${#cmdline} -gt 0 ] && echo "$cmdline" >> /live/config/cmdline
 }
