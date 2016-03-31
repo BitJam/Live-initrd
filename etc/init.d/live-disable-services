@@ -260,7 +260,7 @@ disable_services() {
         done
     done
 
-    [ "$moved" ] && OUT="$OUT${OUT:+,,}#----- $name -----$moved"
+    OUT="$OUT${OUT:+,,}#----- $name -----$moved"
 
     [ "$DEBUGGING" ] || return
 
@@ -272,7 +272,6 @@ disable_services() {
         unused="$unused $service"
     done
     [ "$unused" ] && echo_live '  Unused: %s' "$AMBER$unused"
-
 }
 
 prep_main "$@"
