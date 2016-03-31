@@ -13,6 +13,8 @@
 
 export PATH=/sbin:/usr/sbin:/bin:/usr/bin:/usr/local/bin
 
+OUT_FILE=/live/config/disabled
+
 VBOX_SERVICES="
 virtualbox-guest-utils
 virtualbox-guest-x11
@@ -108,6 +110,7 @@ prep_main() {
            disable_srv=*) antiX_param=${param#*=}; must_run=true ;;
                 nosysv=*) antiX_param=${param#*=}; must_run=true ;;
        disable_service=*) antiX_param=${param#*=}; must_run=true ;;
+               disable=*) antiX_param=${param#*=}; must_run=true ;;
                     lean)        LEAN=true;        must_run=true ;;
                     mean)        MEAN=true;        must_run=true ;;
                 Xtralean)   XTRA_LEAN=true;        must_run=true ;;
@@ -169,38 +172,40 @@ main() {
         fi
 
         echo_live "Disabling some services %s" "$(paren L, lean)"
-        disable_services "$LEAN_SERVICES"
+        disable_services "lean (l)" "$LEAN_SERVICES"
     fi
 
     if [ "$DISABLE_VBOX" ]; then
         echo_live "Disabling %s services %s" "Virtual Box" "$(paren v)"
-        disable_services "$VBOX_SERVICES"
+        disable_services "vbox (v)" "$VBOX_SERVICES"
     fi
 
     if [ "$DISABLE_NFS" ]; then
-        echo_live "Disabling %s services" "NFS kernel server"
-        disable_services "$NFS_SERVICES"
+        echo_live "Disabling NFS server %s" "$(paren n)"
+        disable_services "nfs (n)" "$NFS_SERVICES"
     fi
 
     if [ "$MEAN" ]; then
         echo_live "Disabling network services %s" "$(paren M, mean)"
-        disable_services "$MEAN_SERVICES"
+        disable_services "mean (m)" "$MEAN_SERVICES"
     fi
 
     if [ "$XTRA_LEAN" ]; then
         echo_live "Disabling more services %s" "$(paren X, Xtralean)"
-        disable_services "$XTRA_LEAN_SERVICES"
+        disable_services "Xtralean (x)" "$XTRA_LEAN_SERVICES"
     fi
 
     if [ "$NO_DBUS" ]; then
         echo_live "Disabling %s services %s" "debus" "$(paren D, nodbus)"
-        disable_services "$NO_DBUS_SERVICES"
+        disable_services "nodbus (d)" "$NO_DBUS_SERVICES"
     fi
+
+    [ "$OUT" ] && echo "$OUT" | tr "," "\n" > $OUT_FILE
 }
 
 
 #----------------------------------------------------------------------------
-# function disable_services "$names" [ "$rc_dirs" ]
+# function disable_services "$name" "$services" [ "$rc_dirs" ]
 #
 # Temporarily disable services at boot-time by moving their /etc/rc?.d/
 # symlinks.  See also live-restore-services which is the script
@@ -214,58 +219,42 @@ main() {
 
 disable_services() {
 
-    local names="$1" rc_dirs="${2:-rc?.d}"
+    local name=$1 services="$2" rc_dirs="${3:-rc?.d}"
 
-    local rc_dir dest name slink moved length
+    local rc_dir dest service slink moved length
 
     for rc_dir in /etc/$rc_dirs; do
 
         dest=/live/config/disabled-rc.d/${rc_dir#/etc/}
         mkdir -p $dest
 
-        for name in $names; do
-            [ -z "${name###*}" ]  && continue
-            for slink in /$rc_dir/S*$name; do
+        local out
+        for service in $services; do
+            [ -z "${service###*}" ]  && continue
+            for slink in /$rc_dir/S*$service; do
                 [ -e "$slink" ] || continue
                 mv -f $slink $dest
 
-                #[ "$DEBUGGING" ] || continue
-
-                [ "$moved" ] || echo -n "    "
-
-                # Only print out each name once
+                # Only print out each service once
                 case ",$moved," in
-                    *,$name,*)
-                        continue;
-                        ;;
+                    *,$service,*) continue ;;
                 esac
 
-                # Wrap long lines
-                if [ "${#length}" -ge "60" ]; then
-                    unset length
-                    echo
-                    echo -n "    "
-                fi
-                length="$length $name"
-                moved="$moved,$name"
-                echo -n "${PARAM_COLOR}$name$NO_COLOR "
-
+                moved="$moved,$service"
             done
         done
     done
 
-    [ "$moved" ] && echo
+    [ "$moved" ] && OUT="$OUT${OUT:+,,}#----- $name -----$moved"
 
     [ "$DEBUGGING" ] || return
 
     local unused
-    for name in $names; do
+    for service in $services; do
         case ",$moved," in
-            *,$name,*)
-                continue
-                ;;
+            *,$service,*) continue ;;
         esac
-        unused="$unused $name"
+        unused="$unused $service"
     done
     [ "$unused" ] && echo_live '  Unused: %s' "$AMBER$unused"
 
