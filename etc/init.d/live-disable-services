@@ -126,15 +126,17 @@ prep_main() {
         esac
     done
 
-    DISABLE_NFS=true
-    NFS_REASON="no exports"
+    if test -x /etc/init.d/nfs-kernel-server; then
+        DISABLE_NFS=true
+        NFS_REASON="no exports"
 
-    local file export_files="/etc/exports"
-    for file in /etc/exports.d/*.exports ; do
-		[ -f "$file" ] && export_files="$export_files $file"
-	done
+        local file export_files="/etc/exports"
+        for file in /etc/exports.d/*.exports ; do
+            [ -f "$file" ] && export_files="$export_files $file"
+        done
 
-    [ -f /etc/exports ] && grep -q '^[[:space:]]*[^#]*/' $export_files && DISABLE_NFS=
+        [ -f /etc/exports ] && grep -q '^[[:space:]]*[^#]*/' $export_files && DISABLE_NFS=
+    fi
 
     if [ "$disable_param" ]; then
 
