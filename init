@@ -694,7 +694,7 @@ read_cmdline_params()
                        fatuid=*) any_int USER_UID $param                         ;;
                        fatgid=*) any_int USER_GID $param                         ;;
 
-                       nosysv=*) NOSYSV="$NOSYSV$value"                          ;;
+             disable=*|nosysv=*) DISABLE_SERVICES="$DISABLE_SERVICES$value"      ;;
 
         #----- These get interpreted late but we don't want them to be unknown
                 hwclock=*|hwc=*)  ;;
@@ -2726,11 +2726,11 @@ initialize_cmdline2() {
     touch /live/config/cmdline /live/config/cmdline2
 
     local cmdline
-    if [ ${#NOSYSV} -gt 0 ]; then
-        [ -z "${NOSYSV##*S*}" ] && cmdline="$cmdline${cmdline:+ }nostore"
-        [ -z "${NOSYSV##*s*}" ] && cmdline="$cmdline${cmdline:+ }nosavestate"
-        [ -z "${NOSYSV##*r*}" ] && cmdline="$cmdline${cmdline:+ }norepo"
-        [ -z "${NOSYSV##*k*}" ] && cmdline="$cmdline${cmdline:+ }noloadkeys conkbd=us"
+    if [ ${#DISABLE_SERVICES} -gt 0 ]; then
+        [ -z "${DISABLE_SERVICES##*S*}" ] && cmdline="$cmdline${cmdline:+ }nostore"
+        [ -z "${DISABLE_SERVICES##*s*}" ] && cmdline="$cmdline${cmdline:+ }nosavestate"
+        [ -z "${DISABLE_SERVICES##*r*}" ] && cmdline="$cmdline${cmdline:+ }norepo"
+        [ -z "${DISABLE_SERVICES##*k*}" ] && cmdline="$cmdline${cmdline:+ }noloadkeys conkbd=us"
         [ "$cmdline" ] && echo "$cmdline" >> /live/config/cmdline2
     fi
 }
