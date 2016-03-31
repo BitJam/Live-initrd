@@ -108,20 +108,21 @@ prep_main() {
                exit 1   ;;
     esac
 
-    local must_run
+    local must_run param val
     : ${CMDLINE:=$(cat /live/config/proc-cmdline)}
     for param in $CMDLINE; do
+        val=${param#*=}
         case "$param" in
-            antiX=*|aX=*) antiX_param=${param#*=}; must_run=true ;;
-           disable_srv=*) antiX_param=${param#*=}; must_run=true ;;
-                nosysv=*) antiX_param=${param#*=}; must_run=true ;;
-       disable_service=*) antiX_param=${param#*=}; must_run=true ;;
-               disable=*) antiX_param=${param#*=}; must_run=true ;;
-                    lean)        LEAN=true;        must_run=true ;;
-                    mean)        MEAN=true;        must_run=true ;;
-                Xtralean)   XTRA_LEAN=true;        must_run=true ;;
-                  nodbus)     NO_DBUS=true;        must_run=true ;;
-                    db++)   DEBUGGING=true                       ;;
+            antiX=*|aX=*) disable_param=$val   ; must_run=true ;;
+           disable_srv=*) disable_param=$val   ; must_run=true ;;
+                nosysv=*) disable_param=$val   ; must_run=true ;;
+       disable_service=*) disable_param=$val   ; must_run=true ;;
+               disable=*) disable_param=$val   ; must_run=true ;;
+                    lean)        LEAN=true;      must_run=true ;;
+                    mean)        MEAN=true;      must_run=true ;;
+                Xtralean)   XTRA_LEAN=true;      must_run=true ;;
+                  nodbus)     NO_DBUS=true;      must_run=true ;;
+                    db++)   DEBUGGING=true                     ;;
         esac
     done
 
@@ -135,17 +136,17 @@ prep_main() {
 
     [ -f /etc/exports ] && grep -q '^[[:space:]]*[^#]*/' $export_files && DISABLE_NFS=
 
-    if [ "$antiX_param" ]; then
+    if [ "$disable_param" ]; then
 
         # If the ## expression matches then the resulting string length is zero
-        [ "${antiX_param##*[lL]*}" ] ||          LEAN=true
-        [ "${antiX_param##*[mM]*}" ] ||          MEAN=true
-        [ "${antiX_param##*[xX]*}" ] ||     XTRA_LEAN=true
-        [ "${antiX_param##*[dD]*}" ] ||       NO_DBUS=true
-        [ "${antiX_param##*[vV]*}" ] ||  DISABLE_VBOX=true
-        [ "${antiX_param##*[nN]*}" ] ||   DISABLE_NFS=true
-        [ "${antiX_param##*[k]*}"  ] ||      FAST_KBD=true
-        [ "${antiX_param##*[nN]*}" ] ||    NFS_REASON=n
+        [ "${disable_param##*[lL]*}" ] ||          LEAN=true
+        [ "${disable_param##*[mM]*}" ] ||          MEAN=true
+        [ "${disable_param##*[xX]*}" ] ||     XTRA_LEAN=true
+        [ "${disable_param##*[dD]*}" ] ||       NO_DBUS=true
+        [ "${disable_param##*[vV]*}" ] ||  DISABLE_VBOX=true
+        [ "${disable_param##*[nN]*}" ] ||   DISABLE_NFS=true
+        [ "${disable_param##*[k]*}"  ] ||      FAST_KBD=true
+        [ "${disable_param##*[nN]*}" ] ||    NFS_REASON=n
     fi
 
     . /live/lib/live-init-utils.sh
