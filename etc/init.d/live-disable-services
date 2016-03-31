@@ -85,6 +85,12 @@ MEAN_SERVICES="
     smbd
     nfs-kernel-server
     wicd
+    avahi-daemon
+"
+
+KBD_SERVICES="
+console-setup
+keyboard-setup
 "
 
 NO_DBUS_SERVICES="
@@ -120,6 +126,8 @@ prep_main() {
     done
 
     DISABLE_NFS=true
+    NFS_REASON="no exports"
+
     local file export_files="/etc/exports"
     for file in /etc/exports.d/*.exports ; do
 		[ -f "$file" ] && export_files="$export_files $file"
@@ -136,6 +144,8 @@ prep_main() {
         [ "${antiX_param##*[dD]*}" ] ||       NO_DBUS=true
         [ "${antiX_param##*[vV]*}" ] ||  DISABLE_VBOX=true
         [ "${antiX_param##*[nN]*}" ] ||   DISABLE_NFS=true
+        [ "${antiX_param##*[k]*}"  ] ||      FAST_KBD=true
+        [ "${antiX_param##*[nN]*}" ] ||    NFS_REASON=n
     fi
 
     . /live/lib/live-init-utils.sh
@@ -181,7 +191,7 @@ main() {
     fi
 
     if [ "$DISABLE_NFS" ]; then
-        echo_live "Disabling NFS server %s" "$(paren n)"
+        echo_live "Disabling NFS server %s" "$(paren $NFS_REASON)"
         disable_services "nfs (n)" "$NFS_SERVICES"
     fi
 
@@ -193,6 +203,11 @@ main() {
     if [ "$XTRA_LEAN" ]; then
         echo_live "Disabling more services %s" "$(paren X, Xtralean)"
         disable_services "Xtralean (x)" "$XTRA_LEAN_SERVICES"
+    fi
+
+    if [ "$FAST_KBD" ]; then
+        echo_live "Disabling keyboard setup %s" "$(paren k)"
+        disable_services "keyboard (k)" "$KBD_SERVICES"
     fi
 
     if [ "$NO_DBUS" ]; then
