@@ -569,16 +569,16 @@ read_late_cmdline_params() {
                           toram) TO_RAM=true                                     ;;
 
         # Convenience short cuts from our menus
-                    persist-all) PERSIST="root!,home"                            ;;
-                   persist-root) PERSIST="root!"                                 ;;
-                persist-statict) PERSIST="root!,home,static"                     ;;
-                   persist-home) PERSIST="home!"                                 ;;
+                    persist_all) PERSIST="root!,home"                            ;;
+                   persist_root) PERSIST="root!"                                 ;;
+                persist_statict) PERSIST="root!,home,static"                     ;;
+                   persist_home) PERSIST="home!"                                 ;;
 
-                 frugal-persist) FRUGAL_ID=$frugal_id ; FRUGAL=true ; PERSIST="root!,home"        ;;
-                    frugal-root) FRUGAL_ID=$frugal_id ; FRUGAL=true ; PERSIST="root!"             ;;
-                  frugal-static) FRUGAL_ID=$frugal_id ; FRUGAL=true ; PERSIST="root!,home,static" ;;
-                    frugal-home) FRUGAL_ID=$frugal_id ; FRUGAL=true ; PERSIST="home!"             ;;
-                    frugal-only) FRUGAL_ID=$frugal_id ; FRUGAL=true                               ;;
+                 frugal_persist) FRUGAL_ID=$frugal_id ; FRUGAL=true ; PERSIST="root!,home"        ;;
+                    frugal_root) FRUGAL_ID=$frugal_id ; FRUGAL=true ; PERSIST="root!"             ;;
+                  frugal_static) FRUGAL_ID=$frugal_id ; FRUGAL=true ; PERSIST="root!,home,static" ;;
+                    frugal_home) FRUGAL_ID=$frugal_id ; FRUGAL=true ; PERSIST="home!"             ;;
+                    frugal_only) FRUGAL_ID=$frugal_id ; FRUGAL=true                               ;;
         esac
     done
 }
@@ -711,15 +711,15 @@ read_cmdline_params()
                           toram)  ;;
 
         # Convenience short cuts from our menus
-                    persist-all)  ;;
-                   persist-root)  ;;
-                 persist-static)  ;;
-                   persist-home)  ;;
-                 frugal-persist)  ;;
-                    frugal-root)  ;;
-                  frugal-static)  ;;
-                    frugal-home)  ;;
-                    frugal-only)  ;;
+                    persist_all)  ;;
+                   persist_root)  ;;
+                 persist_static)  ;;
+                   persist_home)  ;;
+                 frugal_persist)  ;;
+                    frugal_root)  ;;
+                  frugal_static)  ;;
+                    frugal_home)  ;;
+                    frugal_only)  ;;
 
         #----- Some known codes -------------------------
 
