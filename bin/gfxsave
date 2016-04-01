@@ -140,7 +140,6 @@ write_boot_param_hash() {
         # so we can turn them into variables names.  This is
         # a poor man's ash hash.
 
-        #echo "P: $param"
         # skip parameter names with non-word characters
         echo $param | grep -q "^[^=]*[^A-Za-z0-9_=]" && continue
         case "$param" in
@@ -209,10 +208,8 @@ write_gfx_menu_defaults() {
             -e 's/\<(nouveau|video)_/\1./g' \
             -e 's/\<lang=//'                \
             -e 's/\<nouveau\.modeset=0$//'  \
-            -e 's/\<(persist|frugal)_/\1-/g' \
             -e 's/\<tz=//')
 
-        #echo "E: $entry   O: $out"
         [ -n "$out" ] || continue
         local menu_file=$dir/$fname.men
         if [ -r $menu_file ]; then
