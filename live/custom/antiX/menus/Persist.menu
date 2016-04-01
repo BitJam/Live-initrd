@@ -1,10 +1,10 @@
-  1) Default
-  2) persist-all     Both root and home persistence
-  3) persist-root    Only root persistence (uses persist-save)
-  4) persist-static  Only root persistence (slow but no persist-save)
-  5) persist-home    Only home persistence
-  6) frugal-persist  Frual with both root and home persistence
-  7) frugal-root     Frugal with only root persistence
-  8) frugal-static   Frugal with only static root persistence
-  9) frugal-home     Frugal with onl home persistence
- 10) frugal-only     Only Frugal, no persistence
+   1)  Default
+   2)  persist-all     Both root and home persistence (uses persist-save)
+   3)  persist-root    Only root persistence (uses persist-save)
+   4)  persist-static  Home and root persistence (slower but no persist-save)
+   5)  persist-home    Only home persistence
+   6)  frugal-persist  Frugal with both root and home persistence
+   7)  frugal-root     Frugal with only root persistence
+   8)  frugal-static   Frugal with home and static root persistence
+   9)  frugal-home     Frugal with only home persistence
+  10)  frugal-only     Only Frugal, no persistence

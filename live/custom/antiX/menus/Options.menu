@@ -1,13 +1,17 @@
-  1) Default
-  2) checkmd5        Check integrity of the install media
-  3) checkfs         Check LiveUSB ext2/3/4 and persistent file systems
-  4) toram           Copy the compressed file system to RAM
-  5) from=usb        Finish booting from a LiveUSB
-  6) hwclock=ask     Have the system help determine the clock setting
-  7) hwclock=utc     Use UTC for hardware clock (Linux-only systems)
-  8) hwclock=local   Use localtime for hardware clock (Windows systems)
-  9) private         Change passwords before booting
- 10) nostore         Disable LiveUSB-Storage feature
- 11) savestate       Save some files across reboots (LiveUSB only)
- 12) nosavestate     Don't save files across reboots (LiveUSB only)
- 13) nousb2          Disable all usb-2 devices while booting
+   1)  Default
+   2)  checkmd5        Check integrity of the live media
+   3)  checkfs         Check LiveUSB ext2/3/4 and persistent file systems
+   4)  toram           Copy the compressed file system to RAM
+   5)  from=usb        Finish booting from a LiveUSB
+   6)  nousb2          Disable all usb-2 devices while booting
+   7)  automount       Automatically mount devices when plugged in
+   8)  mount=usb       ... and mount all usb devices at boot time
+   9)  mount=all       ... and mount ALL devices at boot time
+  10)  mount=off       Disable all extra mounting
+  11)  hwclock=ask     Have the system help determine the clock setting
+  12)  hwclock=utc     Hardware clock uses UTC (Linux-only systems)
+  13)  hwclock=local   Hardware clock uses local time (Windows systems)
+  14)  private         Change passwords before booting
+  15)  nostore         Disable LiveUSB-Storage feature
+  16)  savestate       Save some files across reboots (LiveUSB only)
+  17)  nosavestate     Don't save files across reboots (LiveUSB only)
