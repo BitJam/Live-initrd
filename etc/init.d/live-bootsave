@@ -34,7 +34,7 @@ do_start() {
         case $param in
             gfxsave=*) gfx_cmd=${param#*=} ;;
               gfxsave) gfx_cmd=both        ;;
-              bootsave) boot_save=true     ;;
+             bootsave) boot_save=true     ;;
         esac
     done
     echo_script "Possibly saving boot parameters" $0
