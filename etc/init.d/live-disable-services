@@ -247,7 +247,6 @@ disable_services() {
         dest=/live/config/disabled-rc.d/${rc_dir#/etc/}
         mkdir -p $dest
 
-        local out
         for service in $services; do
             [ -z "${service###*}" ]  && continue
             for slink in /$rc_dir/S*$service; do
