@@ -168,6 +168,18 @@ main() {
         fi
     fi
 
+    # Turn on (off) lastlog info in console login if root persistence is (not) enabled
+    # Lastlog info is not useful on non-persistent system
+    local pam_file=/etc/pam.d/login
+    egrep -q '^[[[:space:]]*session[[:space:]]+[^[:space:]]+[[:space:]]+pam_lastlog.so[[:space:]]+silent' $pam_file
+    local silent_pam=$?
+    if grep -q "^PERSISTENCE=.*root" /live/config/initrd.out; then
+        [ $silent_pam -eq 0 ] && sed -r -i 's/^\s*(session\s+[^\s]+\s+pam_lastlog.so).*/\1/' $pam_file
+    else
+        [ $silent_pam -ne 0 ] && sed -i -r 's/^\s*(session\s+[^\s]+\s+pam_lastlog.so).*/\1 silent/' $pam_file
+    fi
+    disable_services "motd (no root persistence)" motd
+
     [ -z "$must_run" -o -n "$DISABLE_NFS" ] || exit 0
 
     if [ "$LEAN" ]; then
