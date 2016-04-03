@@ -88,11 +88,6 @@ MEAN_SERVICES="
     avahi-daemon
 "
 
-KBD_SERVICES="
-console-setup
-keyboard-setup
-"
-
 NO_DBUS_SERVICES="
     dbus
 "
@@ -147,7 +142,6 @@ prep_main() {
         [ "${disable_param##*[dD]*}" ] ||       NO_DBUS=true
         [ "${disable_param##*[vV]*}" ] ||  DISABLE_VBOX=true
         [ "${disable_param##*[nN]*}" ] ||   DISABLE_NFS=true
-        [ "${disable_param##*[k]*}"  ] ||      FAST_KBD=true
         [ "${disable_param##*[nN]*}" ] ||    NFS_REASON=n
     fi
 
@@ -206,11 +200,6 @@ main() {
     if [ "$XTRA_LEAN" ]; then
         echo_live "Disabling more services %s" "$(paren X, Xtralean)"
         disable_services "Xtralean (x)" "$XTRA_LEAN_SERVICES"
-    fi
-
-    if [ "$FAST_KBD" ]; then
-        echo_live "Disabling keyboard setup %s" "$(paren k)"
-        disable_services "keyboard (k)" "$KBD_SERVICES"
     fi
 
     if [ "$NO_DBUS" ]; then
