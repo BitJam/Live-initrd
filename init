@@ -462,6 +462,9 @@ main_core() {
         msg "$green@${cyan} Extras took$hi_co $delta${cyan} seconds"
     fi
 
+    rm -f $NEW_ROOT/etc/motd
+    test -e /issue && cp /issue $NEW_ROOT/etc/issue
+
     # FIXME: do this after copy_xtra for easy testing (for now) (????)
     PROC_CMDLINE=$(cat /live/config/proc-cmdline)
     [ "$DO_MENUS" ] && do_late_menus
@@ -1044,13 +1047,19 @@ do_welcome() {
 
     vmsg 2 "Welcome to %s" "$(pq $pretty_name$arch)!"
 
+    (   imsg "Welcome to %s! Powered by %s" "$(gq $pretty_name$arch)" "$(gq Debian)."
+        imsg "For cli install, login as %s (password is %s) and type %s" \
+            "$(gq root)" "$(gq root)"  "$(gq cli-installer)."
+        imsg "Follow the instructions."
+    ) > /issue
+
     if lspci -n | grep -iq " 80ee:beef"; then
         vmsg 7 'VirtualBox detected'
         touch /live/config/virtualbox
     fi
 
     local bat_stat=$(battery-status | sed "s/:/:$hi_co/" )
-    [ "$bat_stat" ] && msg %s "$bat_stat"
+    [ -n "$DB_PLUS" -a -n "$bat_stat" ] && msg %s "$bat_stat"
 
     # Get total ramsize, and available real ram in MB. We need this later.
 
@@ -2384,6 +2393,15 @@ pqe()    { echo "$bold_co$*$err_co"       ;}
 pqw()    { echo "$hi_co$*$warn_co"        ;}
 pqh()    { echo "$m_co$*$hi_co"           ;}
 hq()     { echo "$hi_co$*$m_co"           ;}
+ncq()    { echo "$hi_co$*$nc_co"          ;}
+gq()     { echo "$hi_co$*$lt_green"       ;}
+
+
+imsg() {
+    local fmt=$1
+    shift
+    printf "$lt_green$fmt$nc_co\n" "$@"
+}
 
 vmsg() {
     local level=$1  fmt=$2
