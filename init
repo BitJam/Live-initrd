@@ -2738,7 +2738,7 @@ initialize_cmdline2() {
         [ -z "${DISABLE_SERVICES##*S*}" ] && cmdline="$cmdline${cmdline:+ }savestate"
         [ -z "${DISABLE_SERVICES##*s*}" ] && cmdline="$cmdline${cmdline:+ }nosavestate"
         [ -z "${DISABLE_SERVICES##*r*}" ] && cmdline="$cmdline${cmdline:+ }norepo"
-        [ -z "${DISABLE_SERVICES##*k*}" ] && cmdline="$cmdline${cmdline:+ }noloadkeys conkbd=us"
+        [ -z "${DISABLE_SERVICES##*k*}" ] && cmdline="$cmdline${cmdline:+ }noloadkeys"
         [ "$cmdline" ] && echo "$cmdline" >> /live/config/cmdline2
     fi
 }
