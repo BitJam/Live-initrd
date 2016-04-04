@@ -461,8 +461,7 @@ main_core() {
         msg "$green@${cyan} Extras took$hi_co $delta${cyan} seconds"
     fi
 
-    rm -f $NEW_ROOT/etc/motd
-    test -e /issue && cp /issue $NEW_ROOT/etc/issue
+    test -e /$NEW_ROOT/etc/issue || cp /issue $NEW_ROOT/etc/issue
 
     # FIXME: do this after copy_xtra for easy testing (for now) (????)
     PROC_CMDLINE=$(cat /live/config/proc-cmdline)
