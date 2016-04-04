@@ -2735,7 +2735,7 @@ initialize_cmdline2() {
 
     local cmdline
     if [ ${#DISABLE_SERVICES} -gt 0 ]; then
-        [ -z "${DISABLE_SERVICES##*S*}" ] && cmdline="$cmdline${cmdline:+ }nostore"
+        [ -z "${DISABLE_SERVICES##*S*}" ] && cmdline="$cmdline${cmdline:+ }savestate"
         [ -z "${DISABLE_SERVICES##*s*}" ] && cmdline="$cmdline${cmdline:+ }nosavestate"
         [ -z "${DISABLE_SERVICES##*r*}" ] && cmdline="$cmdline${cmdline:+ }norepo"
         [ -z "${DISABLE_SERVICES##*k*}" ] && cmdline="$cmdline${cmdline:+ }noloadkeys conkbd=us"
