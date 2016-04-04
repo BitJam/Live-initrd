@@ -14,6 +14,7 @@
 export PATH=/sbin:/usr/sbin:/bin:/usr/bin:/usr/local/bin
 
 OUT_FILE=/live/config/disabled
+PAM_FILE=/etc/pam.d/login
 
 VBOX_SERVICES="
 virtualbox-guest-utils
@@ -93,16 +94,22 @@ NO_DBUS_SERVICES="
 "
 
 PATH=/live/bin:$PATH
+. /live/lib/live-init-utils.sh
 
-prep_main() {
+start_init_logging
+load_translation
+
+main() {
 
     case $1 in
-        start)          ;;
-         stop) exit 0   ;;
+        start) do_start  ;;
+         stop) do_stop   ;;
             *) echo "Usage: $0 {start|stop}"
-               exit 1   ;;
+               exit 1    ;;
     esac
+}
 
+do_start() {
     local must_run param val
     : ${CMDLINE:=$(cat /live/config/proc-cmdline)}
     for param in $CMDLINE; do
@@ -141,17 +148,11 @@ prep_main() {
         [ "${disable_param##*[xX]*}" ] ||     XTRA_LEAN=true
         [ "${disable_param##*[dD]*}" ] ||       NO_DBUS=true
         [ "${disable_param##*[vV]*}" ] ||  DISABLE_VBOX=true
+        [ "${disable_param##*[g]*}"  ] ||   DISABLE_GPM=true
         [ "${disable_param##*[nN]*}" ] ||   DISABLE_NFS=true
         [ "${disable_param##*[nN]*}" ] ||    NFS_REASON=n
     fi
 
-    . /live/lib/live-init-utils.sh
-
-    start_init_logging
-    load_translation
-}
-
-main() {
     # Prevent other messages stepping on ours
     # sleep 2
     echo_script "Customizing services" $0
@@ -170,17 +171,19 @@ main() {
 
     # Turn on (off) lastlog info in console login if root persistence is (not) enabled
     # Lastlog info is not useful on non-persistent system
-    local pam_file=/etc/pam.d/login
-    egrep -q '^[[[:space:]]*session[[:space:]]+[^[:space:]]+[[:space:]]+pam_lastlog.so[[:space:]]+silent' $pam_file
+    egrep -q '^[[[:space:]]*session[[:space:]]+[^[:space:]]+[[:space:]]+pam_lastlog.so[[:space:]]+silent' $PAM_FILE
     local silent_pam=$?
     if grep -q "^PERSISTENCE=.*root" /live/config/initrd.out; then
-        [ $silent_pam -eq 0 ] && sed -r -i 's/^\s*(session\s+[^\s]+\s+pam_lastlog.so).*/\1/' $pam_file
+        [ $silent_pam -eq 0 ] && sed -r -i 's/^\s*(session\s+[^\s]+\s+pam_lastlog.so).*/\1/' $PAM_FILE
     else
-        [ $silent_pam -ne 0 ] && sed -i -r 's/^\s*(session\s+[^\s]+\s+pam_lastlog.so).*/\1 silent/' $pam_file
+        [ $silent_pam -ne 0 ] && sed -i -r \
+            -e 's/^\s*(session\s+[^\s]+\s+pam_lastlog.so).*/\1 silent/'  \
+            -e 's/^\s*(session\s+[^\s]+\s+pam_(exec|motd).so.*)/#-- \1/' \
+            $PAM_FILE
     fi
-    disable_services "motd (no root persistence)" motd
+    #disable_services "motd (no root persistence)" motd
 
-    [ -z "$must_run" -o -n "$DISABLE_NFS" ] || exit 0
+    [ -n "$must_run" -o -n "$DISABLE_NFS" ] || exit 0
 
     if [ "$LEAN" ]; then
 
@@ -277,8 +280,15 @@ disable_services() {
     [ "$unused" ] && echo_live '  Unused: %s' "$AMBER$unused"
 }
 
-prep_main "$@"
-main  2>&1 | tee -a $INIT_LOG_FILE
+do_stop() {
+
+    sed -r -i \
+        -e 's/^\s*(session\s+[^\s]+\s+pam_lastlog.so).*/\1/'     \
+        -e '/session\s+[^\s]+\s+pam_(exec|motd).so/ s/^#-*\s*//' \
+        $ROOT$PAM_FILE
+}
+
+main "$@" 2>&1 | tee -a $INIT_LOG_FILE
 
 exit 0
 
