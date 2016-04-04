@@ -24,6 +24,10 @@ virtualbox-guest-x11
 NFS_SERVICES="
 nfs-kernel-server
 "
+GPM_SERVICES="
+gpm
+"
+
 
 LEAN_SERVICES="
     acpi-fakekey
@@ -34,7 +38,6 @@ LEAN_SERVICES="
     cpufrequtils
     cron
     cups
-    gpm
     ifplugd
     irqbalance
     loadcpufreq
@@ -205,6 +208,11 @@ do_start() {
     if [ "$DISABLE_NFS" ]; then
         echo_live "Disabling NFS server %s" "$(paren $NFS_REASON)"
         disable_services "nfs (n)" "$NFS_SERVICES"
+    fi
+
+    if [ "$DISABLE_GPM" ]; then
+        echo_live "Disabling gpm (g)"
+        disable_services "gpm (g)" "$GPM_SERVICES"
     fi
 
     if [ "$MEAN" ]; then
