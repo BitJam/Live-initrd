@@ -15,15 +15,10 @@
 export PATH=/sbin:/usr/sbin:/bin:/usr/bin:/usr/local/bin
 
 case "$1" in
-    start) 
-         ;;
-    stop)
-        exit 0
-         ;;
-    *)
-         echo "Usage: $0 {start|stop}"
-         exit 1
-         ;;
+   start)         ;;
+    stop) exit 0  ;;
+       *) echo "Usage: $0 {start|stop}" >&2
+          exit 1  ;;
 esac
 
 # For debugging
