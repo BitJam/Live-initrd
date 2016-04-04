@@ -4765,6 +4765,8 @@ prepare_switch_root() {
     (cd $root_dir/bin && rm -rf fbcondecor_helper ntfs-3g)
     rm -rf /$root_dir/etc/splash
 
+    rm -rf /$root_dir/live/custom/*/menus
+
     # Work around a bug in fbcondecor_helper
     local fbsys=$root_dir/lib/splash/sys
     mountpoint $fbsys &>/dev/null && umount $fbsys
