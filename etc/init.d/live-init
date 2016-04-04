@@ -32,6 +32,7 @@ XORG_DRIVER_DIR="/usr/lib/xorg/modules/drivers"
 for param in $CMDLINE; do
     value=${param#*=}
     case "$param" in
+            noloadkeys)    NO_LOAD_KEYS=true                        ;;
                    db+)      DB_PLUS=true                           ;;
              desktop=*)  CMD_DESKTOP=$value                         ;;
                  dpi=*)      CMD_DPI=$value                         ;;
@@ -113,7 +114,7 @@ do_start() {
     localize_skel $WM_LANG
 
     # Always create keyboard file in non-perisistent system even with no X
-    set_keyboard
+    [ -z "$NO_LOAD_KEYS" ] && set_keyboard
     set_utc_local $CMD_CLOCK
 
     # Only do X stuff on systems that seem to have X

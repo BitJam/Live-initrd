@@ -31,6 +31,7 @@ esac
 
 for param in $CMDLINE; do
     case $param in
+        noloadkeys)    NO_LOAD_KEYS=true                   ;;
             lang=*)    CMD_LANG=${param#*=}; MUST_RUN=true ;;
         hostname=*)    CMD_HOST=${param#*=}; MUST_RUN=true ;;
               tz=*)      CMD_TZ=${param#*=}; MUST_RUN=true ;;
@@ -102,7 +103,7 @@ load_translation
 
 
     KEYTABLE=${CMD_KEYS:-$KEYTABLE}
-    if [ -n "$KEYTABLE" ]; then
+    if [ -n "$KEYTABLE" -a -z "$NO_LOAD_KEYS" ]; then
         echo_live "Configuring console for a %s keymap" "$(pquote $KEYTABLE)"
         # install keymap and set console font
         rm -f /etc/console/*
