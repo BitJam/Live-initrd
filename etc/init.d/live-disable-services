@@ -152,6 +152,7 @@ do_start() {
         [ "${disable_param##*[dD]*}" ] ||       NO_DBUS=true
         [ "${disable_param##*[vV]*}" ] ||  DISABLE_VBOX=true
         [ "${disable_param##*[g]*}"  ] ||   DISABLE_GPM=true
+        [ "${disable_param##*[P]*}"  ] ||    ENABLE_PAM=true
         [ "${disable_param##*[nN]*}" ] ||   DISABLE_NFS=true
         [ "${disable_param##*[nN]*}" ] ||    NFS_REASON=n
     fi
@@ -176,8 +177,11 @@ do_start() {
     # Lastlog info is not useful on non-persistent system
     egrep -q '^[[[:space:]]*session[[:space:]]+[^[:space:]]+[[:space:]]+pam_lastlog.so[[:space:]]+silent' $PAM_FILE
     local silent_pam=$?
-    if grep -q "^PERSISTENCE=.*root" /live/config/initrd.out; then
-        [ $silent_pam -eq 0 ] && sed -r -i 's/^\s*(session\s+[^\s]+\s+pam_lastlog.so).*/\1/' $PAM_FILE
+    if [ -n "$ENABLE_PAM" ] || grep -q "^PERSISTENCE=.*root" /live/config/initrd.out; then
+        [ $silent_pam -eq 0 ] && sed -r -i \
+            -e 's/^\s*(session\s+[^\s]+\s+pam_lastlog.so).*/\1/'     \
+            -e '/session\s+[^\s]+\s+pam_(exec|motd).so/ s/^#-*\s*//' \
+            $PAM_FILE
     else
         [ $silent_pam -ne 0 ] && sed -i -r \
             -e 's/^\s*(session\s+[^\s]+\s+pam_lastlog.so).*/\1 silent/'  \
