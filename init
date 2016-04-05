@@ -458,7 +458,7 @@ main_core() {
     if [ "$DB_PLUS" ]; then
         local plus_t2=$(get_time)
         local delta=$(get_seconds $((plus_t2 - plus_t1)))
-        msg "$green@${cyan} Extras took$hi_co $delta${cyan} seconds"
+        vmsg 8 "$green@${cyan} Extras took$hi_co $delta${cyan} seconds"
     fi
 
     test -e /$NEW_ROOT/etc/issue || cp /issue $NEW_ROOT/etc/issue
@@ -1057,28 +1057,28 @@ do_welcome() {
     local total_mem=$(mem_info MemTotal)
     local used_mem=$((total_mem - FREE_MEM))
 
-    vmsg 6 "$white  $(busybox | head -n 1)"
+    vmsg 8 "$white  $(busybox | head -n 1)"
 
-    [ -x /bin/ntfs-3g ] && vmsg 6 "$white  $(ntfs-3g --version 2>&1)"
+    [ -x /bin/ntfs-3g ] && vmsg 8 "$white  $(ntfs-3g --version 2>&1)"
 
     vmsg 6 "%25s: $white%s"  'initrd version' "$version"
     vmsg 6 "%25s: $white%s"  'initrd built'   "$v_date"
 
     # Print meminfo.
     local mem_format="${m_co}%s: $num_co%5d${m_co} M"
-    vmsg 6 "$mem_format"  '             Total Memory' $total_mem
+    vmsg 8 "$mem_format"  '             Total Memory' $total_mem
     # vmsg 6 "$mem_format"  '              Free Memory'  $FREE_MEM
-    vmsg 6 "$mem_format"  '              Used Memory'  $used_mem
+    vmsg 8 "$mem_format"  '              Used Memory'  $used_mem
 
     local cpu_format="%s:$white %s"
-    vmsg 6 "$cpu_format"  '             Linux kernel' "$(uname -r)"
-    vmsg 6 "$cpu_format"  '             Screen width' "$SCREEN_WIDTH"
-    vmsg 6 "$cpu_format"  '              Kernel arch' "$(uname -m)"
+    vmsg 8 "$cpu_format"  '             Linux kernel' "$(uname -r)"
+    vmsg 8 "$cpu_format"  '             Screen width' "$SCREEN_WIDTH"
+    vmsg 8 "$cpu_format"  '              Kernel arch' "$(uname -m)"
 
     local board_name board_vendor id_dir=/sys/class/dmi/id
     read board_name   2>/dev/null  < $id_dir/board_name
     read board_vendor 2>/dev/null  < $id_dir/board_vendor
-    vmsg 6 "$cpu_format"  '             Mother board' "$board_vendor $board_name"
+    vmsg 8 "$cpu_format"  '             Mother board' "$board_vendor $board_name"
 
     # vmsg 6  "$cpu_format" '                      CPU' "$(cpu_param 'model name' unknown)"
     # vmsg 6  "$cpu_format" '                    Cores' "$num_co$(cpu_param 'cpu cores'  1)"
@@ -1415,7 +1415,7 @@ _find_files() {
         #-- delay every time except inside first second
         if [ "$do_delay" ]; then
             if [ -z "$said_retry" ]; then
-                vmsgN 4 "Retry for %s seconds " $(nq $retry_time)
+                vmsgN 4 "Retry for %s seconds %s" $(nq $retry_time) ""
                 vmsg_if $vthresh " ..."
                 said_retry=true
             fi
@@ -1423,7 +1423,7 @@ _find_files() {
             [ "$DO_COLDPLUG" ] && coldplug_modules
 
             # Normally just print out a dot for each iteration
-            [ "$be_verbose" ] || msgN $dot
+            [ "$be_verbose" ] || vmsgN 3 $dot
 
             # Adjust sleep time dynamically to account for previous time
             # through the loop
@@ -1460,7 +1460,7 @@ _find_files() {
 
             #. Scan <type> devices for <type> file(s) <file names>
             [ "$try" = "0" ] \
-                && vmsg 5 "Scan %s devices.  Look for %s file(s) %s"  $(dq $FROM_TYPE) $find_type "$(fq $short_files)"
+                && vmsg 4 "Scan %s devices.  Look for %s file(s) %s"  $(dq $FROM_TYPE) $find_type "$(fq $short_files)"
 
             DEVICE_LIST=$(most_block_devices)
 
@@ -1587,7 +1587,7 @@ _find_files() {
 
                     local fstype=$(mntpnt_fstype $mntpnt)
                     #. <type> device filesystem: <filesystem-name>
-                    vmsg 5 "%s device filesystem: %s" $find_type \
+                    vmsg 6 "%s device filesystem: %s" $find_type \
                         "$(cq $fstype)"
 
                     case $find_type in
@@ -2067,7 +2067,7 @@ mount_overlayfs() {
     mkdir -p $aufs_mp $upper $work
 
     # Do the actual mount
-    vmsg 5 "Mount %s at %s" 'overlayfs' "$(fq $aufs_mp)"
+    vmsg 6 'Mount %s at %s' 'overlayfs' "$(fq $aufs_mp)"
 
     log_cmd mount -t overlay overlay -o "lowerdir=$sqfs_mp,upperdir=$upper,workdir=$work" $aufs_mp \
         || fatal "Could not mount %s" overlayfs
@@ -2518,7 +2518,7 @@ heading() {
 }
 
 log_cmd() {
-    vmsg_nc 7 "$*"
+    vmsg_nc 8 "$*"
     #"$@" >/dev/null
     "$@"
     return $?
@@ -2539,10 +2539,10 @@ _error() {
         #warn $hbar
         err "$type"
         #warn $hbar
-        [ "$1" ] && msg "${hi_co}$1"
+        [ "$1" ] && vmsg 1 "${hi_co}$1"
         shift
         for arg; do
-            msg "${hi_co}$arg"
+            vmsg 1 "${hi_co}$arg"
         done
         ### warn $hbar
         err
@@ -3289,7 +3289,7 @@ free_space() {
         real=$(( $( stat -c %s $sparse) / 1024 / 1024))
         orig=$(du -m $sparse | cut -f1)
         new_free=$((free - $real + $orig))
-        printf "sparse: r=%4s o=%4s of=%5s nf=%5s %s\n" $real $orig $free $new_free $sparse >> $MY_LOG
+        printf 'sparse: r=%4s o=%4s of=%5s nf=%5s %s\n' $real $orig $free $new_free $sparse >> $MY_LOG
         free=$new_free
     done
     [ $free -lt 0 ] && free=0
@@ -4643,7 +4643,7 @@ run_init_scripts() {
         chroot $new_root $full start
         [ "$DB_PLUS" ] || continue
         now=$(get_time)
-        vmsg 6 "%25s @ %s seconds" $script $(pq $(get_seconds $((now - last_time))))
+        vmsg 8 "%25s @ %s seconds" $script $(pq $(get_seconds $((now - last_time))))
         last_time=$now
     done
 
