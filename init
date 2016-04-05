@@ -955,16 +955,16 @@ list_modules() {
     list=$( echo $(lsmod | grep "^[a-z]" | cut -d" " -f1) | sort)
     cnt=$(echo $list | wc -w)
 
-    #. loaded <count> modules(s)
-    vmsg 6 "Loaded %s module(s)" $(nq $cnt)
+    # loaded <count> modules(s)
+    vmsg 6 'Loaded %s module(s)' $(nq $cnt)
 
     [ "$list" ] && vmsg 7 "$white$list"
 
     [ "$ERR_MODULES" ] || return
     local ecnt=$(echo "$ERR_MODULES" | wc -w)
 
-    #. <count> module(s) failed to load
-    vmsg 6 "%s module(s) failed to load" $(nq $ecnt)
+    # <count> module(s) failed to load
+    vmsg 6 '%s module(s) failed to load' $(nq $ecnt)
 
     vmsg 7 "$white$ERR_MODULES"
 
@@ -1106,11 +1106,11 @@ show_bootcodes() {
 show_integer_errors() {
     local param name value params=$1
 
-    #. Only small integer values are allowed for <name>.  Will ignore <name=value>
+    # Only small integer values are allowed for <name>.  Will ignore <name=value>
     for param in $params; do
         name=${param%%=*}
         value=${param#*=}
-        warn "Only small integer values are allowed for %s.  Will ignore %s" \
+        warn 'Only small integer values are allowed for %s.  Will ignore %s' \
             $(pqw $name) $(pqw $param)
     done
 }
@@ -1312,10 +1312,10 @@ from_filter() {
         esac
     done
 
-    #. Invalid <parameter-name> value(s) <bad values>
+    # Invalid <parameter-name> value(s) <bad values>
     [ "$invalid_scan" ] \
-        && _fatal "$(printf "Invalid %s values(s) %s" "$(pqh from=)" "$(pqh $invalid_scan)")" \
-        "$(printf "Valid values are %s" "$(cq cd hd mmc usb all)")"
+        && _fatal "$(printf 'Invalid %s values(s) %s' "$(pqh from=)" "$(pqh $invalid_scan)")" \
+        "$(printf 'Valid values are %s' "$(cq cd hd mmc usb all)")"
 
     [ "$FILTERED_LIST" ]
 
@@ -1415,6 +1415,7 @@ _find_files() {
         #-- delay every time except inside first second
         if [ "$do_delay" ]; then
             if [ -z "$said_retry" ]; then
+                #. Retry for <N> seconds <...>
                 vmsgN 4 "Retry for %s seconds %s" $(nq $retry_time) ""
                 vmsg_if $vthresh " ..."
                 said_retry=true
@@ -1581,7 +1582,7 @@ _find_files() {
             for fname in $files; do
                 [ -f "$mntpnt/$fname" ] || continue
                 if [ "$mntpnt" = "$mp_orig" ]; then
-                    #. Mounted <type> <device> at <mount point>
+                    #. Mounted <type> device at <mount point>
                     vmsg 4 "Mounted %s device. Mounted device %s at %s" \
                         $find_type "$(fq $dev)" "${to_co}$mntpnt${m_co}"
 
@@ -1598,8 +1599,8 @@ _find_files() {
                     local drive=$(echo $short_dev | sed -r 's/[0-9]+$//')
                     local model=$(cat /sys/block/$drive/device/model 2>/dev/null)
 
-                    #. <type> device model: <model-name>
-                    [ "$model" ] && vmsg 6 "%s device model: %s" $find_type "$(cq $model)"
+                    # <type> device model: <model-name>
+                    [ "$model" ] && vmsg 6 '%s device model: %s' $find_type "$(cq $model)"
 
                 else
                     rmdir $mp_orig
@@ -2790,6 +2791,8 @@ my_select_menu() {
                  PROC_CMDLINE=$(filter_cmdline "$fields" $PROC_CMDLINE)                      ;;
     esac
 
+    #. <menu-name> set to <menu-value>
+    #. <Timezone> set to <Denver>
     case $MENU_VALUE in
         default|none|reset)                            ;;
                    *) [ -n "$new_label" ] && msg "%s set to %s" "$label" "$(bq $new_label)"
@@ -3618,8 +3621,8 @@ _copy_to_ram() {
         size_k="$(du -sk $ex_full | cut -f 1)"
         sq_size_k=$((sq_size_k + size_k))
         vmsg 8 "$format" $extra $size_k
-        #. Total [RAM needed]
-        vmsg 8 "$format2" "          Total"  $sq_size_k
+        # Total [RAM needed]
+        vmsg 8 "$format2" '          Total'  $sq_size_k
     done
 
     # Extra space here does not waste ram
@@ -3629,8 +3632,8 @@ _copy_to_ram() {
 
     if [ "$sq_size_m" -gt "$FREE_MEM" ]; then
         err "Not enough RAM available to do %s" $err_toram
-        #. Have <size> RAM, needed <size>
-        err "have %s RAM, needed %s" "${num_co}$FREE_MEM ${m_co}M${err_co}" \
+        # Have <size> RAM, needed <size>
+        err 'have %s RAM, needed %s' "${num_co}$FREE_MEM ${m_co}M${err_co}" \
             "${num_co}$sq_size_m ${m_co}M"
         return 1
     fi
@@ -3830,9 +3833,9 @@ mount_persist_device() {
             *) warn "Could not find persistence device"     ;;
         esac
 
-        #. Could not enable required <type> persistence
-        [ "$NEED_ROOTFS" ] && non_fatal "Could not enable required %s persistence" $(pqh 'root!')
-        [ "$NEED_HOMEFS" ] && non_fatal "Could not enable required %s persistence" $(pqh 'home!')
+        # Could not enable required <type> persistence
+        [ "$NEED_ROOTFS" ] && non_fatal 'Could not enable required %s persistence' $(pqh 'root!')
+        [ "$NEED_HOMEFS" ] && non_fatal 'Could not enable required %s persistence' $(pqh 'home!')
 
         unset WANT_ROOTFS WANT_HOMEFS NEED_ROOTFS NEED_HOMEFS
     fi
@@ -4132,7 +4135,7 @@ copy_persist_to_ram() {
          return 2
     fi
     local ram_used=$(used_space $AUFS_RAM_MP)
-    #. AUFS uses [this much RAM]
+    # AUFS uses [this much RAM]
     vmsg 7 "$format" '                     AUFS uses' $ram_used
     vmsg 7 "$format" '              Persistence uses' $persist_used
     vmsg 6 "${hi_co}%s" "Copy persistent root to RAM succeeded"
