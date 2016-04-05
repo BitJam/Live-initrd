@@ -189,7 +189,7 @@ do_sendsigs() {
 
     vmsg 7 "$ME: remaining pids:$white $list"
 
-    vmsgN 4 "%s Waiting for termination " "$ME:"
+    vmsgN 4 "%s Waiting for termination %s" "$ME:" ""
 
     # You have no chance to survive make your time
     local all_dead
