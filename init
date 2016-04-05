@@ -2858,7 +2858,7 @@ do_early_menus() {
     local MENU_VALUE BOOT_MENU_WARN=true
     local lang time_zone option persist desktop
     local cmdline
-    my_select_menu "Select Language"           "Languages are listed alphabetically"   l lang "Language" "lang=*"
+    my_select_menu "Select Language"           "Languages are listed alphabetically"   l lang "Language" 'lang=*'
 
     case $MENU_VALUE in
         lang=*) LANG=${MENU_VALUE#lang=}
@@ -2866,9 +2866,9 @@ do_early_menus() {
          reset) read_xlat                  ;;
     esac
 
-    my_select_menu "Select Timezone"           "Timezones are listed by longitude"     t tz      "Timezone"    "tz=*"
+    my_select_menu "Select Timezone"           "Timezones are listed by longitude"     t tz      "Timezone"    'tz=*'
     my_select_menu "Select Option"             "Only one option can be selected"       o options "Options"     "$OPTIONS_ENTRIES"
-    my_select_menu "Select Persistence Option" ""                                      p persist "Persistence" "persist-*|frugal-*"
+    my_select_menu "Select Persistence Option" ""                                      p persist "Persistence" 'persist-*|frugal-*'
     #vmsg 6 "cmdline:$white $cmdline"
     [ ${#cmdline} -gt 0 ] && echo "$cmdline" >> /live/config/cmdline
 }
@@ -2878,7 +2878,7 @@ do_late_menus() {
     local BOOT_MENU_WARN=
     local lang time_zone option persist desktop
     local cmdline
-    my_select_menu "Select Desktop" "" d desktop "Desktop" "desktop=*|desktheme=*"
+    my_select_menu "Select Desktop" "" d desktop "Desktop" 'desktop=*|desktheme=*'
 
     if [ "$REMASTERABLE" ]; then
         BOOT_MENU_DIR=/live/custom/$DISTRO_NAME/menus
