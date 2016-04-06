@@ -1013,6 +1013,9 @@ read_xlat() {
     local font=$fdir/${lang:-default}
     [ -e "$font" ] && log_cmd setfont $font -C $(tty)
 
+    local alt=$DISTRO_ALT_PRETTY_NAME
+    [ -n "$lang" -a -e $fdir/$lang -a -n "$alt" ] && DISTRO_PRETTY_NAME=$alt
+
     [ "$lang" ] || return
 
     xlat=$xdir/$lang/$prog.xlat
