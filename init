@@ -30,8 +30,11 @@
               DEVELOPER="BitJam"
          BUG_REPORT_URL="liveboot@mxlinux.org"
 
-        RETRY_TIME=10
-     PERSIST_RETRY=10
+# This are all times in seconds, not attempts
+             BOOT_RETRY=15
+           FRUGAL_RETRY=10
+          PERSIST_RETRY=10
+    FAILSAFE_BOOT_RETRY=30
 
            RW_MODE="ro"
        #DISTRO_NAME="Linux"
@@ -550,13 +553,13 @@ read_late_cmdline_params() {
     #vmsg 6 "read_late_cmdline_params: $*"
     local param value cmdline=${1:-$(cat /proc/cmdline)}
 
-    local frugal_id=label="$DISTRO_NAME-Frugal"
+    local frugal_id="label=$DISTRO_NAME-Frugal"
     for param in $cmdline; do
         value=${param#*=}
 
         case $param in
-                         frugal) FRUGAL_ID=label=$DISTRO_NAME-Frugal ; FRUGAL=true                   ;;
-                       frugal=*) FRUGAL_ID=label=$DISTRO_NAME-Frugal ; FRUGAL=true  ; PERSIST=$value ;;
+                         frugal) FRUGAL_ID=$frugal_id ; FRUGAL=true                   ;;
+                       frugal=*) FRUGAL_ID=$frugal_id ; FRUGAL=true  ; PERSIST=$value ;;
                 hwclock=*|hwc=*) DO_HWCLOCK=true                                 ;;
                          from=*) FROM_TYPE=$value     ; ALWAYS_SCAN=true         ;;
                   persist=*|p=*) PERSIST=$PERSIST,$value                         ;;
@@ -613,7 +616,7 @@ read_cmdline_params()
              bootuuid=*|buuid=*) BOOT_ID=uuid=$value                             ;;
                bootdev=*|bdev=*) BOOT_ID=name=$value                             ;;
 
-                  try=*|retry=*) small_int RETRY_TIME $param                     ;;
+                  try=*|retry=*) small_int CMD_RETRY $param                      ;;
 
             persistdir=*|pdir=*) PERSIST_PATH=${value#/}                         ;;
 
@@ -621,7 +624,9 @@ read_cmdline_params()
           persistuuid=*|puuid=*) PERSIST_ID=uuid=$value   ;  SET_PERSIST=true    ;;
             persistdev=*|pdev=*) PERSIST_ID=name=$value   ;  SET_PERSIST=true    ;;
 
- persistretry=*|pretry=*|ptry=*) small_int PERSIST_RETRY $param                  ;;
+                         btry=*) small_int CMD_BOOT_RETRY $param                 ;;
+                         ftry=*) small_int CMD_FRUGAL_RETRY $param               ;;
+                         ptry=*) small_int CMD_PERSIST_RETRY $param              ;;
 
                           dbv=*) DBV=$value                                      ;;
                         fneed=*) FRUGAL_NEEDED=$value                            ;;
@@ -663,12 +668,16 @@ read_cmdline_params()
                         noclear) NO_CLEAR=true                                   ;;
 
                       gfxsave=*) GFX_SAVE=$value ; BOOT_SAVE=true                ;;
-                        gfxsave) GFX_SAVE=both   ; BOOT_SAVE=true                ;;
+                   save|gfxsave) GFX_SAVE=both   ; BOOT_SAVE=true                ;;
                        bootsave) BOOT_SAVE=true                                  ;;
 
                       nocheckfs) DO_FSCK=                                        ;;
 
-                       failsafe) MODULE_LIST=all; BLACK_LIST=$BLACK_LIST,VIDEO; FROM_TYPE=all ;;
+                       failsafe) MODULE_LIST=all
+                                 BLACK_LIST=$BLACK_LIST,VIDEO
+                                 BOOT_RETRY=$FAILSAFE_BOOT_RETRY
+                                 FROM_TYPE=all                                   ;;
+
                          load=*) MODULE_LIST=$MODULE_LIST,$value                 ;;
                bl=*|blacklist=*) BLACK_LIST=$BLACK_LIST,$value                   ;;
 
@@ -880,7 +889,16 @@ read_cmdline_params()
         *) UNKNOWN_BOOTCODES="$UNKNOWN_BOOTCODES $param"
         esac
     done
+
+       BOOT_RETRY=${CMD_RETRY:-$BOOT_RETRY}
+     FRUGAL_RETRY=${CMD_RETRY:-$FRUGAL_RETRY}
+    PERSIST_RETRY=${CMD_RETRY:-$PERSIST_RETRY}
+
+       BOOT_RETRY=${CMD_BOOT_RETRY:-$BOOT_RETRY}
+     FRUGAL_RETRY=${CMD_FRUGAL_RETRY:-$FRUGAL_RETRY}
+    PERSIST_RETRY=${CMD_PERSIST_RETRY:-$PERSIST_RETRY}
 }
+
 
 small_int() {
     local var=$1 val=${2#*=} name=${2%%=*} param=$2
@@ -1022,7 +1040,6 @@ read_xlat() {
     [ -r "$xlat" ] || return
     . $xlat
     vmsg 7 'Translate to %s' $lang
-
 }
 
 do_welcome() {
@@ -1703,7 +1720,7 @@ find_frugal_file() {
     local sqfile=$bdir/$SQFILE_NAME need_to_ask
     local device name=${frugal_id%%=*}  value=${frugal_id#*=}
 
-    find_files frugal "$sqfile" "$BOOT_MP" "$frugal_id" "$RETRY_TIME"
+    find_files frugal "$sqfile" "$BOOT_MP" "$frugal_id" "$FRUGAL_RETRY"
     local ret=$?
 
     if [ $ret -eq 0  -a -z "$FORCE_FRUGAL" ]; then
@@ -1744,7 +1761,7 @@ find_frugal_file() {
         warn
     fi
 
-    find_boot_file "$SQFILE_FILE" "$BOOT_MP" "$BOOT_ID" "$RETRY_TIME" \
+    find_boot_file "$SQFILE_FILE" "$BOOT_MP" "$BOOT_ID" "$BOOT_RETRY" \
         || linuxfs_error "Could not find %s file %s" "$LINUXFS_NAME" "$(fqe \"$SQFILE_FILE\")"
 
     SQFILE_MP=$BOOT_MP
@@ -1860,7 +1877,7 @@ find_linuxfs_file() {
         heading "${cheat_co}fromiso"
 
         #. Could not find <type> file <file name>
-        find_boot_file "$ISO_FILE" "$ISO_DEV_MP" "$BOOT_ID" "$RETRY_TIME" \
+        find_boot_file "$ISO_FILE" "$ISO_DEV_MP" "$BOOT_ID" "$BOOT_RETRY" \
             || fatal "Could not find %s file %s" iso "$(pqh $ISO_FILE)"
 
         local iso_full=$ISO_DEV_MP/$ISO_FILE
@@ -1887,7 +1904,7 @@ find_linuxfs_file() {
         DID_ISO=true
     else
 
-        find_boot_file "$SQFILE_FILE" "$BOOT_MP" "$BOOT_ID" "$RETRY_TIME" \
+        find_boot_file "$SQFILE_FILE" "$BOOT_MP" "$BOOT_ID" "$BOOT_RETRY" \
             || linuxfs_error "Could not find %s file %s" "$LINUXFS_NAME" "$(fqe \"$SQFILE_FILE\")"
 
         SQFILE_MP=$BOOT_MP
