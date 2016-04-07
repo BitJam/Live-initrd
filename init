@@ -1042,9 +1042,14 @@ do_welcome() {
     vmsg 2 "Welcome to %s" "$(pq $pretty_name$arch)!"
 
     (   imsg "Welcome to %s! Powered by %s" "$(gq $pretty_name$arch)" "$(gq Debian)."
-        imsg "For cli install, login as %s (password is %s) and type %s" \
-            "$(gq root)" "$(gq root)"  "$(gq cli-installer)."
-        imsg "Follow the instructions."
+        echo
+        imsg "For command line install, login as %s (password=%s)." "$(gq root)" "$(gq root)"
+        imsg "Enter the command %s.  Follow the instructions." "$(gq cli-installer)"
+
+        #imsg "For cli install, login as %s (password is %s) and type %s" \
+        #    "$(gq root)" "$(gq root)" "$(gq cli-installer)"
+        #imsg "Follow the instructions."
+
     ) > /issue
 
     if lspci -n | grep -iq " 80ee:beef"; then
