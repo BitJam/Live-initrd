@@ -1509,7 +1509,7 @@ _find_files() {
 
             # pure window dressing
             if [ -z "$have_devices" ]; then
-                [ $try -gt 0 ] && vmsg 5
+                [ $try -gt 0 ] && vmsg 4
                 vmsg 5 "Filtered devices %s" "$white$DEVICE_LIST"
             else
                 vmsg_if $vthresh "%s Filtered devices %s" "$cnt_up" "$(pq $DEVICE_LIST)"
@@ -1606,6 +1606,7 @@ _find_files() {
 
             for fname in $files; do
                 [ -f "$mntpnt/$fname" ] || continue
+                #[ "$said_retry" ] && echo
                 if [ "$mntpnt" = "$mp_orig" ]; then
                     #. Mounted <type> device at <mount point>
                     vmsg 4 "Mounted %s device. Mounted device %s at %s" \
