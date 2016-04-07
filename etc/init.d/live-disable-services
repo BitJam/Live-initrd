@@ -206,6 +206,21 @@ do_start() {
         disable_services "lean (l)" "$LEAN_SERVICES"
     fi
 
+    if [ "$MEAN" ]; then
+        echo_live "Disabling network services %s" "$(paren M, mean)"
+        disable_services "mean (m)" "$MEAN_SERVICES"
+    fi
+
+    if [ "$XTRA_LEAN" ]; then
+        echo_live "Disabling more services %s" "$(paren X, Xtralean)"
+        disable_services "Xtralean (x)" "$XTRA_LEAN_SERVICES"
+    fi
+
+    if [ "$NO_DBUS" ]; then
+        echo_live "Disabling %s services %s" "debus" "$(paren D, nodbus)"
+        disable_services "nodbus (d)" "$NO_DBUS_SERVICES"
+    fi
+
     if [ "$DISABLE_VBOX" ]; then
         echo_live "Disabling %s services %s" "Virtual Box" "$(paren v)"
         disable_services "vbox (v)" "$VBOX_SERVICES"
@@ -221,20 +236,6 @@ do_start() {
         disable_services "gpm (g)" "$GPM_SERVICES"
     fi
 
-    if [ "$MEAN" ]; then
-        echo_live "Disabling network services %s" "$(paren M, mean)"
-        disable_services "mean (m)" "$MEAN_SERVICES"
-    fi
-
-    if [ "$XTRA_LEAN" ]; then
-        echo_live "Disabling more services %s" "$(paren X, Xtralean)"
-        disable_services "Xtralean (x)" "$XTRA_LEAN_SERVICES"
-    fi
-
-    if [ "$NO_DBUS" ]; then
-        echo_live "Disabling %s services %s" "debus" "$(paren D, nodbus)"
-        disable_services "nodbus (d)" "$NO_DBUS_SERVICES"
-    fi
 
     [ "$OUT" ] && echo "$OUT" | tr "," "\n" > $OUT_FILE
 }
