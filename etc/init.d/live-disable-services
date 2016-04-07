@@ -178,11 +178,13 @@ do_start() {
     egrep -q '^[[[:space:]]*session[[:space:]]+[^[:space:]]+[[:space:]]+pam_lastlog.so[[:space:]]+silent' $PAM_FILE
     local silent_pam=$?
     if [ -n "$ENABLE_PAM" ] || grep -q "^PERSISTENCE=.*root" /live/config/initrd.out; then
+        # On persistent systems enable lastlog but disable MOTD
         [ $silent_pam -eq 0 ] && sed -r -i \
-            -e 's/^\s*(session\s+[^\s]+\s+pam_lastlog.so).*/\1/'     \
-            -e '/session\s+[^\s]+\s+pam_(exec|motd).so/ s/^#-*\s*//' \
+            -e 's/^\s*(session\s+[^\s]+\s+pam_lastlog.so).*/\1/'         \
+            -e 's/^\s*(session\s+[^\s]+\s+pam_(exec|motd).so.*)/#-- \1/' \
             $PAM_FILE
     else
+        # On non-persistent systems disable both lastlog and MOTD
         [ $silent_pam -ne 0 ] && sed -i -r \
             -e 's/^\s*(session\s+[^\s]+\s+pam_lastlog.so).*/\1 silent/'  \
             -e 's/^\s*(session\s+[^\s]+\s+pam_(exec|motd).so.*)/#-- \1/' \
