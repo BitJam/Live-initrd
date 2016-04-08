@@ -1059,9 +1059,11 @@ do_welcome() {
     vmsg 2 "Welcome to %s" "$(pq $pretty_name$arch)!"
 
     (   imsg "Welcome to %s! Powered by %s" "$(gq $pretty_name$arch)" "$(gq Debian)."
-        echo
-        imsg "For command line install, login as %s (password=%s)." "$(gq root)" "$(gq root)"
-        imsg "Enter the command %s.  Follow the instructions." "$(gq cli-installer)"
+        if [ -n "$CLI_INSTALLER" ] ;then
+            echo
+            imsg "For command line install, login as %s (password=%s)." "$(gq root)" "$(gq root)"
+            imsg "Enter the command %s.  Follow the instructions." "$(gq $CLI_INSTALLER)"
+        fi
 
         #imsg "For cli install, login as %s (password is %s) and type %s" \
         #    "$(gq root)" "$(gq root)" "$(gq cli-installer)"

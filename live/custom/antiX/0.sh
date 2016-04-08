@@ -1,6 +1,8 @@
 # File: /live/custom/antiX/0.sh
 # antiX Specific /init code
 
+CLI_INSTALLER=cli-installer
+
 LIST_MODULES=true
 CHECK_BOOTCODES=true
 
