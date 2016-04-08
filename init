@@ -232,9 +232,8 @@ main_wrapper() {
     late_umount $PERSIST_DEVICE
     late_umount $SQFILE_DEV
 
-    #if confile remasterable; then
+    if [ -z "$DISABLE_STORE" ]; then
         if detect_old_persist_scripts $NEW_ROOT; then
-            DISABLE_STORE=true
             warn "%s disabled due to outdated persistence scripts and libs" "$(pqw LiveUSB-Storage)"
         else
             confile remasterable && run_init_scripts $NEW_ROOT live-usb-storage
@@ -245,7 +244,7 @@ main_wrapper() {
 
             chmod 700 $NEW_ROOT/live
         fi
-    #fi
+    fi
 
     breakpoint 9 "right before starting init"
 
@@ -708,6 +707,8 @@ read_cmdline_params()
 
              disable=*|nosysv=*) DISABLE_SERVICES="$DISABLE_SERVICES$value" ; DS_PARAM=$param  ;;
 
+                   disablestore) DISABLE_STORE=true                              ;;
+
         #----- These get interpreted late but we don't want them to be unknown
                 hwclock=*|hwc=*)  ;;
                          frugal)  ;;
@@ -899,6 +900,11 @@ read_cmdline_params()
        BOOT_RETRY=${CMD_BOOT_RETRY:-$BOOT_RETRY}
      FRUGAL_RETRY=${CMD_FRUGAL_RETRY:-$FRUGAL_RETRY}
     PERSIST_RETRY=${CMD_PERSIST_RETRY:-$PERSIST_RETRY}
+
+    if [ "$DISABLE_STORE" ]; then
+        USER_UID=0
+        USER_GID=0
+    fi
 }
 
 
