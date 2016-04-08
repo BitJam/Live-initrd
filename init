@@ -36,6 +36,8 @@
           PERSIST_RETRY=10
     FAILSAFE_BOOT_RETRY=30
 
+  DISABLE_SERVICES_OPTS="DLMPSXdgklmnrsvx"
+
            RW_MODE="ro"
        #DISTRO_NAME="Linux"
             PRINTK=0
@@ -314,7 +316,7 @@ main_core() {
     do_welcome "$DISTRO_PRETTY_NAME" "$VERSION" "$VERSION_DATE"
     show_bootcodes "$(live_param_filter $UNKNOWN_BOOTCODES)"
     show_integer_errors "$INTEGER_ERRORS"
-
+    show_disable_errors "$DISABLE_SERVICES" "$DS_PARAM"
     breakpoint 2 "before coldplug"
 
     check_unionfs
@@ -704,7 +706,7 @@ read_cmdline_params()
                        fatuid=*) any_int USER_UID $param                         ;;
                        fatgid=*) any_int USER_GID $param                         ;;
 
-             disable=*|nosysv=*) DISABLE_SERVICES="$DISABLE_SERVICES$value"      ;;
+             disable=*|nosysv=*) DISABLE_SERVICES="$DISABLE_SERVICES$value" ; DS_PARAM=$param  ;;
 
         #----- These get interpreted late but we don't want them to be unknown
                 hwclock=*|hwc=*)  ;;
@@ -1140,6 +1142,14 @@ show_integer_errors() {
         warn 'Only small integer values are allowed for %s.  Will ignore %s' \
             $(pqw $name) $(pqw $param)
     done
+}
+
+show_disable_errors() {
+    local codes=$1  ds_param=$2
+    [ -n "$codes" ] || return
+    local bad=$(echo "$codes" | sed -r "s/[$DISABLE_SERVICES_OPTS]+//g")
+    [ -n "$bad" ] || return
+    warn "Unknown options in %s.  Unknown options %s" "$(pqw $ds_param)" "$(pqw $bad)"
 }
 
 cpu_param() {
