@@ -150,11 +150,11 @@ do_start() {
         [ "${disable_param##*[mM]*}" ] ||          MEAN=true
         [ "${disable_param##*[xX]*}" ] ||     XTRA_LEAN=true
         [ "${disable_param##*[dD]*}" ] ||       NO_DBUS=true
-        [ "${disable_param##*[vV]*}" ] ||  DISABLE_VBOX=true
+        [ "${disable_param##*[v]*}"  ] ||  DISABLE_VBOX=true
         [ "${disable_param##*[g]*}"  ] ||   DISABLE_GPM=true
         [ "${disable_param##*[P]*}"  ] ||    ENABLE_PAM=true
-        [ "${disable_param##*[nN]*}" ] ||   DISABLE_NFS=true
-        [ "${disable_param##*[nN]*}" ] ||    NFS_REASON=n
+        [ "${disable_param##*[n]*}"  ] ||   DISABLE_NFS=true
+        [ "${disable_param##*[n]*}"  ] ||    NFS_REASON=n
     fi
 
     # Prevent other messages stepping on ours
