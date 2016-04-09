@@ -13,5 +13,6 @@
 13:hwclock=local:hwclock=local
 14:private:private
 15:nostore:nostore
-16:savestate:savestate
-17:nosavestate:nosavestate
+16:dostore:dostore
+17:savestate:savestate
+18:nosavestate:nosavestate

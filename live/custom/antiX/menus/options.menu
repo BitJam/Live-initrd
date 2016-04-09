@@ -13,5 +13,6 @@
   13)  hwclock=local   Hardware clock uses local time (Windows systems)
   14)  private         Change passwords before booting
   15)  nostore         Disable LiveUSB-Storage feature
-  16)  savestate       Save some files across reboots (LiveUSB only)
-  17)  nosavestate     Don't save files across reboots (LiveUSB only)
+  16)  dostore         Enable LiveUSB-Storage feature
+  17)  savestate       Save some files across reboots (LiveUSB only)
+  18)  nosavestate     Don't save files across reboots (LiveUSB only)
