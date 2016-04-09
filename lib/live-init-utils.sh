@@ -33,7 +33,7 @@ export TEXTDOMAINDIR=/usr/share/locale
 
 IVERBOSE=5
 
-: ${CMDLINE:=$(cat /proc/cmdline /live/config/cmdline 2>/dev/null)}
+: ${CMDLINE:=$(cat /live/config/proc-cmdline /live/config/cmdline 2>/dev/null)}
 for param in $CMDLINE; do
     case "$param" in
     verbose=[0-9]|verb=[0-9]) IVERBOSE=${param#*=}     ;;
