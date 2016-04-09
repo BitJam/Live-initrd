@@ -1162,7 +1162,8 @@ show_disable_errors() {
     [ -n "$codes" ] || return
     local bad=$(echo "$codes" | sed -r "s/[$DISABLE_SERVICES_OPTS]+//g")
     [ -n "$bad" ] || return
-    warn "Unknown options in %s.  Unknown options %s" "$(pqw $ds_param)" "$(pqw $bad)"
+    #. Unknown options in <disable=abcRxyz>.  Unknown options(s): <R>
+    warn "Unknown option(s) in %s.  Unknown option(s): %s" "$(pqw $ds_param)" "$(pqw $bad)"
 }
 
 cpu_param() {
