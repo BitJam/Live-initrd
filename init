@@ -475,6 +475,8 @@ main_core() {
     [ "$NO_NEW_OUTPUT" ] || write_output_files     $OUTPUT_DIR
     [ "$NO_OLD_OUTPUT" ] || old_write_output_files $OUTPUT_DIR
 
+    update_store_file "$NO_STORE" "$DO_STORE"
+
     mkdir -p $NEW_ROOT/etc/live
 
     echo $FINAL_DIR > $NEW_ROOT/etc/live/live-dir
@@ -584,6 +586,9 @@ read_late_cmdline_params() {
                   frugal_static) FRUGAL_ID=$frugal_id ; FRUGAL=true ; PERSIST="root!,home,static" ;;
                     frugal_home) FRUGAL_ID=$frugal_id ; FRUGAL=true ; PERSIST="home!"             ;;
                     frugal_only) FRUGAL_ID=$frugal_id ; FRUGAL=true                               ;;
+
+                        nostore) NO_STORE=true                                   ;;
+                        dostore) DO_STORE=true                                   ;;
         esac
     done
 }
@@ -733,6 +738,8 @@ read_cmdline_params()
                   frugal_static)  ;;
                     frugal_home)  ;;
                     frugal_only)  ;;
+                        nostore)  ;;
+                        dostore)  ;;
 
         #----- Some known codes -------------------------
 
@@ -3271,7 +3278,6 @@ cp_rm_dest() {
     local src=$1 dest=$2
     rm -f "$dest"
     cp "$src" "$dest"
-
 }
 
 #------------------------------------------------------------------------------
@@ -4647,6 +4653,21 @@ PERSIST_MP="$PERSIST_MP"
 ROOTFS_MP="$ROOTFS_MP"
 SQFS_MP="$SQFS_MP"
 Persist_Out
+}
+
+update_store_file() {
+    local disable=$1  enable=$2
+    [ "$REMASTERABLE" ] || return
+
+    local no_store_file=$ORIG_SQFILE_MP/$ORIG_SQFILE_DIR/state/nostore
+    if [ "$disable" ]; then
+        test -e $no_store_file && return
+        mkdir -p $(dirname $no_store_file)
+        touch $no_store_file
+
+    elif [ "$enable" ]; then
+        rm -f $no_store_file
+    fi
 }
 
 write_log_files() {

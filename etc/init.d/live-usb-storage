@@ -32,11 +32,21 @@ do_start() {
 
     test -e /live/config/remasterable || exit 0
 
-    . /live/config/initrd.out
+    . $INITRD_OUT
 
-    echo_script "Configure LiveUSB Storage" $0
+    local bdir root_dir
+    for bdir in $SQFILE_DIR $TORAM_MP; do
+        [ -d $bdir ] || continue
+        root_dir=$bdir
+        break
+    done
+    [ "$root_dir" ] || exit 0
 
     read_cmdline
+
+    [ -e $root_dir/state/nostore -a -z "$DISABLE" ] && return
+
+    echo_script "Configure LiveUSB Storage" $0
 
     DEF_USER=$(find_def_user)
 
