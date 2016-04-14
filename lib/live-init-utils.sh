@@ -171,6 +171,7 @@ get_init_lang() {
 
     # echo_live 'Setting language via: %s' $(pquote lang=$lang)
     . $lang_file
+    cp $lang_file /live/config/lang
     return 0
 }
 
