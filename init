@@ -556,41 +556,46 @@ read_late_cmdline_params() {
     #vmsg 6 "read_late_cmdline_params: $*"
     local param value cmdline=${1:-$(cat /proc/cmdline)}
 
-    local frugal_id="label=$DISTRO_NAME-Frugal"
     for param in $cmdline; do
         value=${param#*=}
 
         case $param in
-                         frugal) FRUGAL_ID=$frugal_id ; FRUGAL=true                   ;;
-                       frugal=*) FRUGAL_ID=$frugal_id ; FRUGAL=true  ; PERSIST=$value ;;
-                hwclock=*|hwc=*) DO_HWCLOCK=true                                 ;;
-                         from=*) FROM_TYPE=$value     ; ALWAYS_SCAN=true         ;;
-                  persist=*|p=*) PERSIST=$PERSIST,$value                         ;;
-                        persist) PERSIST=$PERSIST,root,home                      ;;
-                         lang=*) LANG=$value                                     ;;
-                   md5|checkmd5) CHECK_MD5=true                                  ;;
-                        checkfs) FORCE_FSCK=true                                 ;;
+                         frugal) set_frugal                           ;;
+                       frugal=*) set_frugal $value                    ;;
+                hwclock=*|hwc=*) DO_HWCLOCK=true                      ;;
+                         from=*) FROM_TYPE=$value ; ALWAYS_SCAN=true  ;;
+                  persist=*|p=*) PERSIST=$PERSIST,$value              ;;
+                        persist) PERSIST=$PERSIST,root,home           ;;
+                         lang=*) LANG=$value                          ;;
+                   md5|checkmd5) CHECK_MD5=true                       ;;
+                        checkfs) FORCE_FSCK=true                      ;;
 
-                  nousb2|noehci) NO_EHCI=true                                    ;;
-              private|private=*) FORCE_PASSWD=true                               ;;
-                          toram) TO_RAM=true                                     ;;
+                  nousb2|noehci) NO_EHCI=true                         ;;
+              private|private=*) FORCE_PASSWD=true                    ;;
+                          toram) TO_RAM=true                          ;;
 
         # Convenience short cuts from our menus
-                    persist_all) PERSIST="root!,home"                            ;;
-                   persist_root) PERSIST="root!"                                 ;;
-                persist_statict) PERSIST="root!,home,static"                     ;;
-                   persist_home) PERSIST="home!"                                 ;;
+                    persist_all) PERSIST="root!,home"                 ;;
+                   persist_root) PERSIST="root!"                      ;;
+                persist_statict) PERSIST="root!,home,static"          ;;
+                   persist_home) PERSIST="home!"                      ;;
 
-                 frugal_persist) FRUGAL_ID=$frugal_id ; FRUGAL=true ; PERSIST="root!,home"        ;;
-                    frugal_root) FRUGAL_ID=$frugal_id ; FRUGAL=true ; PERSIST="root!"             ;;
-                  frugal_static) FRUGAL_ID=$frugal_id ; FRUGAL=true ; PERSIST="root!,home,static" ;;
-                    frugal_home) FRUGAL_ID=$frugal_id ; FRUGAL=true ; PERSIST="home!"             ;;
-                    frugal_only) FRUGAL_ID=$frugal_id ; FRUGAL=true                               ;;
+                 frugal_persist) set_frugal "root!,home"              ;;
+                    frugal_root) set_frugal "root!"                   ;;
+                  frugal_static) set_frugal "root!,home,static"       ;;
+                    frugal_home) set_frugal "home!"                   ;;
+                    frugal_only) set_frugal                           ;;
 
-                        nostore) NO_STORE=true                                   ;;
-                        dostore) DO_STORE=true                                   ;;
+                        nostore) NO_STORE=true                        ;;
+                        dostore) DO_STORE=true                        ;;
         esac
     done
+}
+
+set_frugal() {
+    FRUGAL_ID="label=$DISTRO_NAME-Frugal"
+    FRUGAL=true
+    PERSIST=$1
 }
 
 #------------------------------------------------------------------------------
