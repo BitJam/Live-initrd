@@ -164,6 +164,8 @@ gather_params() {
               gfxsave|gfxsave=*) continue ;;
             bootsave|bootsave=*) continue ;;
                    BOOT_IMAGE=*) continue ;;
+          savestate|nosavestate) continue ;;
+                nostore|dostore) continue ;;
         esac
         out=$out${out:+ }$p
     done
