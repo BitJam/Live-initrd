@@ -81,7 +81,7 @@ do_start() {
 
     [ "$root_dir" ] || exit 0
 
-    read_create_config_files $root_dir
+    read_create_config_files $root_dir || exit 0
 
     echo_script "Restore state information" $0
 
@@ -113,7 +113,7 @@ do_stop() {
         root_dir=$ROOT_MP
     fi
 
-    read_create_config_files $root_dir
+    read_create_config_files $root_dir || exit 0
 
     echo_script "Save state information" $0
 
@@ -128,15 +128,15 @@ do_stop() {
 read_create_config_files() {
     local dir="$1"
 
-    local sem_file=$dir/state/no-state
+    local no_state_file=$dir/state/no-state
     if [ "$DISABLE" ]; then
-        mkdir -p $(dirname $sem_file)
-        touch $sem_file
+        mkdir -p $(dirname $no_state_file)
+        touch $no_state_file
     elif [ "$ENABLE" ]; then
-        rm -f $sem_file
+        rm -f $no_state_file
     fi
 
-    test -e $sem_file && exit 0
+    test -e $no_state_file && return 1
     local mlist_file=$dir/state/machine-state-files
     local glist_file=$dir/state/general-state-files
 
@@ -155,6 +155,8 @@ read_create_config_files() {
         echo_cmd mkdir -p $(dirname $glist_file)
         echo "$GSTATE_FILES" > $glist_file
     fi
+
+    return 0
 }
 
 save_desktop() {
