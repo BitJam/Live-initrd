@@ -36,7 +36,7 @@
           PERSIST_RETRY=10
     FAILSAFE_BOOT_RETRY=30
 
-  DISABLE_SERVICES_OPTS="DLMPSXdgklmnrsvx"
+    DISABLE_SERVICES_OPTS="(c[0-9]|[DLMPSXcdgklmnrsvx])+"
 
            RW_MODE="ro"
        #DISTRO_NAME="Linux"
@@ -1165,7 +1165,7 @@ show_integer_errors() {
 show_disable_errors() {
     local codes=$1  ds_param=$2
     [ -n "$codes" ] || return
-    local bad=$(echo "$codes" | sed -r "s/[$DISABLE_SERVICES_OPTS]+//g")
+    local bad=$(echo "$codes" | sed -r "s/$DISABLE_SERVICES_OPTS//g")
     [ -n "$bad" ] || return
     #. Unknown options in <disable=abcRxyz>.  Unknown options(s): <R>
     warn "Unknown option(s) in %s.  Unknown option(s): %s" "$(pqw $ds_param)" "$(pqw $bad)"
@@ -2799,6 +2799,11 @@ initialize_cmdline2() {
         [ -z "${DISABLE_SERVICES##*s*}" ] && cmdline="$cmdline${cmdline:+ }nosavestate"
         [ -z "${DISABLE_SERVICES##*r*}" ] && cmdline="$cmdline${cmdline:+ }norepo"
         [ -z "${DISABLE_SERVICES##*k*}" ] && cmdline="$cmdline${cmdline:+ }noloadkeys"
+        if [ -z "${DISABLE_SERVICES##*c*}" ]; then
+            local conky_delay=$(echo $DISABLE_SERVICES | sed -r 's/[^c]*c([0-9]*).*/\1/')
+            : ${conky_delay:=0}
+            cmdline="$cmdline${cmdline:+ }conky=$conky_delay"
+        fi
         [ "$cmdline" ] && echo "$cmdline" >> /live/config/cmdline2
     fi
 }

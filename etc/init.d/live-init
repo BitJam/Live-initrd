@@ -63,6 +63,7 @@ automount=off|amnt=off)                          AUTOMOUNT_OFF=true ;;
               splash=*) SPLASH_PARAM=$value                         ;;
            desktheme=*) DESK_THEME=$value                           ;;
                 norepo) NO_REPO=true                                ;;
+           conky=[0-9]) CONKY_DELAY=$value                          ;;
     esac
 done
 
@@ -131,6 +132,8 @@ do_start() {
         make_xorg_conf "$XORG_ARGS" "$FOUND_VDRIVER"
         HAVE_X=true
     fi
+
+    [ "$CONKY_DELAY" ] && adjust_conky_delay $CONKY_DELAY
 
     # Find the "default" user.  This is usually "demo" but can vary on snapshots
     # and such.  First check the default user for SLiM and lightdm.  Then get
@@ -361,6 +364,13 @@ set_utc_local() {
     esac
 }
 
+adjust_conky_delay() {
+    local delay=${1:-0}
+    local ds_conf=/etc/desktop-session/desktop-session.conf
+    test -e $ds_conf || return
+    echo_live "Setting conky delay to %s" $(pquote $delay)
+    sed -r -i "s/^\s*(STARTUP_DELAY=).*/\1$delay/" $ds_conf
+}
 
 #-------------------------------------------------------------------------------
 # XORG and VIDEO stuff

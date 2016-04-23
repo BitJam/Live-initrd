@@ -41,6 +41,8 @@ live_param_filter() {
         nosavestate|savestate|dbsavestate) ;;
         norepo|nostore) ;;
 
+        conky=[0-9]) ;;
+
         *) printf "$param " ;;
         esac
     done
