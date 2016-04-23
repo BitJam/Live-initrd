@@ -63,7 +63,7 @@ automount=off|amnt=off)                          AUTOMOUNT_OFF=true ;;
               splash=*) SPLASH_PARAM=$value                         ;;
            desktheme=*) DESK_THEME=$value                           ;;
                 norepo) NO_REPO=true                                ;;
-           conky=[0-9]) CONKY_DELAY=$value                          ;;
+               conky=*) CONKY_DELAY=$value                          ;;
     esac
 done
 
@@ -368,6 +368,12 @@ adjust_conky_delay() {
     local delay=${1:-0}
     local ds_conf=/etc/desktop-session/desktop-session.conf
     test -e $ds_conf || return
+    local bad=$(echo $delay | sed -r 's/^([0-9]+(\.[0-9]*)?|.[0-9]+)//')
+
+    if [ ${#bad} -gt 0 ]; then
+        error "Bady delay parameter %s" $(pquote $delay)
+        return
+    fi
     echo_live "Setting conky delay to %s" $(pquote $delay)
     sed -r -i "s/^\s*(STARTUP_DELAY=).*/\1$delay/" $ds_conf
 }
