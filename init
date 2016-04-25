@@ -2933,9 +2933,10 @@ do_early_menus() {
          reset) read_xlat                  ;;
     esac
 
-    my_select_menu "Select Timezone"           "Timezones are listed by longitude"     t tz      "Timezone"    'tz=*'
-    my_select_menu "Select Option"             "Only one option can be selected"       o options "Options"     "$OPTIONS_ENTRIES"
-    my_select_menu "Select Persistence Option" ""                                      p persist "Persistence" 'persist_*|frugal_*'
+    my_select_menu "Select Timezone"           "Timezones are listed by longitude"     t tz      "Timezone"      'tz=*'
+    my_select_menu "Select Option"             "Only one option can be selected"       o options "Options"       "$OPTIONS_ENTRIES"
+    my_select_menu "Select Persistence Option" ""                                      p persist "Persistence"   'persist_*|frugal_*'
+    my_select_menu "Select Dots per In for X"  "Larger DPI means larger fonts"         D dpi     "Dots per Inch" 'dpi=*'
     #vmsg 6 "cmdline:$white $cmdline"
     [ ${#cmdline} -gt 0 ] && echo "$cmdline" >> /live/config/cmdline
 }
