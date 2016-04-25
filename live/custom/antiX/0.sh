@@ -6,7 +6,7 @@ CLI_INSTALLER=cli-installer
 LIST_MODULES=true
 CHECK_BOOTCODES=true
 
-MENUS_LIST=ltopds
+MENUS_LIST=ltopDds
 
 DO_DEB=true
 DO_FSCK=true
