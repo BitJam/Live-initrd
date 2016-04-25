@@ -35,7 +35,8 @@ for param in $CMDLINE; do
             noloadkeys)    NO_LOAD_KEYS=true                        ;;
                    db+)      DB_PLUS=true                           ;;
              desktop=*)  CMD_DESKTOP=$value                         ;;
-                 dpi=*)      CMD_DPI=$value                         ;;
+        dpi=[1-9][0-9])      CMD_DPI=$value                         ;;
+   dpi=[1-9][0-9][0-9])      CMD_DPI=$value                         ;;
                  kbd=*)      CMD_KBD=$value ;          DO_XKBD=true ;;
                kbopt=*)   XKBOPTIONS=$value ;          DO_XKBD=true ;;
                kbvar=*)   XKBVARIANT=$value ;          DO_XKBD=true ;;
@@ -127,13 +128,15 @@ do_start() {
             detect_any_video_driver
         fi
 
-        set_dpi $CMD_DPI
+        set_dpi     $CMD_DPI
+        #scale_conky $CMD_DPI
 
         make_xorg_conf "$XORG_ARGS" "$FOUND_VDRIVER"
         HAVE_X=true
-    fi
 
-    [ "$CONKY_DELAY" ] && adjust_conky_delay $CONKY_DELAY
+        [ "$CONKY_DELAY" ] && adjust_conky_delay $CONKY_DELAY
+
+    fi
 
     # Find the "default" user.  This is usually "demo" but can vary on snapshots
     # and such.  First check the default user for SLiM and lightdm.  Then get
@@ -540,6 +543,20 @@ detect_sisimedia_driver() {
     # But both come *before* the orignal XORG_ARGS so they get over-ridden
     # by the xorg= cheat.
     XORG_ARGS="${XORG_ARGS:-default,$xorg_driver}"
+}
+
+scale_conky() {
+    local dpi=$1
+    local file=/etc/skel/.conkyrc  def_width=180  def_gheight=30
+    [ "$dpi" ] || return
+    test -w $file || return
+    local width=$((dpi * $def_width / 96 ))
+    [ $width -gt $def_width ] || return
+    echo_live "Setting Conky width to %s" $(pquote $width)
+    local width2=$((width - 10))
+    local gheight=$((2 * dpi * $def_gheight / 96 - $def_gheight))
+    sed -i -r -e "s/^\s*(maximum_width\s+).*/\1$width/" \
+        -e "s/$def_gheight, ?170/$gheight,$width2/" $file
 }
 
 set_dpi() {
