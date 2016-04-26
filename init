@@ -894,6 +894,7 @@ read_cmdline_params()
         watchdog|x2apic_phys|x86_mrst_timer=*|xd=*|xd_geo=*|xen_emul_unplug=*);;
         xirc2ps_cs=*);;
 
+        drm.*|i915.*) ;;
         nomodeset|*.modeset=*);;
         nosplash|splash=*|fbcon=*);;
 
