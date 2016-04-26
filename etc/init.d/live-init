@@ -35,8 +35,7 @@ for param in $CMDLINE; do
             noloadkeys)    NO_LOAD_KEYS=true                        ;;
                    db+)      DB_PLUS=true                           ;;
              desktop=*)  CMD_DESKTOP=$value                         ;;
-        dpi=[1-9][0-9])      CMD_DPI=$value                         ;;
-   dpi=[1-9][0-9][0-9])      CMD_DPI=$value                         ;;
+                 dpi=*)      CMD_DPI=$value                         ;;
                  kbd=*)      CMD_KBD=$value ;          DO_XKBD=true ;;
                kbopt=*)   XKBOPTIONS=$value ;          DO_XKBD=true ;;
                kbvar=*)   XKBVARIANT=$value ;          DO_XKBD=true ;;
@@ -57,14 +56,14 @@ for param in $CMDLINE; do
 
 automount=off|amnt=off)                          AUTOMOUNT_OFF=true ;;
         automount|amnt)                              AUTOMOUNT=true ;;
-    automount=*|amnt=*)    CMD_MOUNT=$value ;        AUTOMOUNT=true ;;
-               mount=*)    CMD_MOUNT=$value ;        AUTOMOUNT=true ;;
-               fstab=*)    CMD_FSTAB=$value                         ;;
-                splash) SPLASH_PARAM=v                              ;;
-              splash=*) SPLASH_PARAM=$value                         ;;
-           desktheme=*) DESK_THEME=$value                           ;;
-                norepo) NO_REPO=true                                ;;
-               conky=*) CONKY_DELAY=$value                          ;;
+    automount=*|amnt=*)     CMD_MOUNT=$value ;       AUTOMOUNT=true ;;
+               mount=*)     CMD_MOUNT=$value ;       AUTOMOUNT=true ;;
+               fstab=*)     CMD_FSTAB=$value                        ;;
+                splash)  SPLASH_PARAM=v                             ;;
+              splash=*)  SPLASH_PARAM=$value                        ;;
+           desktheme=*)    DESK_THEME=$value                        ;;
+                norepo)       NO_REPO=true                          ;;
+           deskdelay=*) DESKTOP_DELAY=$value                        ;;
     esac
 done
 
@@ -128,13 +127,12 @@ do_start() {
             detect_any_video_driver
         fi
 
-        set_dpi     $CMD_DPI
-        #scale_conky $CMD_DPI
+        set_server_dpi $CMD_DPI
 
         make_xorg_conf "$XORG_ARGS" "$FOUND_VDRIVER"
         HAVE_X=true
 
-        [ "$CONKY_DELAY" ] && adjust_conky_delay $CONKY_DELAY
+        [ "$DESKTOP_DELAY" ] && adjust_desktop_delay $DESKTOP_DELAY
 
     fi
 
@@ -160,6 +158,7 @@ do_start() {
 
     set_default_desktop "$CMD_DESKTOP" $DEF_USER $USER_HOME
     set_desktop_theme   "$DESK_THEME"  $DEF_USER $USER_HOME
+    set_user_dpi        "$CMD_DPI"     $DEF_USER $USER_HOME
 
     #localize_firefox $LANG
 }
@@ -367,7 +366,7 @@ set_utc_local() {
     esac
 }
 
-adjust_conky_delay() {
+adjust_desktop_delay() {
     local delay=${1:-0}
     local ds_conf=/etc/desktop-session/desktop-session.conf
     test -e $ds_conf || return
@@ -377,7 +376,7 @@ adjust_conky_delay() {
         error "Bady delay parameter %s" $(pquote $delay)
         return
     fi
-    echo_live "Setting conky delay to %s" $(pquote $delay)
+    echo_live "Setting desktop delay to %s" $(pquote $delay)
     sed -r -i "s/^\s*(STARTUP_DELAY=).*/\1$delay/" $ds_conf
 }
 
@@ -546,8 +545,8 @@ detect_sisimedia_driver() {
 }
 
 scale_conky() {
-    local dpi=$1
-    local file=/etc/skel/.conkyrc  def_width=180  def_gheight=30
+    local dpi=$1  user=$2  home=$3
+    local file=/$home/.conkyrc  def_width=180  def_gheight=30
     [ "$dpi" ] || return
     test -w $file || return
     local width=$((dpi * $def_width / 96 ))
@@ -555,16 +554,16 @@ scale_conky() {
     echo_live "Setting Conky width to %s" $(pquote $width)
     local width2=$((width - 10))
     local gheight=$((2 * dpi * $def_gheight / 96 - $def_gheight))
-    sed -i -r -e "s/^\s*(maximum_width\s+).*/\1$width/" \
-        -e "s/$def_gheight, ?170/$gheight,$width2/" $file
+
+    su -c "sed -i -r -e 's/^\s*(maximum_width\s+).*/\1$width/' -e 's/$def_gheight, ?170/$gheight,$width2/' $file" $user
 }
 
-set_dpi() {
+set_server_dpi() {
     local dpi=$1
     [ "$dpi" ] || return
 
     if ! echo $dpi | grep -q "^[[:digit:]]\+$"; then
-        error "Invalid %s boot parameter %s" $(pquote dpi) $(pquote $dpi)
+        error "Invalid %s boot parameter %s" "$(pquote server dpi)" $(pquote $dpi)
         return
     fi
 
@@ -581,6 +580,22 @@ set_dpi() {
         sed -i -r "s/^#?\s*(xserver-command=X).*/\1 -dpi $dpi/" $file
     done
 }
+
+set_user_dpi() {
+    local dpi=$1  user=$2  home=$3
+    [ "$dpi" ] || return
+
+    echo_live "Setting %s to %s" "$(pquote user dpi)" $(pquote $dpi)
+    if ! echo $dpi | grep -q "^[[:digit:]]\+$"; then
+        error "Invalid %s boot parameter %s" $(pquote dpi) $(pquote $dpi)
+        return
+    fi
+
+    add_or_edit "^[ !]*Xft.dpi:" "Xft.dpi: $dpi" $home/.Xresources $user create
+
+    scale_conky "$dpi" "$user" $home
+}
+
 
 
 #-------------------------------------------------------------------------------
@@ -666,6 +681,20 @@ move_if() {
     test -e $f1 || return
     mkdir -p $(dirname $f2)
     mv -f $f1 $f2
+}
+
+add_or_edit() {
+    local where=$1  line=$2  file=$3  user=$4 create=$5
+    if ! test "$file"; then
+        [ "$create" ] && echo  "$line" | su -c "tee $file" $user
+        return
+    fi
+
+    if grep -iq "$where" "$file"; then
+        sed -i -r "/$where/I s|.*|$line|" $file
+        return
+    fi
+    su -c "sed -i '1 i$line' $file" $user
 }
 
 #-------------------------------------------------------------------------------
