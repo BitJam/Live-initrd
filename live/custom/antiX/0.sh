@@ -42,6 +42,7 @@ live_param_filter() {
         norepo|nostore) ;;
 
         deskdelay=*) ;;
+        udpi=*|sdpi=*) ;;
 
         *) printf "$param " ;;
         esac

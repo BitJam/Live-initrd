@@ -35,7 +35,9 @@ for param in $CMDLINE; do
             noloadkeys)    NO_LOAD_KEYS=true                        ;;
                    db+)      DB_PLUS=true                           ;;
              desktop=*)  CMD_DESKTOP=$value                         ;;
-                 dpi=*)      CMD_DPI=$value                         ;;
+                 dpi=*)     CMD_SDPI=$value ;       CMD_UDPI=$value ;;
+                sdpi=*)     CMD_SDPI=$value                         ;;
+                udpi=*)     CMD_UDPI=$value                         ;;
                  kbd=*)      CMD_KBD=$value ;          DO_XKBD=true ;;
                kbopt=*)   XKBOPTIONS=$value ;          DO_XKBD=true ;;
                kbvar=*)   XKBVARIANT=$value ;          DO_XKBD=true ;;
@@ -128,7 +130,7 @@ do_start() {
             detect_any_video_driver
         fi
 
-        set_server_dpi $CMD_DPI
+        set_server_dpi $CMD_SDPI
 
         make_xorg_conf "$XORG_ARGS" "$FOUND_VDRIVER"
         HAVE_X=true
@@ -159,7 +161,7 @@ do_start() {
 
     set_default_desktop "$CMD_DESKTOP" $DEF_USER $USER_HOME
     set_desktop_theme   "$DESK_THEME"  $DEF_USER $USER_HOME
-    set_user_dpi        "$CMD_DPI"     $DEF_USER $USER_HOME
+    set_user_dpi        "$CMD_UDPI"    $DEF_USER $USER_HOME
 
     #localize_firefox $LANG
 }
