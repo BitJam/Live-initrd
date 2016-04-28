@@ -246,7 +246,8 @@ main_wrapper() {
         fi
     fi
 
-    breakpoint 9 "right before starting init"
+    breakpoint bash "start Bash shell"
+    breakpoint 9    "right before starting init"
 
     stop_hotplug
 
@@ -1012,10 +1013,11 @@ select_breakpoints() {
             echo
             echo "${m_co}Remaining ${hi_co}$ME$m_co breakpoints:$nc_co"
             echo
-            sed -rn 's/^\s*breakpoint ([1-9a-z][0-9a-z]?)/  \1)/p' $0 | sed "s/['\"]//g" | sort
+            sed -rn 's/^\s*breakpoint ([1-9a-z][0-9a-z]?\>/  \1)/p' $0 | sed "s/['\"]//g" | sort
             echo
             echo "${m_co}Use \"a\" to set most breakpoints$nc_co"
             echo "${m_co}Use \"A\" to set all breakpoints$nc_co"
+            echo "${m_co}Use \"bash\" to enter a Bash shell before system starts$nc_co"
             echo
             printf "${ok_co}%s$m_co: $nc_co" "Enter breakpoint(s) separated by commas"
             setsid cttyhack > /dev/null
@@ -2382,27 +2384,17 @@ breakpoint() {
 
     custom_code "$bp" "$desc"
 
-    if [ "$DBV" ]; then
-        eval local val=\$$DBV
-        msg "$bold_co$DBV=$white$val"
-    fi
-
     if [ "$DB_PLUS" ]; then
         local now=$(get_time)
         local delta=$(get_seconds $((now - LAST_BP_TIME)))
         vmsg 9 "$green@bp$cyan[$num_co$bp$m_co]$hi_co $(get_seconds $now)s ($delta)$m_co: $desc"
         LAST_BP_TIME=$now
-        [ "$TEST_FATAL" ] && [ "$TEST_FATAL" = "$bp" ] && non_fatal "Test at bp=$bp $desc"
     fi
 
-    if ! should_break_at $bp; then
+    should_break_at $bp || return
 
-        if [ "$TEST_ERRORS" ]; then
-            msg 'normal message one'
-            echo 'test error' >&2
-            msg 'normal message two'
-        fi
-
+    if [ "$bp" = bash ]; then
+        do_bash_chroot
         return
     fi
 
@@ -2417,6 +2409,32 @@ breakpoint() {
     bp_time_2=$(get_time)
     time_0=$((time_0 + bp_time_2 - bp_time_1))
     echo
+}
+
+do_bash_chroot() {
+
+    local rc_file=/root/chrootrc bp=${1:-bash} root_dir=${2:-$NEW_ROOT}
+
+    cat<<Chroot_RC > $root_dir$rc_file
+alias shutdown="touch /shutdown; exit &>/dev/null"
+alias reboot="touch /reboot; exit &>/dev/null"
+source /root/.bashrc
+rm $rc_file
+Chroot_RC
+
+    echo "$green$tbar$nc_co"
+    echo "$green==>$cyan Bash shell @ breakpoint [$num_co$bp$cyan]$white $desc"
+    echo "$green    Use the$white exit$green command or press$white Ctrl-d$green to boot"
+    echo "$green    Use$white poweroff$green and$white reboot$green to poweroff and reboot"
+
+    rm -f $root_dir/shutdown $/root_dir/reboot
+    setsid cttyhack aufs-chroot bash --init-file $rc_file
+    local do_shutdown do_reboot
+    test -e $root_dir/shutdown && do_shutdown=true
+    test -e $root_dir/reboot   && do_reboot=true
+    rm -f $root_dir/shutdown $root_dir/reboot
+    [ "$do_shutdown" ] && safe-shutdown
+    [ "$do_reboot" ]   && safe-reboot
 }
 
 db_msg() { vmsg 5 "${green}db+:$hi_co $@" ;}
