@@ -552,10 +552,11 @@ scale_conky() {
     local width=$((dpi * $def_width / 96 ))
     [ $width -gt $def_width ] || return
     echo_live "Setting Conky width to %s" $(pquote $width)
-    local width2=$((width - 10))
+    local gwidth=$((width - 10))
     local gheight=$((2 * dpi * $def_gheight / 96 - $def_gheight))
 
-    su -c "sed -i -r -e 's/^\s*(maximum_width\s+).*/\1$width/' -e 's/$def_gheight, ?170/$gheight,$width2/' $file" $user
+    su -c "sed -i -r -e 's/^\s*(maximum_width\s+).*/\1$width/' \
+        -e 's/(graph +[a-z0-9]+\s+)[0-9]+\s*,\s*[0-9]+/\1$gheight,$gwidth/' $file" $user
 }
 
 set_server_dpi() {
