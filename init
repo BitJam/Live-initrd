@@ -639,7 +639,6 @@ read_cmdline_params()
                          ftry=*) small_int CMD_FRUGAL_RETRY $param               ;;
                          ptry=*) small_int CMD_PERSIST_RETRY $param              ;;
 
-                          dbv=*) DBV=$value                                      ;;
                         fneed=*) FRUGAL_NEEDED=$value                            ;;
                          fforce) FORCE_FRUGAL=true                               ;;
                          flab=*) FRUGAL_ID=label=$value         ; FRUGAL=        ;;
@@ -700,8 +699,6 @@ read_cmdline_params()
                          init=*) INIT_PROG=$value                                ;;
 
                        noerrlog) NO_ERR_LOG=true                                 ;;
-                        errtest) TEST_ERRORS=true                                ;;
-                      errtest=*) TEST_FATAL=$value                               ;;
                         noerr=*) NO_ERROR=$value                                 ;;
 
                       vtblank=*) small_int VT_BLANK $param                       ;;
