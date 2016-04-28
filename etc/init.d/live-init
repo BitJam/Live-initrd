@@ -64,6 +64,7 @@ automount=off|amnt=off)                          AUTOMOUNT_OFF=true ;;
            desktheme=*)    DESK_THEME=$value                        ;;
                 norepo)       NO_REPO=true                          ;;
            deskdelay=*) DESKTOP_DELAY=$value                        ;;
+             nomodeset)     NOMODESET=true                          ;;
     esac
 done
 
