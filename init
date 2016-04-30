@@ -211,7 +211,8 @@ main_wrapper() {
 
     # Need to run persist-password outside of our error catching
 
-    breakpoint 8 "before running init.d scripts"
+    breakpoint 8      "before running live init.d scripts"
+    breakpoint bash8  "Bash shell before running live init.d scripts"
 
     # Try running live-usb-save first so it can restore an xorg.conf machine-state file
     confile remasterable && LIVE_SCRIPTS="live-usb-save $LIVE_SCRIPTS"
@@ -246,7 +247,7 @@ main_wrapper() {
         fi
     fi
 
-    breakpoint bash "start Bash shell"
+    breakpoint bash "Bash shell right before starting init"
     breakpoint 9    "right before starting init"
 
     stop_hotplug
@@ -2393,10 +2394,9 @@ breakpoint() {
 
     should_break_at $bp || return
 
-    if [ "$bp" = bash ]; then
-        do_bash_chroot
-        return
-    fi
+    case $bp in
+        bash*) do_bash_chroot ; return ;;
+    esac
 
     echo "$green$tbar$nc_co"
     echo "$green==>$cyan limited shell @ breakpoint [$num_co$bp$cyan]$white $desc"
