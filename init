@@ -213,6 +213,7 @@ main_wrapper() {
 
     breakpoint 8      "before running live init.d scripts"
     breakpoint bash8  "Bash shell before running live init.d scripts"
+    breakpoint b8     "Bash shell before running live init.d scripts"
 
     # Try running live-usb-save first so it can restore an xorg.conf machine-state file
     confile remasterable && LIVE_SCRIPTS="live-usb-save $LIVE_SCRIPTS"
@@ -247,8 +248,9 @@ main_wrapper() {
         fi
     fi
 
-    breakpoint bash "Bash shell right before starting init"
-    breakpoint 9    "right before starting init"
+    breakpoint bash9 "Bash shell right before starting init"
+    breakpoint b9    "Bash shell right before starting init"
+    breakpoint 9     "right before starting init"
 
     stop_hotplug
 
@@ -1014,7 +1016,7 @@ select_breakpoints() {
             echo
             echo "${m_co}Remaining ${hi_co}$ME$m_co breakpoints:$nc_co"
             echo
-            sed -rn 's/^\s*breakpoint ([1-9a-z][0-9a-z]?\>/  \1)/p' $0 | sed "s/['\"]//g" | sort
+            sed -rn 's/^\s*breakpoint ([1-9a-z])\>/  \1)/p' $0 | sed "s/['\"]//g" | sort
             echo
             echo "${m_co}Use \"a\" to set most breakpoints$nc_co"
             echo "${m_co}Use \"A\" to set all breakpoints$nc_co"
@@ -2395,7 +2397,7 @@ breakpoint() {
     should_break_at $bp || return
 
     case $bp in
-        bash*) do_bash_chroot ; return ;;
+        bash*|b[1-9]) do_bash_chroot $bp ; return ;;
     esac
 
     echo "$green$tbar$nc_co"
@@ -3677,7 +3679,7 @@ copy_to_ram() {
         mountpoint -q $toram_mp && log_cmd umount $toram_mp
         [ -d $toram_mp ]        && rmdir $toram_mp
     fi
-    breakpoint tr "After copy to ram"
+    breakpoint t "After copy to ram"
 }
 
 _copy_to_ram() {
