@@ -34,6 +34,8 @@ GSTATE_FILES="# File: general-state-files
 /var/log/live/persist-save.log
 /var/log/live/live-remaster.log
 
+/root/.bash_history
+
 # /etc/passwd
 # /etc/shadow
 # /etc/group
