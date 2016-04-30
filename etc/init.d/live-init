@@ -135,7 +135,7 @@ do_start() {
         make_xorg_conf "$XORG_ARGS" "$FOUND_VDRIVER"
         HAVE_X=true
 
-        [ "$DESKTOP_DELAY" ] && adjust_desktop_delay $DESKTOP_DELAY
+        adjust_desktop_delay $DESKTOP_DELAY
 
     fi
 
@@ -159,10 +159,10 @@ do_start() {
     [ "$HAVE_X" ] || return
     #--------------------------------------------------------------------------
 
-    set_default_desktop "$CMD_DESKTOP" $DEF_USER $USER_HOME
-    set_desktop_theme   "$DESK_THEME"  $DEF_USER $USER_HOME
-    set_user_dpi        "$CMD_UDPI"    $DEF_USER $USER_HOME
-
+    set_default_desktop    "$CMD_DESKTOP"   $DEF_USER $USER_HOME
+    set_desktop_theme      "$DESK_THEME"    $DEF_USER $USER_HOME
+    set_user_dpi           "$CMD_UDPI"      $DEF_USER $USER_HOME
+    set_user_desktop_delay "$DESKTOP_DELAY" $DEF_USER $USER_HOME
     #localize_firefox $LANG
 }
 
@@ -370,7 +370,8 @@ set_utc_local() {
 }
 
 adjust_desktop_delay() {
-    local delay=${1:-0}
+    local delay=$1
+    [ ${#delay} -gt 0 ] || return
     local ds_conf=/etc/desktop-session/desktop-session.conf
     test -e $ds_conf || return
     local bad=$(echo $delay | sed -r 's/^([0-9]+(\.[0-9]*)?|.[0-9]+)//')
@@ -598,6 +599,22 @@ set_user_dpi() {
     add_or_edit "^[ !]*Xft.dpi:" "Xft.dpi: $dpi" $home/.Xresources $user create
 
     scale_conky "$dpi" "$user" $home
+}
+
+set_user_desktop_delay() {
+    local delay=$1  user=$2  home=$3
+    [ ${#delay} -gt 0 ] || return
+
+    local ds_conf=$home/.desktop-session/desktop-session.conf
+    test -e $ds_conf || return
+    local bad=$(echo $delay | sed -r 's/^([0-9]+(\.[0-9]*)?|.[0-9]+)//')
+
+    if [ ${#bad} -gt 0 ]; then
+        error "Bady delay parameter %s" $(pquote $delay)
+        return
+    fi
+    echo_live "Setting desktop delay to %s" $(pquote $delay)
+    su -c "sed -r -i 's/^\s*(STARTUP_DELAY=).*/\1$delay/' $ds_conf"
 }
 
 
