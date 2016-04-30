@@ -2418,7 +2418,8 @@ do_bash_chroot() {
     local rc_file=/root/chrootrc bp=${1:-bash} root_dir=${2:-$NEW_ROOT}
 
     cat<<Chroot_RC > $root_dir$rc_file
-alias shutdown="touch /shutdown; exit &>/dev/null"
+alias shutdown="touch /poweroff; exit &>/dev/null"
+alias poweroff="touch /poweroff; exit &>/dev/null"
 alias reboot="touch /reboot; exit &>/dev/null"
 source /root/.bashrc
 rm $rc_file
@@ -2429,13 +2430,13 @@ Chroot_RC
     echo "$green    Use the$white exit$green command or press$white Ctrl-d$green to boot"
     echo "$green    Use$white poweroff$green and$white reboot$green to poweroff and reboot"
 
-    rm -f $root_dir/shutdown $/root_dir/reboot
+    rm -f $root_dir/poweroff $/root_dir/reboot
     setsid cttyhack aufs-chroot bash --init-file $rc_file
-    local do_shutdown do_reboot
-    test -e $root_dir/shutdown && do_shutdown=true
+    local do_poweroff do_reboot
+    test -e $root_dir/poweroff && do_poweroff=true
     test -e $root_dir/reboot   && do_reboot=true
-    rm -f $root_dir/shutdown $root_dir/reboot
-    [ "$do_shutdown" ] && safe-shutdown
+    rm -f $root_dir/poweroff $root_dir/reboot
+    [ "$do_poweroff" ] && safe-poweroff
     [ "$do_reboot" ]   && safe-reboot
 }
 
