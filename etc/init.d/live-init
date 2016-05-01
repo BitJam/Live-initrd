@@ -560,7 +560,7 @@ scale_conky() {
     local gheight=$((2 * dpi * $def_gheight / 96 - $def_gheight))
 
     su -c "sed -i -r -e 's/^\s*(maximum_width\s+).*/\1$width/' \
-        -e 's/(graph +[a-z0-9]+\s+)[0-9]+\s*,\s*[0-9]+/\1$gheight,$gwidth/' $file" $user
+        -e 's/(graph\s+([a-z0-9]+\s+)?)[0-9]+\s*,\s*[0-9]+/\1$gheight,$gwidth/' $file" $user
 }
 
 set_server_dpi() {
