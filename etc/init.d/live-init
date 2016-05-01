@@ -566,14 +566,20 @@ scale_conky() {
 check_dpi() {
     local dpi=$1
     [ "$dpi" ] || return 1
-    if [ -z "${dpi##*.*}" ]; then
-        dpi=$(awk "BEGIN{ printf \"%.0f\n\", $dpi * 96; }")
-    elif ! echo $dpi | grep -q "^[[:digit:]]\+$"; then
-        error "Invalid %s boot parameter %s" "$(pquote server dpi)" $(pquote $dpi)
+    local bad=$(echo $dpi | sed -r 's/^([0-9]+(\.[0-9]*)?|.[0-9]+)//')
+    if [ ${#bad} -gt 0 ]; then
+        error "Invalid %s boot parameter %s" "$(pquote dpi)" $(pquote $dpi)
         return 1
     fi
 
-    [ $dpi -le 5 ] && dpi=$(awk "BEGIN{ printf \"%.0f\n\", $dpi * 96; }")
+    local mag=${dpi%%.*}
+    if [ ${mag:-0} -le 6 ]; then
+        dpi=$(awk "BEGIN{ printf \"%.0f\n\", $dpi * 96; }")
+    elif ! echo $dpi | grep -q "^[[:digit:]]\+$"; then
+        error "Invalid %s boot parameter %s" "$(pquote dpi)" $(pquote $dpi)
+        return 1
+    fi
+
     DPI_OUT=$dpi
     return 0
 }
@@ -591,10 +597,8 @@ set_server_dpi() {
         sed -i -e "s/^xserver_arguments.*/xserver_arguments -dpi $dpi -nolisten tcp/" $file
     done
 
-    for file in /etc/lightdm/lightdm.conf; do
-        [ -e $file ] || continue
-        sed -i -r "s/^#?\s*(xserver-command=X).*/\1 -dpi $dpi/" $file
-    done
+    file=/etc/lightdm/lightdm.conf
+    [ -e $file ] && sed -i -r "s/^#?\s*(xserver-command=X).*/\1 -dpi $dpi/" $file
 }
 
 set_user_dpi() {
