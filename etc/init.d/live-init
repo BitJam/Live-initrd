@@ -563,16 +563,27 @@ scale_conky() {
         -e 's/(graph\s+([a-z0-9]+\s+)?)[0-9]+\s*,\s*[0-9]+/\1$gheight,$gwidth/' $file" $user
 }
 
-set_server_dpi() {
+check_dpi() {
     local dpi=$1
-    [ "$dpi" ] || return
-
-    if ! echo $dpi | grep -q "^[[:digit:]]\+$"; then
+    [ "$dpi" ] || return 1
+    if [ -z "${dpi##*.*}" ]; then
+        dpi=$(awk "BEGIN{ printf \"%.0f\n\", $dpi * 96; }")
+    elif ! echo $dpi | grep -q "^[[:digit:]]\+$"; then
         error "Invalid %s boot parameter %s" "$(pquote server dpi)" $(pquote $dpi)
-        return
+        return 1
     fi
 
-    echo_live "Setting %s to %s" $(pquote dpi) $(pquote $dpi)
+    [ $dpi -le 5 ] && dpi=$(awk "BEGIN{ printf \"%.0f\n\", $dpi * 96; }")
+    DPI_OUT=$dpi
+    return 0
+}
+
+set_server_dpi() {
+    local dpi=$1
+    check_dpi $dpi || return
+    dpi=$DPI_OUT
+
+    echo_live "Setting %s to %s" "$(pquote server dpi)" $(pquote $dpi)
 
     local file
     for file in /etc/slim.conf /usr/share/slim/themes/antiX/slim-install.conf; do
@@ -588,7 +599,8 @@ set_server_dpi() {
 
 set_user_dpi() {
     local dpi=$1  user=$2  home=$3
-    [ "$dpi" ] || return
+    check_dpi $dpi || return
+    dpi=$DPI_OUT
 
     echo_live "Setting %s to %s" "$(pquote user dpi)" $(pquote $dpi)
     if ! echo $dpi | grep -q "^[[:digit:]]\+$"; then
