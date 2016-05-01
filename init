@@ -2820,8 +2820,7 @@ initialize_cmdline2() {
         [ -z "${DISABLE_SERVICES##*k*}" ] && cmdline="$cmdline${cmdline:+ }noloadkeys"
         if [ -z "${DISABLE_SERVICES##*c*}" ]; then
             local desk_delay=$(echo $DISABLE_SERVICES | sed -r 's/[^c]*c([0-9]+(\.[0-9]*)?|\.[0-9]+|).*/\1/')
-            : ${desk_delay:=0}
-            cmdline="$cmdline${cmdline:+ }deskdelay=$desk_delay"
+            cmdline="$cmdline${cmdline:+ }deskdelay=${desk_delay:-0}"
         fi
         [ "$cmdline" ] && echo "$cmdline" >> /live/config/cmdline2
     fi
