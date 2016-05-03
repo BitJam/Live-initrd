@@ -6,7 +6,7 @@ CLI_INSTALLER=cli-installer
 LIST_MODULES=true
 CHECK_BOOTCODES=true
 
-MENUS_LIST=ltopDds
+MENUS_LIST=ltopfds
 
 DO_DEB=true
 DO_FSCK=true
@@ -40,9 +40,9 @@ live_param_filter() {
         desktheme=*) ;;
         nosavestate|savestate|dbsavestate) ;;
         norepo|nostore) ;;
-
         deskdelay=*) ;;
         udpi=*|sdpi=*) ;;
+        fontsize=*) ;;
 
         *) printf "$param " ;;
         esac

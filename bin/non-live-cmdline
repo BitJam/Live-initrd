@@ -135,6 +135,7 @@ for param in $(cat /proc/cmdline); do
         nosavestate|savestate|dbsavestate) ;;
         deskdelay=*) ;;
         udpi=*|sdpi=*) ;;
+        fontsize=*) ;;
 
         *) printf "$param "
     esac
