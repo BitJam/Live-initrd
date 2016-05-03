@@ -27,15 +27,22 @@ KMS_VIDEO_MODULES="ast|bochs[_-]drm|cirrus|emgd|gma500[_-]gfx|i915|mgag200|nouve
 SISIMEDIA_K_DRIVERS="sis|sis[_-]agp"
 XORG_DRIVER_DIR="/usr/lib/xorg/modules/drivers"
 
+UXA_PCI_ID="0042|0046|1132|1240|2562|2572|2582|258a|2592|2772|2776|2782
+2792|27a2|27a6|27ae|2972|2973|2982|2983|2992|2993|29a2|29a3
+29b2|29b3|29c2|29c3|29d2|29d3|2a02|2a03|2a12|2a13|2a42|2a43
+2e12|2e13|2e22|2e23|2e32|2e33|2e42|2e43|2e92|2e93|3577|3582
+358e|7121|7123|7125|7800|a001|a002|a011|a012"
+
+
 #-jbb For debugging
 : ${CMDLINE:=$(cat /live/config/proc-cmdline /live/config/cmdline /live/config/cmdline2)}
 for param in $CMDLINE; do
     value=${param#*=}
     case "$param" in
-            noloadkeys)    NO_LOAD_KEYS=true                        ;;
+            noloadkeys) NO_LOAD_KEYS=true                           ;;
                    db+)      DB_PLUS=true                           ;;
              desktop=*)  CMD_DESKTOP=$value                         ;;
-                 dpi=*)     CMD_SDPI=$value ;       CMD_UDPI=$value ;;
+                 dpi=*)      CMD_DPI=$value                         ;;
                 sdpi=*)     CMD_SDPI=$value                         ;;
                 udpi=*)     CMD_UDPI=$value                         ;;
                  kbd=*)      CMD_KBD=$value ;          DO_XKBD=true ;;
@@ -67,6 +74,7 @@ automount=off|amnt=off)                          AUTOMOUNT_OFF=true ;;
                 norepo)       NO_REPO=true                          ;;
            deskdelay=*) DESKTOP_DELAY=$value                        ;;
              nomodeset)     NOMODESET=true                          ;;
+            fontsize=*)     FONT_SIZE=$value                        ;;
     esac
 done
 
@@ -117,12 +125,17 @@ do_start() {
     [ "$NO_REPO" ] || localize_repo "$CMD_MIRROR" "$CMD_TZ" "$MIRROR" "$TZ"
     localize_skel $WM_LANG
 
+
+    local dpi DPI_OUT
+
     # Always create keyboard file in non-perisistent system even with no X
+    # Unless NO_LOAD_KEYS
     [ -z "$NO_LOAD_KEYS" ] && set_keyboard
     set_utc_local $CMD_CLOCK
 
     # Only do X stuff on systems that seem to have X
     if which X &>/dev/null; then
+        HAVE_X=true
 
         if [ "$EARLY_VID" ]; then
             load_video_driver
@@ -130,10 +143,17 @@ do_start() {
             detect_any_video_driver
         fi
 
-        set_server_dpi $CMD_SDPI
+        if [ ${#FONT_SIZE} -gt 0 ]; then
+            font_size_to_dpi $FONT_SIZE
+            dpi=$DPI_OUT
+        elif [ ${#CMD_DPI} -gt 0 ]; then
+            check_dpi $CMD_DPI
+            dpi=$DPI_OUT
+        fi
 
-        make_xorg_conf "$XORG_ARGS" "$FOUND_VDRIVER"
-        HAVE_X=true
+        set_server_dpi ${CMD_SDPI:-$dpi}
+
+        make_xorg_conf "$XORG_ARGS" "$FOUND_VDRIVER" "$FOUND_KMS_DRIVER" "$NOMODESET" "$NO_XORG"
 
         adjust_desktop_delay $DESKTOP_DELAY
 
@@ -159,10 +179,10 @@ do_start() {
     [ "$HAVE_X" ] || return
     #--------------------------------------------------------------------------
 
-    set_default_desktop    "$CMD_DESKTOP"   $DEF_USER $USER_HOME
-    set_desktop_theme      "$DESK_THEME"    $DEF_USER $USER_HOME
-    set_user_dpi           "$CMD_UDPI"      $DEF_USER $USER_HOME
-    set_user_desktop_delay "$DESKTOP_DELAY" $DEF_USER $USER_HOME
+    set_default_desktop    "$CMD_DESKTOP"      $DEF_USER $USER_HOME
+    set_desktop_theme      "$DESK_THEME"       $DEF_USER $USER_HOME
+    set_user_dpi           "${CMD_UDPI:-$dpi}" $DEF_USER $USER_HOME
+    set_user_desktop_delay "$DESKTOP_DELAY"    $DEF_USER $USER_HOME
     #localize_firefox $LANG
 }
 
@@ -391,15 +411,15 @@ adjust_desktop_delay() {
 # Don't make a default xorg.conf if:
 #    1) a modified xorg.conf is found
 #    2) "noxorg" was specified
-#    3) a kms driver was found (regardless of "nomodeset")
-#    4) there is no frame buffer
-#    3) there is a frame buffer other than vesa
+#    3) any video driver was found (regardless of "nomodeset")
+#    4) we are in Virtual Box
 
 make_xorg_conf() {
-    local args=$1 found_vdriver=$2 safe_mode= xorg_conf=/etc/X11/xorg.conf
+    local args=$1  found_vdriver=$2  found_kms_driver=$3  nomodeset=$4  no_xorg=$5
+    local safe_mode xorg_conf=/etc/X11/xorg.conf
 
     case ,$args, in
-        *,safe,*) safe_mode=true;;
+        *,safe,*) safe_mode=true ;;
     esac
     #- # Disable fbdev unless it is specifically requested
     #- # If it is requested then make sure it is enabled (by us at least)
@@ -418,33 +438,35 @@ make_xorg_conf() {
 
     local no_default
     test -e $xorg_conf             && no_default=true
-    [ "$NO_XORG" ]                 && no_default=true
+    [ "$no_xorg" ]                 && no_default=true
     [ "$found_vdriver" ]           && no_default=true
     [ -e /live/config/virtualbox ] && no_default=true
 
-    # FIXME: should I include this or does check for "EFI VGA" below suffice?
-    #[ -e /live/config/uefi ]       && no_default=true
+    if [ -z "$nomodeset" -a -n "$found_kms_driver" -a -n "$safe_mode" ]; then
+        echo_live "Disabling safe mode because of %s" "$(pquote "$found_kms_driver video driver(s)")"
+        args=$(echo $args | sed "s/\<safe\>//g")
+        safe_mode=
+    fi
 
-    # Check who is creating the framebuffer (if any)
-    local vga_fb fb_name=none
-    read fb_name 2>/dev/null < /sys/class/graphics/fb0/name
+    #  # safe mode from the user over-rides vbox
+    #  [ -z "$safe_mode" -a -e /live/config/virtualbox -a -z "$args" -a -z "$no_default" ] \
+    #     && args=vbox${args:+,}$args
 
-    case $fb_name in
-                  none) ;;
-     "VESA VGA"|simple) vga_fb=true ;;
-           "EFI VGA"|*) echo_live "Disabling safe mode because of %s" "$(pquote $fb_name framebuffer)"
-                        no_default=true
-                        safe_mode= ;;
-    esac
-
-    # safe mode from the user over-rides vbox
-    [ -z "$safe_mode" -a -e /live/config/virtualbox -a -z "$args" -a -z "$no_default" ] \
-        && args=vbox${args:+,}$args
-
-    # Force X video driver to be vesa if the vga framebuffer is enabled.
-    if  [ "$vga_fb" -a -z "$no_default" -a -z "$safe_mode" ]; then
+    if  [ -z "$no_default" -a -z "$safe_mode" ]; then
         echo_live "Forcing X-windows to use default mode"
         args=default${args:+,}$args
+    fi
+
+    if [ "$FOUND_i915" -a -z "$no_xorg" ]; then
+        local arch=$(uname -m)
+        if [ $arch = x86_64 ] && need_uxa; then
+            echo_live "Forcing %s acceleration on %s" $(pquote uxa) $(pre-sandybridge)
+            args=uxa${args:+,}$args
+
+        elif [ $arch = i686 -a -z "$nomodeset" ] && need_modesetting; then
+            echo_live "Forcing %s driver on %s" $(pquote modesetting) $(pquote skylake)
+            args=modesetting${args:+,}$args
+        fi
     fi
 
     [ "$args" ] || return
@@ -454,13 +476,31 @@ make_xorg_conf() {
     /sbin/make-xorg-conf --output=$xorg_conf $args
 }
 
+need_modesetting() {
+    # Get all skylake pci ids
+    # See recent pci.ids from http://pci-ids.ucw.cz/
+    # 8086:19* ==> Intel Skylake
+    local skylake=$(lspci -n | cut -d" " -f3 | grep "^8086:19[1-9]") || return 1
+
+    # Make sure no HD Graphics 510
+    echo "$skylake" | grep -q "^8086:190[26]" && return 1
+    return 0
+}
+
+need_uxa() {
+    local pci_id_regex=$(echo $UXA_PCI_ID | tr '\n' '|')
+
+    lspci -n | cut -d" " -f3 | egrep -q "^8086:($pci_id_regex)"
+    return $?
+}
+
 find_video_modules() {
     local modules=${1:-$ALL_VIDEO_MODULES}
     find /sys/devices -name modalias -print0 | xargs -0 sort -u \
         | xargs modprobe -a -D -q 2>> $INIT_LOG_FILE | sort -u \
         | sed -n -r "s/^insmod [^ ]*($modules)\.ko.*/\1/p"
 
-    # FIXME: for testing
+    # for testing:
     # echo sis-agp
 }
 
@@ -494,12 +534,13 @@ load_video_driver() {
 
     FOUND_VDRIVER=true
     detect_sisimedia_driver "$video_modules"
-    local kms_modules="$(echo "$video_modules" | egrep "^($KMS_VIDEO_MODULES)$")"
+    FOUND_KMS_DRIVER="$(echo "$video_modules" | egrep "^($KMS_VIDEO_MODULES)$")"
+    FOUND_i915=$(echo $FOUND_KMS_DRIVER | grep "^i915$")
 
-    if [ "$kms_modules" ]; then
-        echo_live "Found %s video module(s) %s" KMS "$(pquote $(echo $kms_modules))"
-        echo_live "Load module(s) %s" "$(pquote $(echo $kms_modules))"
-        modprobe -b -a -q "$kms_modules"
+    if [ "$FOUND_KMS_DRIVER" ]; then
+        echo_live "Found %s video module(s) %s" KMS "$(pquote $(echo $FOUND_KMS_DRIVER))"
+        echo_live "Load module(s) %s" "$(pquote $(echo $FOUND_KMS_DRIVER))"
+        modprobe -b -a -q "$FOUND_KMS_DRIVER"
         set_fbcondecor "$SPLASH_PARAM" "$orig_fb_name"
     else
         echo_live "Found video module(s) %s" "$(pquote $(echo $video_modules))"
@@ -517,10 +558,14 @@ detect_any_video_driver() {
 
     FOUND_VDRIVER=true
 
-    local kms_modules="$(echo "$video_modules" | egrep "^($KMS_VIDEO_MODULES)$")"
-
-    echo_live "Found %s video module(s) %s" "" "$(pquote $(echo $video_modules))"
-    [ "$kms_modules" ] || detect_sisimedia_driver "$video_modules"
+    FOUND_KMS_DRIVER="$(echo "$video_modules" | egrep "^($KMS_VIDEO_MODULES)$")"
+    if [ "$FOUND_KMS_DRIVER" ]; then
+        echo_live "Found %s video module(s) %s" KMS "$(pquote $(echo $FOUND_KMS_DRIVER))"
+        FOUND_i915=$(echo $FOUND_KMS_DRIVER | grep "^i915$")
+    else
+        echo_live "Found %s video module(s) %s" "" "$(pquote $(echo $video_modules))"
+        detect_sisimedia_driver "$video_modules"
+    fi
 }
 
 # Note: we will report FOUND_VDRIVER even if "nomodeset" is used because unless
@@ -549,7 +594,7 @@ detect_sisimedia_driver() {
 }
 
 scale_conky() {
-    local dpi=$1  user=$2  home=$3
+    local dpi=${1%.*}  user=$2  home=$3
     local file=/$home/.conkyrc  def_width=180  def_gheight=30
     [ "$dpi" ] || return
     test -w $file || return
@@ -563,19 +608,21 @@ scale_conky() {
         -e 's/(graph\s+([a-z0-9]+\s+)?)[0-9]+\s*,\s*[0-9]+/\1$gheight,$gwidth/' $file" $user
 }
 
+font_size_to_dpi() {
+    local size=$1
+    local bad=$(echo $size | sed -r 's/^([0-9]+(\.[0-9]*)?|\.[0-9]+)//')
+    if [ ${#bad} -gt 0 ]; then
+        error "Invalid %s boot parameter %s" "$(pquote fontsize)" $(pquote $size)
+        return 1
+    fi
+    DPI_OUT=$(awk "BEGIN{ printf \"%.0f\n\", $size * 96; }")
+}
+
 check_dpi() {
     local dpi=$1
     [ "$dpi" ] || return 1
-    local bad=$(echo $dpi | sed -r 's/^([0-9]+(\.[0-9]*)?|.[0-9]+)//')
+    local bad=$(echo $dpi | sed -r 's/^([0-9]+(\.[0-9]*)?|\.[0-9]+)//')
     if [ ${#bad} -gt 0 ]; then
-        error "Invalid %s boot parameter %s" "$(pquote dpi)" $(pquote $dpi)
-        return 1
-    fi
-
-    local mag=${dpi%%.*}
-    if [ ${mag:-0} -le 6 ]; then
-        dpi=$(awk "BEGIN{ printf \"%.0f\n\", $dpi * 96; }")
-    elif ! echo $dpi | grep -q "^[[:digit:]]\+$"; then
         error "Invalid %s boot parameter %s" "$(pquote dpi)" $(pquote $dpi)
         return 1
     fi
@@ -586,8 +633,7 @@ check_dpi() {
 
 set_server_dpi() {
     local dpi=$1
-    check_dpi $dpi || return
-    dpi=$DPI_OUT
+    [ ${#dpi} -gt 0 ] || return
 
     echo_live "Setting %s to %s" "$(pquote server dpi)" $(pquote $dpi)
 
@@ -603,14 +649,9 @@ set_server_dpi() {
 
 set_user_dpi() {
     local dpi=$1  user=$2  home=$3
-    check_dpi $dpi || return
-    dpi=$DPI_OUT
 
+    [ ${#dpi} -gt 0 ] || return
     echo_live "Setting %s to %s" "$(pquote user dpi)" $(pquote $dpi)
-    if ! echo $dpi | grep -q "^[[:digit:]]\+$"; then
-        error "Invalid %s boot parameter %s" $(pquote dpi) $(pquote $dpi)
-        return
-    fi
 
     add_or_edit "^[ !]*Xft.dpi:" "Xft.dpi: $dpi" $home/.Xresources $user create
 
