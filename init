@@ -212,7 +212,6 @@ main_wrapper() {
     # Need to run persist-password outside of our error catching
 
     breakpoint 8      "before running live init.d scripts"
-    breakpoint bash8  "Bash shell before running live init.d scripts"
     breakpoint b8     "Bash shell before running live init.d scripts"
 
     # Try running live-usb-save first so it can restore an xorg.conf machine-state file
@@ -248,7 +247,7 @@ main_wrapper() {
         fi
     fi
 
-    breakpoint bash9 "Bash shell right before starting init"
+    breakpoint bash  "Bash shell right before starting init"
     breakpoint b9    "Bash shell right before starting init"
     breakpoint 9     "right before starting init"
 
