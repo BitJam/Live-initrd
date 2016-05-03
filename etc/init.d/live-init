@@ -460,7 +460,7 @@ make_xorg_conf() {
     if [ "$FOUND_i915" -a -z "$no_xorg" ]; then
         local arch=$(uname -m)
         if [ $arch = x86_64 ] && need_uxa; then
-            echo_live "Forcing %s acceleration on %s" $(pquote uxa) $(pre-sandybridge)
+            echo_live "Forcing %s acceleration on %s" $(pquote uxa) $(pquote pre-sandybridge)
             args=uxa${args:+,}$args
 
         elif [ $arch = i686 -a -z "$nomodeset" ] && need_modesetting; then
