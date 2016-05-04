@@ -1002,7 +1002,6 @@ list_modules() {
     [ "$ERR_MODULES" ] || return
     local ecnt=$(echo "$ERR_MODULES" | wc -w)
 
-    #. <count> module(s) failed to load
     vmsg 6 '%s module(s) failed to load' $(nq $ecnt)
 
     vmsg 7 "$white$ERR_MODULES"
@@ -1370,7 +1369,7 @@ from_filter() {
         esac
     done
 
-    #. Invalid <parameter-name> value(s) <bad values>
+    # Invalid <parameter-name> value(s) <bad values>
     [ "$invalid_scan" ] \
         && _fatal "$(printf 'Invalid %s values(s) %s' "$(pqh from=)" "$(pqh $invalid_scan)")" \
         "$(printf 'Valid values are %s' "$(cq cd hd mmc usb all)")"
@@ -1414,7 +1413,7 @@ find_files() {
     ret=$?
     t2=$(get_time)
     elapsed=$(get_seconds $((t2 - start_t)))
-    #. Spent <15> seconds looking for <boot> file(s) <linuxfs>
+    # Spent <15> seconds looking for <boot> file(s) <linuxfs>
     vmsg 6 "Spent %s seconds looking for %s file(s) %s" $(nq $elapsed) $(fq $find_type) "$(fq $files)"
     [ "$loop_times" ] && vmsg 6 "loop times:$num_co$loop_times"
 
@@ -1527,7 +1526,6 @@ _find_files() {
             if [ -z "$DEVICE_LIST" ]; then
                 [ "$final_try" ] && return 10
 
-                #. <seconds> No <block> devices found
                 vmsg_if $vthresh "%s No %s devices found" "$cnt_up" block
                 continue
             fi
@@ -1596,7 +1594,6 @@ _find_files() {
                 vmsg 4 "Look for file(s) %s on device(s) %s" "$(pq $short_files)" "$(dq $DEVICE_LIST)"
             else
                 #vmsg_if $vthresh
-                #. <seconds> Look for <file-list> on <device-list>
                 vmsg_if $vthresh "%s Look for %s on %s" "$cnt_up" "$(pq $short_files)" "$(dq $DEVICE_LIST)"
             fi
         fi
@@ -1779,8 +1776,8 @@ find_frugal_file() {
         need_to_ask=true
 
         warn
-        #. Found <frugal> device with <label=xxxx>
-        warn "Found %s device with %s" $(cqw frugal)  "$name $(cqw $value)"
+        # Found <frugal> device with <label=xxxx>
+        warn "Found %s device with %s" $(cqw frugal) "$name=$(cqw $value)"
         warn "But did not find file %s on the device" "$(cqw $sqfile)"
         warn "Will start normal boot to do frugal install"
         warn
@@ -1794,13 +1791,11 @@ find_frugal_file() {
 
     else
         warn
-        #. Could not find <frugal> device with <label=xxxx>
-        warn "Could not find %s device with %s" $(cqw frugal) "$name $(cqw $value)"
+        warn "Could not find %s device with %s" $(cqw frugal) "$name=$(cqw $value)"
         warn "Will start normal boot to do frugal install"
         warn
     fi
 
-    #. Could not find <linuxfs> file <antiX/linuxfs>
     find_boot_file "$SQFILE_FILE" "$BOOT_MP" "$BOOT_ID" "$BOOT_RETRY" \
         || linuxfs_error "Could not find %s file %s" "$LINUXFS_NAME" "$(fqe \"$SQFILE_FILE\")"
 
@@ -1944,7 +1939,6 @@ find_linuxfs_file() {
 
         DID_ISO=true
     else
-        #. Could not find <linuxfs> file <antiX/linuxfs>
         find_boot_file "$SQFILE_FILE" "$BOOT_MP" "$BOOT_ID" "$BOOT_RETRY" \
             || linuxfs_error "Could not find %s file %s" "$LINUXFS_NAME" "$(fqe \"$SQFILE_FILE\")"
 
@@ -2276,7 +2270,7 @@ should_fsck() {
     [ "$FORCE_FSCK" ] && return 0
 
     if [ $SB_STATE != 1 ]; then
-        #. <boot> device <device-name> not cleanly unmounted.  Check forced.
+        # <boot> device <device-name> not cleanly unmounted.  Check forced.
         warn "%s device %s not cleanly unmounted.  Check forced." "$(pqw $name)" $(pqw $sdev)
         return 0
     fi
@@ -2284,7 +2278,7 @@ should_fsck() {
     [ "$SB_MAX_MOUNT_CNT" != 65535 ] && max_count=$SB_MAX_MOUNT_CNT
 
     if [ $SB_MOUNT_CNT -ge $max_count ]; then
-        #. <boot> device <device-name> has not been checked in <32> mounts.  Check forced.
+        # <boot> device <device-name> has not been checked in <32> mounts.  Check forced.
         warn "%s device %s has not been checked in %s mounts.  Check forced." \
             "$(pqw $name)" $sdev "$(nq $SB_MOUNT_CNT)"
         return 0
@@ -2294,7 +2288,7 @@ should_fsck() {
 
     [ $((SB_LASTCHECK + SB_CHECKINTERVAL)) -ge $(date +%s) ] || return 1
 
-    #. <boot> device <device-name> has not been checked in <100> days.  Check forced.
+    # <boot> device <device-name> has not been checked in <100> days.  Check forced.
     warn "%s device %s has not been checked in %s days.  Check forced." \
         $(pqw $name) $(pqw $sdev) "$(nqw $days)"
     return 1
@@ -2882,7 +2876,6 @@ my_select_menu() {
                  PROC_CMDLINE=$(filter_cmdline "$fields" $PROC_CMDLINE)                      ;;
     esac
 
-    #. <menu-name> set to <menu-value>
     #. <Timezone> set to <Denver>
     case $MENU_VALUE in
         default|none|reset)                            ;;
@@ -3185,7 +3178,7 @@ label_device() {
     local full=$(ld_path_which $cmd)
 
     if [ -z "$full" ]; then
-        #. Don't have the <command-name> tool to label a <fat32> filesystem
+        # Don't have the <command-name> tool to label a <fat32> filesystem
         warn "Don't have the %s tool to label a %s filesystem" $(pqw $cmd) $(pqw $type)
         return 3
     fi
@@ -3463,7 +3456,7 @@ check_vid() {
             return 0
 
         elif ! [ -f "$vid_file" ]; then
-            #. <type> file not found <name>
+            #. <type> file not found <file-name>
             vid_error "%s file not found %s" "$VID_NAME" "$vid_file"
             return 1
 
