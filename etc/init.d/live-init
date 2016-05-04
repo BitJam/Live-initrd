@@ -623,10 +623,12 @@ font_size_to_dpi() {
     local size=$1
     local bad=$(echo $size | sed -r 's/^([0-9]+(\.[0-9]*)?|\.[0-9]+)//')
     if [ ${#bad} -gt 0 ]; then
+        #. Invalid <option-name> boot parameter <bad-parameter>
         error "Invalid %s boot parameter %s" "$(pquote fontsize)" $(pquote $size)
         return 1
     fi
-    DPI_OUT=$(awk "BEGIN{ printf \"%.0f\n\", $size * 96; }")
+    local begin=BEGIN
+    DPI_OUT=$(awk "$begin{ printf \"%.0f\n\", $size * 96; }")
 }
 
 check_dpi() {
