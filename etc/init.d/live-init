@@ -489,7 +489,8 @@ need_modesetting() {
     # Get all skylake pci ids
     # See recent pci.ids from http://pci-ids.ucw.cz/
     # 8086:19* ==> Intel Skylake
-    local skylake=$(lspci -n | cut -d" " -f3 | grep "^8086:19[0-5]") || return 1
+    local skylake=$(lspci -n | cut -d" " -f3 | grep "^8086:19[0-5]")
+    [ -z "$skylake" ] && return 1
 
     # Make sure no HD Graphics 510
     echo "$skylake" | grep -q "^8086:190[26]" && return 1
