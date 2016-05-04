@@ -578,15 +578,15 @@ read_late_cmdline_params() {
                           toram) TO_RAM=true                          ;;
 
         # Convenience short cuts from our menus
-                    persist_all) PERSIST="root!,home"                 ;;
-                   persist_root) PERSIST="root!"                      ;;
-                persist_statict) PERSIST="root!,home,static"          ;;
-                   persist_home) PERSIST="home!"                      ;;
+                    persist_all) PERSIST='root!,home'                 ;;
+                   persist_root) PERSIST='root!'                      ;;
+                persist_statict) PERSIST='root!,home,static'          ;;
+                   persist_home) PERSIST='home!'                      ;;
 
-                 frugal_persist) set_frugal "root!,home"              ;;
-                    frugal_root) set_frugal "root!"                   ;;
-                  frugal_static) set_frugal "root!,home,static"       ;;
-                    frugal_home) set_frugal "home!"                   ;;
+                 frugal_persist) set_frugal 'root!,home'              ;;
+                    frugal_root) set_frugal 'root!'                   ;;
+                  frugal_static) set_frugal 'root!,home,static'       ;;
+                    frugal_home) set_frugal 'home!'                   ;;
                     frugal_only) set_frugal                           ;;
 
                         nostore) NO_STORE=true                        ;;
@@ -1002,7 +1002,7 @@ list_modules() {
     [ "$ERR_MODULES" ] || return
     local ecnt=$(echo "$ERR_MODULES" | wc -w)
 
-    # <count> module(s) failed to load
+    #. <count> module(s) failed to load
     vmsg 6 '%s module(s) failed to load' $(nq $ecnt)
 
     vmsg 7 "$white$ERR_MODULES"
@@ -1370,7 +1370,7 @@ from_filter() {
         esac
     done
 
-    # Invalid <parameter-name> value(s) <bad values>
+    #. Invalid <parameter-name> value(s) <bad values>
     [ "$invalid_scan" ] \
         && _fatal "$(printf 'Invalid %s values(s) %s' "$(pqh from=)" "$(pqh $invalid_scan)")" \
         "$(printf 'Valid values are %s' "$(cq cd hd mmc usb all)")"
@@ -1414,6 +1414,7 @@ find_files() {
     ret=$?
     t2=$(get_time)
     elapsed=$(get_seconds $((t2 - start_t)))
+    #. Spent <15> seconds looking for <boot> file(s) <linuxfs>
     vmsg 6 "Spent %s seconds looking for %s file(s) %s" $(nq $elapsed) $(fq $find_type) "$(fq $files)"
     [ "$loop_times" ] && vmsg 6 "loop times:$num_co$loop_times"
 
@@ -1517,7 +1518,7 @@ _find_files() {
         #----------------------------------------------------------------------
         if [ -z "$device_id" ]; then
 
-            #. Scan <type> devices for <type> file(s) <file names>
+            #. Scan <type> devices.  Look for <type> file(s) <file-names>
             [ "$try" = "0" ] \
                 && vmsg 4 "Scan %s devices.  Look for %s file(s) %s"  $(dq $FROM_TYPE) $find_type "$(fq $short_files)"
 
@@ -1526,6 +1527,7 @@ _find_files() {
             if [ -z "$DEVICE_LIST" ]; then
                 [ "$final_try" ] && return 10
 
+                #. <seconds> No <block> devices found
                 vmsg_if $vthresh "%s No %s devices found" "$cnt_up" block
                 continue
             fi
@@ -1590,10 +1592,11 @@ _find_files() {
             # pure window dressing
             if [ -z "$have_devices" ]; then
                 [ "$try" != "0" ] && msg
-                #. Look for files(s) <file-list> on device(s) <device list>
+                #. Look for files(s) <file-list> on device(s) <device-list>
                 vmsg 4 "Look for file(s) %s on device(s) %s" "$(pq $short_files)" "$(dq $DEVICE_LIST)"
             else
                 #vmsg_if $vthresh
+                #. <seconds> Look for <file-list> on <device-list>
                 vmsg_if $vthresh "%s Look for %s on %s" "$cnt_up" "$(pq $short_files)" "$(dq $DEVICE_LIST)"
             fi
         fi
@@ -1776,6 +1779,7 @@ find_frugal_file() {
         need_to_ask=true
 
         warn
+        #. Found <frugal> device with <label=xxxx>
         warn "Found %s device with %s" $(cqw frugal)  "$name $(cqw $value)"
         warn "But did not find file %s on the device" "$(cqw $sqfile)"
         warn "Will start normal boot to do frugal install"
@@ -1790,11 +1794,13 @@ find_frugal_file() {
 
     else
         warn
+        #. Could not find <frugal> device with <label=xxxx>
         warn "Could not find %s device with %s" $(cqw frugal) "$name $(cqw $value)"
         warn "Will start normal boot to do frugal install"
         warn
     fi
 
+    #. Could not find <linuxfs> file <antiX/linuxfs>
     find_boot_file "$SQFILE_FILE" "$BOOT_MP" "$BOOT_ID" "$BOOT_RETRY" \
         || linuxfs_error "Could not find %s file %s" "$LINUXFS_NAME" "$(fqe \"$SQFILE_FILE\")"
 
@@ -1863,7 +1869,7 @@ find_frugal_file() {
         fi
 
         if [ "$need_to_ask" ]; then
-            #. Do you want to do a <frugal>  install on the <name> device?
+            #. Do you want to do a <frugal> install on the <name> device?
             YES_no "Do you want to do a %s install on the %s device?" frugal $(pq $device) || return 2
         fi
 
@@ -1910,7 +1916,7 @@ find_linuxfs_file() {
 
         heading "${cheat_co}fromiso"
 
-        #. Could not find <type> file <file name>
+        #. Could not find <type> file <file-name>
         find_boot_file "$ISO_FILE" "$ISO_DEV_MP" "$BOOT_ID" "$BOOT_RETRY" \
             || fatal "Could not find %s file %s" iso "$(pqh $ISO_FILE)"
 
@@ -1921,6 +1927,7 @@ find_linuxfs_file() {
         [ "$CHECK_MD5" ] && check_md5 $iso_full
 
         # Mount the iso file
+        # Could not mount <file-name> as a <iso> file
         mkdir -p $ISO_FILE_MP
         mount -t iso9660 -o loop,ro $iso_full $ISO_FILE_MP \
             || mount -t udf -o loop,ro $iso_full $ISO_FILE_MP \
@@ -1937,7 +1944,7 @@ find_linuxfs_file() {
 
         DID_ISO=true
     else
-
+        #. Could not find <linuxfs> file <antiX/linuxfs>
         find_boot_file "$SQFILE_FILE" "$BOOT_MP" "$BOOT_ID" "$BOOT_RETRY" \
             || linuxfs_error "Could not find %s file %s" "$LINUXFS_NAME" "$(fqe \"$SQFILE_FILE\")"
 
@@ -2018,7 +2025,8 @@ mount_linuxfs() {
     if [ "$SQFS_VID" ]; then
         vmsg 7 'sqfs_vid: %s' "$nc_co$SQFS_VID"
     else
-        vmsg 7 "No %s found at %s" "$VID_NAME" "$white$vid_file$m_co"
+        #. No <VID> found in <file-name>
+        vmsg 7 "No %s found in %s" "$VID_NAME" "$white$vid_file$m_co"
     fi
     SQFS_VID_FILE=$vid_file
 }
@@ -2199,6 +2207,7 @@ mount_tmpfs() {
     mkdir -p $mp
     local full_name=$(printf "%14s" "$name tmpfs")
     local   full_mp=$(printf "%-20s" "$mp")
+    #. Create <something tmpfs> at <directory> <(size)>
     vmsg 8 "Create %s at %s %s" "${hi_co}$full_name${m_co}" "$(fq "$full_mp")" "(${num_co}$size ${m_co}MB)"
     log_cmd $LIVE_BIN/mount -t tmpfs -o size=${size}m$opts,noatime tmpfs $mp
     return $?
@@ -2267,6 +2276,7 @@ should_fsck() {
     [ "$FORCE_FSCK" ] && return 0
 
     if [ $SB_STATE != 1 ]; then
+        #. <boot> device <device-name> not cleanly unmounted.  Check forced.
         warn "%s device %s not cleanly unmounted.  Check forced." "$(pqw $name)" $(pqw $sdev)
         return 0
     fi
@@ -2274,6 +2284,7 @@ should_fsck() {
     [ "$SB_MAX_MOUNT_CNT" != 65535 ] && max_count=$SB_MAX_MOUNT_CNT
 
     if [ $SB_MOUNT_CNT -ge $max_count ]; then
+        #. <boot> device <device-name> has not been checked in <32> mounts.  Check forced.
         warn "%s device %s has not been checked in %s mounts.  Check forced." \
             "$(pqw $name)" $sdev "$(nq $SB_MOUNT_CNT)"
         return 0
@@ -2283,6 +2294,7 @@ should_fsck() {
 
     [ $((SB_LASTCHECK + SB_CHECKINTERVAL)) -ge $(date +%s) ] || return 1
 
+    #. <boot> device <device-name> has not been checked in <100> days.  Check forced.
     warn "%s device %s has not been checked in %s days.  Check forced." \
         $(pqw $name) $(pqw $sdev) "$(nqw $days)"
     return 1
@@ -3173,6 +3185,7 @@ label_device() {
     local full=$(ld_path_which $cmd)
 
     if [ -z "$full" ]; then
+        #. Don't have the <command-name> tool to label a <fat32> filesystem
         warn "Don't have the %s tool to label a %s filesystem" $(pqw $cmd) $(pqw $type)
         return 3
     fi
@@ -3426,6 +3439,7 @@ check_vid() {
             vmsg 6 'Matching %s found in %s' "$VID_NAME" "$(fq $vid_file)"
             return 0
         else
+            #. "<VID> mismatch between <linuxfs> and <rootfs>
             vid_error "%s mismatch between %s and %s" "$VID_NAME" linuxfs rootfs
             vmsg 1 "linuxfs:$white $sqfs_vid"
             vmsg 1 " rootfs:$white $rootfs_vid"
@@ -3440,6 +3454,7 @@ check_vid() {
         # This is funky but if we don't do it here then there will be problems
         # when "toram" is used.
         if ! ls $base | egrep -q 'etc|bin|lib|var|usr'; then
+            #. Copy <linuxfs VID> to empty <rootfs>
             msg "Copy %s to empty %s" "$LINUXFS_NAME $VID_NAME" rootfs
 
             log_cmd mkdir -p $(dirname $vid_file)  || return 1
@@ -3826,8 +3841,8 @@ prepare_persistence() {
             static|s) ;;
 
             *)
-                # FIXME: should this be an non-fatal error?
                 warn
+                #. Invalid <persist> value(s) <bad-values>
                 warn "Invalid %s values(s) %s"  $(cqw persist) "$(cqw $param)"
                 warn "Valid values: %s" "$(cqw auto home home! root root! static usb hd a h h! r r! s)" ;;
         esac
@@ -4203,7 +4218,8 @@ copy_persist_to_ram() {
     if [ "$persist_used" -ge "$AUFS_RAM_SIZE" ]; then
         vmsg_nc 3 $tbar
         err  "Not enough RAM to hold persistent root"
-        warn "You need to %s or use %s persistence" remaster-live "$(cq static root)"
+        # You need to <live-remaster> or use <static root> persistence
+        warn "You need to %s or use %s persistence" live-remaster "$(cq static root)"
         vmsg_nc 3 $tbar
         return 1
     fi
