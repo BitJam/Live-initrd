@@ -168,6 +168,7 @@ do_start() {
     eval "USER_HOME=~$DEF_USER"
 
     if [ -z "$DEF_USER" -o -z "${USER_HOME##~*}" ]; then
+        #. No default user <USER-NAME> found on the system.
         echo_live "No default user %s found on the system." "$(pquote $DEF_USER)"
         return
     fi
@@ -247,6 +248,7 @@ automount_and_fstab() {
             fstab_opt="$fstab_opt --mount=$CMD_MOUNT" ;;
 
         ,)  ;;
+            #. Invalid <mount/automount> option <invalid-option>
         *)  error "Invalid %s option %s" 'mount/automount' $(pquote $CMD_MOUNT) ;;
     esac
 
@@ -305,7 +307,7 @@ localize_skel() {
         error "Directory not found %s" $from
         return
     fi
-
+    #. Localizing menus to <language> in </etc/skel>
     echo_live "Localizing menus to %s in %s" $(pquote $0) $(pquote $dest)
 
     # Basically a cp -a but make all top level files and directories hidden
@@ -369,6 +371,7 @@ localize_repo() {
     local verbose
     [ "$DB_PLUS" ] && verbose=--verbose
 
+    #. Localizing source repos using <timezone|country-code>
     echo_live "Localizing source repos using %s" $(pquote $arg)
     localize-repo $verbose $arg
 }
@@ -377,6 +380,7 @@ set_utc_local() {
     local new=$1 file=/etc/adjtime
     [ "$new" ] || return
 
+    #. Assuming <hwclock> is set to <utc|local> time
     echo_live "Assuming %s is set to %s time" hwclock $(pquote $new)
 
     #grep -i -q $new $file && return
@@ -460,17 +464,20 @@ make_xorg_conf() {
     if [ "$FOUND_i915" -a -z "$no_xorg" ]; then
         local arch=$(uname -m)
         if [ $arch = x86_64 ] && need_uxa; then
+
+            #. Forcing <acceleration-type> acceleration on <cpu-type>
             echo_live "Forcing %s acceleration on %s" $(pquote uxa) $(pquote pre-sandybridge)
             args=uxa${args:+,}$args
 
         elif [ $arch = i686 -a -z "$nomodeset" ] && need_modesetting; then
+            #. Forcing <driver-name> driver on <cpu-type>
             echo_live "Forcing %s driver on %s" $(pquote modesetting) $(pquote skylake)
             args=modesetting${args:+,}$args
         fi
     fi
 
     [ "$args" ] || return
-
+    #. Configuring <xorg.conf> file with <arguments to xorg= cheat>
     echo_live "Configuring %s file with %s" $(pquote $xorg_conf) $(pquote $args)
     backup_file $xorg_conf
     /sbin/make-xorg-conf --output=$xorg_conf $args
@@ -560,6 +567,7 @@ detect_any_video_driver() {
 
     FOUND_KMS_DRIVER="$(echo "$video_modules" | egrep "^($KMS_VIDEO_MODULES)$")"
     if [ "$FOUND_KMS_DRIVER" ]; then
+        #. Found <KMS> video module(s) <module-name(s)>
         echo_live "Found %s video module(s) %s" KMS "$(pquote $(echo $FOUND_KMS_DRIVER))"
         FOUND_i915=$(echo $FOUND_KMS_DRIVER | grep "^i915$")
     else
