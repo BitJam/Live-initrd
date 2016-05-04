@@ -155,7 +155,7 @@ do_start() {
 
         make_xorg_conf "$XORG_ARGS" "$FOUND_VDRIVER" "$FOUND_KMS_DRIVER" "$NOMODESET" "$NO_XORG"
 
-        adjust_desktop_delay $DESKTOP_DELAY
+        set_etc_desktop_delay $DESKTOP_DELAY
 
     fi
 
@@ -393,7 +393,7 @@ set_utc_local() {
     esac
 }
 
-adjust_desktop_delay() {
+set_etc_desktop_delay() {
     local delay=$1
     [ ${#delay} -gt 0 ] || return
     local ds_conf=/etc/desktop-session/desktop-session.conf
