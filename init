@@ -2077,7 +2077,7 @@ need_unionfs() {
         [ "$USE_UNIONFS" != "$this" ] && warn "Forcing use of %s to match existing rootfs file" $(pqw $this)
         USE_UNIONFS=$this
     else
-        fatal "The %s filesystem is not available. Can't use this %s file" "$this" "rootfs"
+        fatal "The %s filesystem is not available. Can't use this %s file" "$this" 'rootfs'
     fi
 }
 
