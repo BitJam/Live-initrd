@@ -401,7 +401,7 @@ set_etc_desktop_delay() {
     local bad=$(echo $delay | sed -r 's/^([0-9]+(\.[0-9]*)?|.[0-9]+)//')
 
     if [ ${#bad} -gt 0 ]; then
-        error "Bady delay parameter %s" $(pquote $delay)
+        error "Bad desktop delay parameter %s" $(pquote $delay)
         return
     fi
     echo_live "Setting desktop delay to %s" $(pquote $delay)
@@ -681,7 +681,7 @@ set_user_desktop_delay() {
     local bad=$(echo $delay | sed -r 's/^([0-9]+(\.[0-9]*)?|.[0-9]+)//')
 
     if [ ${#bad} -gt 0 ]; then
-        error "Bady delay parameter %s" $(pquote $delay)
+        error "Bad desktop delay parameter %s" $(pquote $delay)
         return
     fi
     echo_live "Setting desktop delay to %s" $(pquote $delay)
