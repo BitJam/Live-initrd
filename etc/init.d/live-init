@@ -447,7 +447,9 @@ make_xorg_conf() {
     [ -e /live/config/virtualbox ] && no_default=true
 
     if [ -z "$nomodeset" -a -n "$found_kms_driver" -a -n "$safe_mode" ]; then
-        echo_live "Disabling safe mode because of %s" "$(pquote "$found_kms_driver video driver(s)")"
+        #. Note: KMS means "kernel mode switching"
+        #. Disabling safe mode because of KMS <video-driver> video hardware
+        echo_live "Disabling safe mode because of KMS %s video hardware" "$(pquote $found_kms_driver)"
         args=$(echo $args | sed "s/\<safe\>//g")
         safe_mode=
     fi
@@ -592,7 +594,8 @@ detect_sisimedia_driver() {
     #. Found <type> kernel modules ...
     echo_live "Found %s kernel modules ..." sis
     test -e $XORG_DRIVER_DIR/${xorg_driver}_drv.so || return
-    echo_live "Found %s xorg driver" $xorg_driver
+    #. Found <driver-name> video driver
+    echo_live "Found %s video driver" $xorg_driver
 
     # Add "default" only if there is no previous XORG_ARGS
     # Always add the "sisimedia" driver
