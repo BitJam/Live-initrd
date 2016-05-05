@@ -500,7 +500,7 @@ need_modesetting() {
 need_uxa() {
     local pci_id_regex=$(echo $UXA_PCI_ID | tr '\n' '|')
 
-    lspci -n | cut -d" " -f3 | egrep -q "^8086:($pci_id_regex)"
+    lspci -n | cut -d" " -f3 | egrep -q "^8086:(${pci_id_regex%|})"
     return $?
 }
 
