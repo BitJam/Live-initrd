@@ -201,9 +201,11 @@ restore_desktop() {
 }
 
 save_state() {
-    local state_dir="$1"  files="$2"  dir2="$3"
+    local state_dir="$1"  files="$2"  dir2="$3"  "$(printf "general")"
+
     test -e $state_dir/no-state && return
 
+    [ ${#dir2} -gt 0 ] && type="$(printf "machine")"
     # dir2 is typically/only a machine-id
     state_dir=$state_dir${dir2:+/$dir2}
     local perm_file=$state_dir/permissions
@@ -241,7 +243,7 @@ save_state() {
         local from=$file
         local to=$state_dir/files$file
         should_copy $from $to || continue
-        echo_live "save state file %s" $(wq $file)
+        echo_live "save %s state file %s" $(wq $type) $(wq $file)
         echo_cmd mkdir -p $(dirname $to)
         echo_cmd cp $from $to
 
@@ -262,10 +264,11 @@ save_state() {
 }
 
 restore_state() {
-    local state_dir="$1"  files="$2"  dir2="$3"
+    local state_dir="$1"  files="$2"  dir2="$3" type="$(printf "general")"
     test -e $state_dir/no-state && return
 
     # dir2 is typically/only a machine-id
+    [ ${#dir2} -gt 0 ] && type="$(printf "machine")"
     state_dir=$state_dir${dir2:+/$dir2}
     local perm_file=$state_dir/permissions
 
@@ -278,7 +281,7 @@ restore_state() {
             [ -z "${to##/live/*}" ] && continue
 
             should_copy $from $to || continue
-            echo_live "restore state file %s" $(wq $to)
+            echo_live "restore %s state file %s" $(wq $type) $(wq $to)
             echo_cmd mkdir -p $(dirname $to)
 
             echo_cmd cp $from $to
