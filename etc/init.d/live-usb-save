@@ -87,6 +87,8 @@ do_start() {
 
     read_create_config_files $root_dir || exit 0
 
+    #. "State" information are files saved at shutdown and restored at startup
+    #. Like saving the state of a game.
     echo_script "Restore state information" $0
 
     # Always restore machine specific state files
@@ -196,6 +198,7 @@ restore_desktop() {
         [ -d "$dest_dir" ] || continue
         [ -e "$sorc"     ] || continue
         should_copy $sorc $dest || continue
+        #. Restore <user-name> desktop to <window-manager-name>
         echo_live "restore %s desktop to %s" $(pquote $user) $(pquote $(cat $sorc))
         echo_cmd cp "$sorc" "$dest"
         echo_cmd chown $user:users $dest
@@ -203,11 +206,13 @@ restore_desktop() {
 }
 
 save_state() {
-    local state_dir="$1"  files="$2"  dir2="$3"  "$(printf "general")"
+    #. "general" (same on all machines) versus "machine specific"
+    local state_dir="$1"  files="$2"  dir2="$3"  type="$(printf "general")"
 
     test -e $state_dir/no-state && return
 
-    [ ${#dir2} -gt 0 ] && type="$(printf "machine")"
+    #. "machine specific" versus "general" (same on all machines)
+    [ ${#dir2} -gt 0 ] && type=$(printf "machine specific")
     # dir2 is typically/only a machine-id
     state_dir=$state_dir${dir2:+/$dir2}
     local perm_file=$state_dir/permissions
@@ -245,11 +250,12 @@ save_state() {
         local from=$file
         local to=$state_dir/files$file
         should_copy $from $to || continue
-        echo_live "save %s state file %s" $(wq $type) $(wq $file)
+        #. Save <general|machine specific> state file <file-name>
+        echo_live "Save %s state file %s" "$(wq $type)" $(wq $file)
         echo_cmd mkdir -p $(dirname $to)
         echo_cmd cp $from $to
 
-        [ "$FS_TYPE" != "vfat" ] && continue
+        [ "$FS_TYPE" != vfat ] && continue
 
         # Save permission information on vfat LiveUSBs
         test -e $perm_file || touch $perm_file
@@ -270,7 +276,7 @@ restore_state() {
     test -e $state_dir/no-state && return
 
     # dir2 is typically/only a machine-id
-    [ ${#dir2} -gt 0 ] && type="$(printf "machine")"
+    [ ${#dir2} -gt 0 ] && type=$(printf "machine specfic")
     state_dir=$state_dir${dir2:+/$dir2}
     local perm_file=$state_dir/permissions
 
@@ -283,7 +289,8 @@ restore_state() {
             [ -z "${to##/live/*}" ] && continue
 
             should_copy $from $to || continue
-            echo_live "restore %s state file %s" $(wq $type) $(wq $to)
+            #. Restore <general|machine specific> state file <file-name>
+            echo_live "Restore %s state file %s" "$(wq $type)" "$(wq $to)"
             echo_cmd mkdir -p $(dirname $to)
 
             echo_cmd cp $from $to
@@ -303,7 +310,8 @@ restore_state() {
                 echo_live "Reset file %s" $(pquote $file)
                 reset_adjtime $file
             else
-                echo_live "delete state file %s" $(pquote $file)
+                #. Delete <general|machine specific> state file <file-name>
+                echo_live "Delete %s state file %s" "$(wq $type)" $(pquote $file)
                 echo_cmd rm -f $file
             fi
         done
@@ -371,7 +379,7 @@ should_copy() {
 }
 
 mach_id() {
-    local data=$(find $ID_DIR/ -name "board_*" -exec cat '{}' + 2>/dev/null)
+    local data=$(find $ID_DIR/ -name 'board_*' -exec cat '{}' + 2>/dev/null)
     if [ ${#data} -eq 0 ]; then
         echo "0000000000000000000000"
         return 1
