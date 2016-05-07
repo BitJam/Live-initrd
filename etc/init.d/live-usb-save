@@ -42,8 +42,7 @@ GSTATE_FILES="# File: general-state-files
 # /etc/passwd
 # /etc/shadow
 # /etc/group
-# /etc/gshadow
-"
+# /etc/gshadow"
 
 MSTATE_DIR=state/machine
 GSTATE_DIR=state/general
