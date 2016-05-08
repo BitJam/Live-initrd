@@ -72,6 +72,7 @@ automount=off|amnt=off)                          AUTOMOUNT_OFF=true ;;
               splash=*)  SPLASH_PARAM=$value                        ;;
            desktheme=*)    DESK_THEME=$value                        ;;
                 norepo)       NO_REPO=true                          ;;
+              norepo=*)   IGNORE_REPO=$value                        ;;
            deskdelay=*) DESKTOP_DELAY=$value                        ;;
              nomodeset)     NOMODESET=true                          ;;
             fontsize=*)     FONT_SIZE=$value                        ;;
@@ -368,12 +369,17 @@ localize_repo() {
     sources_dir=/etc/apt/sources.list.d
     first_write $sources_dir || [ "$mirror" -o "$tz" ] || return
 
-    local verbose
-    [ "$DB_PLUS" ] && verbose=--verbose
+    local verbose_opt random_opt ignore_opt
+    [ "$DB_PLUS" ] && verbose_opt=--verbose
+    if localize-repo --help | grep -q -- --random; then
+        random_opt=--random
+        [ "$IGNORE_REPO" ] && ignore_opt=--ignore=$IGNORE_REPO
+    fi
 
     #. Localizing source repos using <timezone|country-code>
     echo_live "Localizing source repos using %s" $(pquote $arg)
-    localize-repo $verbose $arg
+
+    localize-repo $random_opt $verbose_opt $ignore_opt $arg
 }
 
 set_utc_local() {
@@ -688,7 +694,6 @@ set_user_desktop_delay() {
     echo_live "Setting desktop delay to %s" $(pquote $delay)
     su -c "sed -r -i 's/^\s*(STARTUP_DELAY=).*/\1$delay/' $ds_conf" $user
 }
-
 
 
 #-------------------------------------------------------------------------------
