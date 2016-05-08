@@ -1182,6 +1182,8 @@ disable_hcd() {
     local type=$1
     local dir=/sys/bus/pci/drivers/${type}_hcd
     local symlink kmsg=/dev/kmsg
+    test -d $dir || return
+
     for symlink in $(find $dir -name "0*" | sed 's=.*/=='); do
         echo $symlink >> $DISABLED_USB_FILE.$type
         msg 'disable %s bus: %s' $(nq $type) $(pq $symlink)
