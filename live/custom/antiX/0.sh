@@ -39,7 +39,7 @@ live_param_filter() {
         uverb=*|xres=*|noxorg);;
         desktheme=*) ;;
         nosavestate|savestate|dbsavestate) ;;
-        norepo|nostore) ;;
+        norepo|norepo=*|nostore) ;;
         deskdelay=*) ;;
         udpi=*|sdpi=*) ;;
         fontsize=*) ;;
