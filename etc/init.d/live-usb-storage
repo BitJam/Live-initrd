@@ -125,7 +125,7 @@ create_storage() {
     test -e $from_dir || mkdir -p $from_dir
 
     if ! test -d $from_dir; then
-        echo_live "The file % is not a directory" "$(pquote $from_dir)"
+        echo_live "The file %s is not a directory" "$(pquote $from_dir)"
         return
     fi
 
