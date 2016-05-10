@@ -355,31 +355,31 @@ localize_repo() {
         */UTC|UTC) tz=$lang_tz ;;
     esac
 
-    local arg=$mirror         # cheat mirror=xx overides all else
-    : ${arg:=$tz}             # next come tz=xxx/yyy cheat (or via tz menu)
-    : ${arg:=$lang_tz}        # The lang based timezone
-    : ${arg:=$lang_mirror}    # The lang based mirror should never be needed
+    local args=$mirror         # cheat mirror=xx overides all else
+    : ${args:=$tz}             # next come tz=xxx/yyy cheat (or via tz menu)
+    : ${args:=$lang_tz}        # The lang based timezone
+    : ${args:=$lang_mirror}    # The lang based mirror should never be needed
 
-    [ "$arg" ] || return
-
-    case $arg in
+    case $args in
         */UTC|UTC) return ;;
     esac
 
-    sources_dir=/etc/apt/sources.list.d
-    first_write $sources_dir || [ "$mirror" -o "$tz" ] || return
-
-    local verbose_opt random_opt ignore_opt
-    [ "$DB_PLUS" ] && verbose_opt=--verbose
-    if localize-repo --help | grep -q -- --random; then
-        random_opt=--random
-        [ "$IGNORE_REPO" ] && ignore_opt=--ignore=$IGNORE_REPO
+    if [ ${#IGNORE_REPO} -gt 0 ] && localize-repo --help | grep -q -- --ignore; then
+        : ${args:=default}
+        args="--ignore=$IGNORE_REPO --random $args"
     fi
 
-    #. Localizing source repos using <timezone|country-code>
-    echo_live "Localizing source repos using %s" $(pquote $arg)
+    [ "$args" ] || return
 
-    localize-repo $random_opt $verbose_opt $ignore_opt $arg
+    sources_dir=/etc/apt/sources.list.d
+    first_write $sources_dir || [ "$mirror" -o "$tz" -o "${IGNORE_REPO}" ] || return
+
+    [ "$DB_PLUS" ] && args="--verbose${args:+ }$args"
+
+    #. Localizing source repos using <timezone|country-code>
+    echo_live "Localizing source repos using %s" "$(wq $args)"
+
+    localize-repo $args
 }
 
 set_utc_local() {
