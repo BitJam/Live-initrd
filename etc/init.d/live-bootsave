@@ -74,10 +74,14 @@ do_boot_save() {
         grub2-save $BOOT_MP
     fi
 
-    local uuid uuid_file=$SQFILE_DIR/esp-uuid
-    test -r  $uuid_file || return
+    local uuid dir uuid_file name=esp-uuid
+    for dir in $BOOT_MP $SQFILE_DIR; do
+        test -r $dir/$file || continue
+        uuid_file=$dir/$file
+    done
+    test -r $uuid_file || return
     read uuid 2>/dev/null <$uuid_file
-    [ -n "$uuid" ]      || return
+    [ ${#uuid} -gt 0 ] || return
 
     local esp_mp=/live/esp
     mkdir -p $esp_mp
