@@ -458,8 +458,9 @@ main_core() {
         [ "$NEED_HOMEFS" ] && non_fatal "Could not enable required %s persistence" "$(pqh home!)"
     fi
 
-    [ "$DB_PLUS" ] && local plus_t1=$(get_time)
+    [ "$DB_PLUS"       ] && local plus_t1=$(get_time)
     [ "$DO_XTRA"       ] && copy_xtra    $DEFAULT_DIR
+    [ "$DO_XTRA"       ] && delete_files $DEFAULT_DIR
     [ "$DO_AUTO_LOGIN" ] && auto_login   "$AUTO_LOGIN_PROG" "$AUTO_LOGIN_TERMS" "$NEW_ROOT"
     [ "$DO_FANCY"      ] && fancy_prompt "$FANCY_PROMPT" "$NEW_ROOT"
     if [ "$DB_PLUS" ]; then
@@ -4437,6 +4438,9 @@ copy_xtra() {
         cp -a $xtra_dir/$dir $NEW_ROOT/
     done
     msg
+
+delete_files() {
+    local bdir=$1
     local dfile=$bdir/delete.list
     test -e $dfile || return
     msg 'Deleting files listed in %s' $(pq $dfile)
