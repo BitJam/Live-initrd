@@ -105,6 +105,9 @@ do_start() {
     [ "$PERSISTENCE" ] && return
 
     restore_desktop $root_dir/$USTATE_DIR
+
+    #delete_files $root_dir/to-delete
+    #rm -f $root_dir/to-delete
 }
 
 do_stop() {
@@ -126,9 +129,11 @@ do_stop() {
     # See if we are on a vfat partition
     FS_TYPE=$(df -T $root_dir | tail -n1 | awk '{print $2}')
 
+    unset TO_DELETE
     save_desktop $root_dir/$USTATE_DIR
     save_state   $root_dir/$MSTATE_DIR "$(state_files "$MSTATE_FILES")" $(mach_id)
     save_state   $root_dir/$GSTATE_DIR "$(state_files "$GSTATE_FILES")"
+    #[ ${#TO_DELETE} -gt 0 ] && echo -e "$TO_DELETE" > $root_dir/to-delete
 }
 
 read_create_config_files() {
@@ -249,6 +254,13 @@ save_state() {
 
         local from=$file
         local to=$state_dir/files$file
+
+        if [ ${#dir2} -gt 0 -a ! -e "$from" ]; then
+            TO_DELETE="$TO_DELETE\n$from"
+            rm -f $to
+            continue
+        fi
+
         should_copy $from $to || continue
         #. Save <general|machine specific> state file <file-name>
         echo_live "Save %s state file %s" "$type" $(wq $file)
@@ -309,13 +321,28 @@ restore_state() {
             if [ "$file" = /etc/adjtime ]; then
                 echo_live "Reset file %s" $(wq $file)
                 reset_adjtime $file
-            else
-                #. Delete <general|machine specific> state file <file-name>
-                echo_live "Delete %s state file %s" "$type" $(wq $file)
-                echo_cmd rm -f $file
             fi
+
+            #else
+            #    #. Delete <general|machine specific> state file <file-name>
+            #    echo_live "Delete %s state file %s" "$type" $(wq $file)
+            #    echo_cmd rm -f $file
+            #fi
         done
     fi
+}
+
+delete_files() {
+    local file  list_file=$1  type=$(wq "machine specific")
+    test -r $list_file || return
+    while read file; do
+        test -e "$file" || continue
+        #. Delete <general|machine specific> state file <file-name>
+        echo_live "Delete %s state file %s" "$type" "$(wq $file)"
+        echo_cmd rm -f "$file"
+    done<<Delete_Files
+$(cat $list_file)
+Delete_Files
 }
 
 mount_boot_dev() {
