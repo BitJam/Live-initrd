@@ -334,7 +334,7 @@ main_core() {
 
     initialize_cmdline2
 
-    read PROC_CMDLINE /proc/cmdline 2>/dev/null </proc/cmdline
+    read PROC_CMDLINE 2>/dev/null </proc/cmdline
 
     [ "$DO_MENUS" ]; do_early_menus
 
