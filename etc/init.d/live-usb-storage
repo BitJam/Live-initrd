@@ -18,6 +18,7 @@ export PATH=/sbin:/usr/sbin:/bin:/usr/bin:/usr/local/bin
 
 . /live/lib/live-init-utils.sh
 start_init_logging
+load_translation
 
 main() {
     case $1 in
