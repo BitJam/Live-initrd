@@ -62,7 +62,7 @@
            MOD_DIR="/lib/modules/$(uname -r)"
 
          FROM_TYPE="usb,cd"
-     FROM_TYPE_ALL="usb,cd,mmc,hd"
+     FROM_TYPE_ALL="usb,cd,hd"
 
       FRUGAL_FILES="linuxfs linuxfs.md5 vmlinuz vmlinuz.md5 initrd.gz initrd.gz.md5 xtra xtra.tgz ../boot"
 
