@@ -243,7 +243,7 @@ save_state() {
     local file
     for to in $(find $state_dir/files -type f 2>/dev/null); do
         from=${to#$state_dir/files}
-        test -e $from || echo_cmd -f $to
+        test -e $from || echo_cmd rm -f $to
     done
 
     # Save system files under state_dir
