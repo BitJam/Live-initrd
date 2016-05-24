@@ -327,13 +327,15 @@ main_core() {
 
     coldplug_modules
 
-    local orig_fb_name=$(cat /sys/class/graphics/fb0/name 2> /dev/null)
+    # local orig_fb_name
+    # read orig_fb_name 2>/dev/null </sys/class/graphics/fb0/name
     load_kernel_modules "$MODULE_LIST"
-    set_fbcondecor "$SPLASH_PARAM" "$orig_fb_name"
+    # set_fbcondecor "$SPLASH_PARAM" "$orig_fb_name"
 
     initialize_cmdline2
 
-    PROC_CMDLINE=$(cat /proc/cmdline)
+    read PROC_CMDLINE /proc/cmdline 2>/dev/null </proc/cmdline
+
     [ "$DO_MENUS" ]; do_early_menus
 
     read_late_cmdline_params "$PROC_CMDLINE $(cat /live/config/cmdline)"
@@ -1203,7 +1205,8 @@ set_fbcondecor() {
     local prog=/bin/fbcondecor_ctl.static
     test -x $prog || return
     #vmsg 5 "found $prog"
-    local new_name=$(cat /sys/class/graphics/fb0/name 2>/dev/null)
+    local new_name
+    read new_name 2>/dev/null </sys/class/graphics/fb0/name
     [ "$orig_name" = "$new_name" ] && return
 
     vmsg 6 "Found new fb driver:$white $new_name"
@@ -1683,9 +1686,9 @@ _find_files() {
                         boot) BOOT_FSTYPE=$fstype ;;
                     esac
 
-                    local short_dev=${dev##*/}
-                    local drive=$(echo $short_dev | sed -r 's/[0-9]+$//')
-                    local model=$(cat /sys/block/$drive/device/model 2>/dev/null)
+                    local drive=$(get_drive $dev)
+                    local model
+                    read model 2>/dev/null </sys/block/$drive/device/model
 
                     # <type> device model: <model-name>
                     [ "$model" ] && vmsg 6 '%s device model: %s' $find_type "$(cq $model)"
@@ -3055,7 +3058,6 @@ select_device() {
     while read -r name line ; do
 
         [ ${#name} -eq 0 -o ${#name} -gt 10 ] && continue
-        #case $name in sd?[0-9]*) ;; *) continue ;; esac
 
         local type=$(echo "$line" | sed -n -r 's/.* TYPE="([^"]*)"$/\1/p' | tail -n 1)
         #uuid=$(echo "$line" | sed -n -r -e 's/" (UUID=|TYPE=)".*//' -e 's/[^:]*: LABEL="//p')
@@ -3063,12 +3065,7 @@ select_device() {
             ""|udf|iso9660|swap|squashfs) continue
         esac
 
-        local disk_name  dev=/dev/$name
-        case $(stat -c %t $dev) in
-            [38]|22)  disk_name=${name%[0-9]};  disk_name=${disk_name%[0-9]} ;;
-             179|b3)  disk_name=${name%p[0-9]}                               ;;
-                  *)  continue                                               ;;
-        esac
+        local disk_name=$(get_drive $name)
 
         local sys_dir=/sys/block/$disk_name
         local model=$(head -c 16  $sys_dir/device/model 2>/dev/null)
@@ -4464,6 +4461,7 @@ copy_xtra() {
         cp -a $xtra_dir/$dir $NEW_ROOT/
     done
     msg
+}
 
 delete_files() {
     local bdir=$1
