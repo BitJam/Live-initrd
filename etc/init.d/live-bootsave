@@ -75,7 +75,7 @@ do_boot_save() {
     fi
 
     local uuid dir uuid_file name=esp-uuid
-    for dir in $BOOT_MP $SQFILE_DIR; do
+    for dir in $SQFILE_DIR $BOOT_MP; do
         test -r $dir/$file || continue
         uuid_file=$dir/$file
     done
