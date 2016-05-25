@@ -3074,6 +3074,7 @@ select_device() {
         [ -z "$size" ] && continue
         size=$((size / 2 / 1024))
 
+        local dev=/dev/$name
 
         local label=$(echo "$line" | sed -n -r -e 's/" (UUID=|TYPE=)".*//' -e 's/[^:]*: LABEL="//p')
         size_rev=
