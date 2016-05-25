@@ -58,6 +58,10 @@ LAPTOP_SERVICES="
     wicd
 "
 
+ACPID_SERVICES="
+    acpid
+"
+
 XTRA_LEAN_SERVICES="
     bootlogd
     cryptdisks
@@ -153,6 +157,7 @@ do_start() {
         [ "${disable_param##*[v]*}"  ] ||  DISABLE_VBOX=true
         [ "${disable_param##*[g]*}"  ] ||   DISABLE_GPM=true
         [ "${disable_param##*[P]*}"  ] ||    ENABLE_PAM=true
+        [ "${disable_param##*[a]*}"  ] || DISABLE_ACPID=true
         [ "${disable_param##*[n]*}"  ] ||   DISABLE_NFS=true
         [ "${disable_param##*[n]*}"  ] ||    NFS_REASON=n
     fi
@@ -187,6 +192,11 @@ do_start() {
 
         echo_live "Disabling some services %s" "$(paren L, lean)"
         disable_services "lean (l)" "$LEAN_SERVICES"
+    fi
+
+    if [ "$DISABLE_ACPID" ]; then
+        echo_live "Disabling %s services %s" "$(pquote acpid)" $(paren a)
+        disable_services "acpid (a)" "$ACPID_SERVICES"
     fi
 
     if [ "$MEAN" ]; then
