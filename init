@@ -108,7 +108,7 @@ MKFS_FREE_MARGIN=20
 
    DEFAULT_UNIONFS="overlay"
 
-   OPTIONS_ENTRIES="checkmd5|checkfs|toram|from=usb|hwclock=*|private|nostore|savestate|nosavestate|nousb2"
+   OPTIONS_ENTRIES="|toram|from=usb|private|nousb2"
 
 set_live_dirs() {
     local dir=$1
@@ -2998,7 +2998,7 @@ do_late_menus() {
     local BOOT_MENU_WARN=
     local lang time_zone option persist desktop
     local cmdline
-    my_select_menu "Select Desktop" "" d desktop "Desktop" 'desktop=*|desktheme=*'
+    my_select_menu "Select Desktop" "" d desktop "Desktop" 'desktheme=*'
 
     if [ "$REMASTERABLE" ]; then
         BOOT_MENU_DIR=/live/custom/$DISTRO_NAME/menus
