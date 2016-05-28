@@ -108,7 +108,7 @@ MKFS_FREE_MARGIN=20
 
    DEFAULT_UNIONFS="overlay"
 
-   OPTIONS_ENTRIES="|toram|from=usb|private|nousb2"
+   OPTIONS_ENTRIES="toram|from=usb|private|nousb2"
 
 set_live_dirs() {
     local dir=$1
