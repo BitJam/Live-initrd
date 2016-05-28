@@ -2935,11 +2935,10 @@ get_default_label() {
 
 extract_from_cmdline() {
     local p fields=$1
-
     [ "$fields" ] || return
     for p in $(cat /proc/cmdline); do
-        eval "case $p in
-        $fields) echo $p; break ;;
+        eval "case \$p in
+        $fields) echo \$p; break ;;
         esac"
     done
 }
@@ -2954,7 +2953,7 @@ filter_cmdline() {
     fi
 
     for p; do
-        eval "case $p in
+        eval "case \$p in
         $fields) ;;
               *) echo \$p ;;
         esac"
