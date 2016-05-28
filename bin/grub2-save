@@ -101,6 +101,9 @@ update_grub2() {
             is_blank=
         fi
 
+        # Remove all lines that set the default
+        [ -z "${line##set default=*}" ] && continue
+
         if [ -z "${line##menuentry *}" ]; then
 
             # Add default line before first menuentry
