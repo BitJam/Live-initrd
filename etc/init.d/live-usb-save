@@ -106,8 +106,8 @@ do_start() {
 
     restore_desktop $root_dir/$USTATE_DIR
 
-    #delete_files $root_dir/to-delete
-    #rm -f $root_dir/to-delete
+    delete_files $root_dir/to-delete
+    rm -f $root_dir/to-delete
 }
 
 do_stop() {
@@ -133,7 +133,7 @@ do_stop() {
     save_desktop $root_dir/$USTATE_DIR
     save_state   $root_dir/$MSTATE_DIR "$(state_files "$MSTATE_FILES")" $(mach_id)
     save_state   $root_dir/$GSTATE_DIR "$(state_files "$GSTATE_FILES")"
-    #[ ${#TO_DELETE} -gt 0 ] && echo -e "$TO_DELETE" > $root_dir/to-delete
+    [ ${#TO_DELETE} -gt 0 ] && echo -e "$TO_DELETE" > $root_dir/to-delete
 }
 
 read_create_config_files() {
@@ -314,7 +314,6 @@ restore_state() {
             [ "$perm" != "$(stat -c %a $to)" ] && echo_cmd chmod $perm $to
         done
     else
-        # Delete machine-specific state files on a "new" machine
         [ "$dir2" ] || return
         for file in $MSTATE_FILES; do
             test -f $file || continue
