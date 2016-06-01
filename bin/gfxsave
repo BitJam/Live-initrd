@@ -546,8 +546,16 @@ extra_cmdline_params() {
     local param menu_params=$1
     for param in $CMDLINE; do
         case $param in
+            gfxsave|gfxsave=*) continue ;;
+          bootsave|bootsave=*) continue ;;
+                 BOOT_IMAGE=*) continue ;;
+        savestate|nosavestate) continue ;;
+              nostore|dostore) continue ;;
+             checkmd5|checkfs) continue ;;
+            automount|mount=*) continue ;;
+                    hwclock=*) continue ;;
+                    desktop=*) continue ;;
             nouveau.modeset=0) continue ;;
-                     gfxsave*) continue ;;
         esac
         case " $ALL_MENU_PARAMS " in
             *" ${param%%=*} "*) ;;
