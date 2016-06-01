@@ -49,7 +49,7 @@ GSTATE_DIR=state/general
 USTATE_DIR=state/user
 
 ID_DIR="/sys/class/dmi/id"
-ID_FILES="board_vendor board_name board_version"
+ID_FILES="board_vendor board_name board_version product_name"
 
 DS_FILE="/home/%s/.desktop-session/default-desktop"
 
