@@ -255,7 +255,7 @@ save_state() {
         local from=$file
         local to=$state_dir/files$file
 
-        if [ ${#dir2} -gt 0 -a ! -e "$from" ]; then
+        if [ -e "$from" ]; then
             TO_DELETE="$TO_DELETE\n$from"
             rm -f $to
             continue
