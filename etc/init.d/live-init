@@ -33,6 +33,7 @@ UXA_PCI_ID="0042|0046|1132|1240|2562|2572|2582|258a|2592|2772|2776|2782
 2e12|2e13|2e22|2e23|2e32|2e33|2e42|2e43|2e92|2e93|3577|3582
 358e|7121|7123|7125|7800|a001|a002|a011|a012"
 
+AUTOMOUNT_CMD=/usr/local/bin/automount-antix
 
 #-jbb For debugging
 : ${CMDLINE:=$(cat /live/config/proc-cmdline /live/config/cmdline /live/config/cmdline2)}
@@ -117,7 +118,11 @@ do_start() {
         DISTRO=${DISTRO%\"}
     fi
 
-    create_fstab $DISTRO
+    which X &>/dev/null && HAVE_X=true
+
+    local alt_automount
+    [ -n "$HAVE_X" -a -e $AUTOMOUNT_CMD ] && alt_automount=true
+    create_fstab "$DISTRO" $alt_automount
 
     #-jbb: for debugging
     unset COUNTRY WM_LANG KEYBOARDS KEYTABLE LANG MIRROR TZ XKBLAYOUT CONSOLE_FONT
@@ -135,8 +140,7 @@ do_start() {
     set_utc_local $CMD_CLOCK
 
     # Only do X stuff on systems that seem to have X
-    if which X &>/dev/null; then
-        HAVE_X=true
+    if  [ "$HAVE_X" ]; then
 
         if [ "$EARLY_VID" ]; then
             load_video_driver
@@ -193,10 +197,10 @@ do_start() {
 # FSTAB stuff
 #-------------------------------------------------------------------------------
 create_fstab() {
-    local distro=$1
+    local distro=$1 alt_automount=$2
 
     case $distro in
-        antiX) automount_and_fstab;;
+        antiX) automount_and_fstab $alt_automount ;;
       MX|MX-*) add_fstab_swap     ;;
             *) error 'Unknown distro %s' "$(pquote $distro)"
     esac
@@ -209,10 +213,15 @@ add_fstab_swap() {
 
 automount_and_fstab() {
 
-   local        am_file=/etc/fstab.automount
-   local     mount_file=/etc/fstab.mount
-   local        hp_file=/etc/fstab.hotplug
-   local  hp_state_file=$hp_file.state
+    local alt_automount=
+
+    # Tell rc.local to copy 90-fstab-automount.rules to main file system
+    [ -z "$alt_automount" ] && touch /live/config/fstab-hotplug
+
+    local        am_file=/etc/fstab.automount
+    local     mount_file=/etc/fstab.mount
+    local        hp_file=/etc/fstab.hotplug
+    local  hp_state_file=$hp_file.state
 
     # Delay start of auto-stuff until after udev has started
     local fstab_rule=/etc/udev/rules.d/90-fstab-automount.rules
