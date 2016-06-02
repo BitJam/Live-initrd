@@ -52,6 +52,7 @@ ID_DIR="/sys/class/dmi/id"
 ID_FILES="board_vendor board_name board_version product_name"
 
 DS_FILE="/home/%s/.desktop-session/default-desktop"
+DS_DIR="/home/%s/.desktop-session"
 
 export PATH=/sbin:/usr/sbin:/bin:/usr/bin:/usr/local/bin
 
@@ -175,15 +176,19 @@ save_desktop() {
 
     test -e $to_dir/no-state && return
 
-    local user from to
+    local user from to base_file
+
     for user in $(ls /home); do
-        from=$(printf $DS_FILE $user)
-        [ -e "$from" ] || continue
-        to="$to_dir/$user/default-desktop"
-        should_copy "$from" "$to" || continue
-        echo_live "Save %s desktop %s" $(wq $user) $(wq $(cat $from))
-        echo_cmd mkdir -p $(dirname "$to")
-        echo_cmd cp "$from" "$to"
+        for base_file in default-desktop automount.conf; do
+            from=$(printf $DS_DIR $user)/$base_file
+            [ -e "$from" ] || continue
+            to="$to_dir/$user/$base_file"
+            should_copy "$from" "$to" || continue
+            #. Save <user-name> file <file-name>
+            echo_live "Save %s file %s" $(wq $user) $(wq $(basename $from))
+            echo_cmd mkdir -p $(dirname "$to")
+            echo_cmd cp "$from" "$to"
+        done
     done
 }
 
@@ -195,19 +200,28 @@ restore_desktop() {
 
     test -e $from_dir/no-state && return
 
-    local user dest_dir dest sorc
+    local user dest_dir dest sorc base_file
     for user in $(ls $from_dir 2>/dev/null); do
-        sorc=$from_dir/$user/default-desktop
-        dest=$(printf $DS_FILE $user)
-        dest_dir=$(dirname $dest)
-        [ -d "$dest_dir" ] || continue
-        [ -e "$sorc"     ] || continue
-        should_copy $sorc $dest || continue
-        #. Restore <user-name> desktop to <window-manager-name>
-        echo_live "restore %s desktop to %s" $(wq $user) $(wq $(cat $sorc))
-        echo_cmd cp "$sorc" "$dest"
-        echo_cmd chown $user:users $dest
+        for base_file in default-desktop automount.conf; do
+            sorc=$from_dir/$user/default-desktop
+            dest=$(printf $DS_FILE $user)
+            dest_dir=$(dirname $dest)
+            [ -d "$dest_dir" ] || continue
+            [ -e "$sorc"     ] || continue
+            should_copy $sorc $dest || continue
+            #. Restore <user-name> file <file-name>
+            echo_live "Restore %s file %s" $(wq $user) $(wq $(basename $sorc))
+            echo_cmd cp "$sorc" "$dest"
+            echo_cmd chown $user:users $dest
+        done
     done
+}
+
+dummy() {
+    #. "Save %s desktop %s" $(wq $user) $(wq $(cat $from))
+    echo_live "Save %s desktop %s" $(wq $user) $(wq $(cat $from))
+    #. Restore <user-name> desktop to <window-manager-name>
+    echo_live "restore %s desktop to %s" $(wq $user) $(wq $(cat $sorc))
 }
 
 save_state() {
