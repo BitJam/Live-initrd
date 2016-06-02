@@ -105,10 +105,11 @@ do_start() {
 
     [ "$PERSISTENCE" ] && return
 
+    local del_file=$root_dir/state/to-delete
     restore_desktop $root_dir/$USTATE_DIR
 
-    delete_files $root_dir/to-delete
-    rm -f $root_dir/to-delete
+    delete_files $del_file
+    rm -f $del_file
 }
 
 do_stop() {
@@ -134,7 +135,8 @@ do_stop() {
     save_desktop $root_dir/$USTATE_DIR
     save_state   $root_dir/$MSTATE_DIR "$(state_files "$MSTATE_FILES")" $(mach_id)
     save_state   $root_dir/$GSTATE_DIR "$(state_files "$GSTATE_FILES")"
-    [ ${#TO_DELETE} -gt 0 ] && echo -e "$TO_DELETE" > $root_dir/to-delete
+    local del_file=$root_dir/state/to-delete
+    [ ${#TO_DELETE} -gt 0 ] && echo -e "$TO_DELETE" > $del_file
 }
 
 read_create_config_files() {
@@ -269,9 +271,11 @@ save_state() {
         local from=$file
         local to=$state_dir/files$file
 
-        if [ -e "$from" ]; then
-            TO_DELETE="$TO_DELETE\n$from"
+        if [ ! -e "$from" ]; then
             rm -f $to
+            # Don't add unmatched globs to the delete list
+            [ -z "${from##*\**}" ] && continue
+            TO_DELETE="$TO_DELETE\n$from"
             continue
         fi
 
@@ -346,12 +350,12 @@ restore_state() {
 }
 
 delete_files() {
-    local file  list_file=$1  type=$(wq "machine specific")
+    local file  list_file=$1
     test -r $list_file || return
     while read file; do
         test -e "$file" || continue
         #. Delete <general|machine specific> state file <file-name>
-        echo_live "Delete %s state file %s" "$type" "$(wq $file)"
+        echo_live "Delete %s state file %s" "" "$(wq $file)"
         echo_cmd rm -f "$file"
     done<<Delete_Files
 $(cat $list_file)
