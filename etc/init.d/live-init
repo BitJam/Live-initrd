@@ -643,7 +643,11 @@ scale_conky() {
     head $file | grep -iq "^#[[:space:]]*Standard[[:space:]]*antiX[[:space:]].conkyrc" || return
 
     local width=$((dpi * $def_width / 96 ))
-    [ $width -gt $def_width ] || return
+    # Don't make conky smaller than the default size
+    if [ $width -lt $def_width ]; then
+        dpi=96
+        width=$def_width
+    fi
     echo_live "Setting Conky width to %s" $(pquote $width)
     local gwidth=$((width - 10))
     local gheight=$((2 * dpi * $def_gheight / 96 - $def_gheight))
