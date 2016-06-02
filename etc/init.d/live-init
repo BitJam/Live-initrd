@@ -67,6 +67,7 @@ for param in $CMDLINE; do
 automount=off|amnt=off)                          AUTOMOUNT_OFF=true ;;
         automount|amnt)                              AUTOMOUNT=true ;;
     automount=*|amnt=*)     CMD_MOUNT=$value ;       AUTOMOUNT=true ;;
+             mount=off)     CMD_MOUNT=$value ;   AUTOMOUNT_OFF=true ;;
                mount=*)     CMD_MOUNT=$value ;       AUTOMOUNT=true ;;
                fstab=*)     CMD_FSTAB=$value                        ;;
                 splash)  SPLASH_PARAM=v                             ;;
@@ -189,6 +190,8 @@ do_start() {
     set_desktop_theme      "$DESK_THEME"       $DEF_USER $USER_HOME
     set_user_dpi           "${CMD_UDPI:-$dpi}" $DEF_USER $USER_HOME
     set_user_desktop_delay "$DESKTOP_DELAY"    $DEF_USER $USER_HOME
+    [ "$alt_automount" ] && set_user_automount $DEF_USER $USER_HOME "$AUTOMOUNT" "$AUTOMOUNT_OFF"
+
     #localize_firefox $LANG
 }
 
@@ -213,7 +216,7 @@ add_fstab_swap() {
 
 automount_and_fstab() {
 
-    local alt_automount=
+    local alt_automount=$1
 
     # Tell rc.local to copy 90-fstab-automount.rules to main file system
     [ -z "$alt_automount" ] && touch /live/config/fstab-hotplug
@@ -232,21 +235,23 @@ automount_and_fstab() {
     fi
 
     # "off" means "off"
-    if [ "$CMD_MOUNT" = 'off' -o -n "$AUTOMOUNT_OFF" ]; then
+    if [ "$CMD_MOUNT" = 'off' ]; then
         echo_live "Turning all boot mount options off"
+        echo_live "Turning automount off"
         rm -f $mount_file
+        rm -f $am_file
         CMD_MOUNT=
+        AUTOMOUNT=
 
-        if [ -n "$AUTOMOUNT_OFF" ]; then
-            echo_live "Turning automount off"
-            AUTOMOUNT=
-            rm -f $am_file
-        fi
+    elif [ -n "$AUTOMOUNT_OFF" ]; then
+        echo_live "Turning automount off"
+        AUTOMOUNT=
+        rm -f $am_file
     fi
 
     # Read in previous value (persistent systems only)
     if [ -z "$CMD_MOUNT" -a -e $mount_file ]; then
-        CMD_MOUNT=$(cat $mount_file)
+        read CMD_MOUNT 2>/dev/null <$mount_file
     else
         [ "$CMD_MOUNT" ] && echo $CMD_MOUNT > $mount_file
     fi
@@ -272,6 +277,11 @@ automount_and_fstab() {
     fi
 
     make-fstab --quiet $fstab_opt
+
+    if [ "$alt_automount" ]; then
+        rm -f $am_file $hp_file $hp_state_file
+        return
+    fi
 
     [ "$AUTOMOUNT" ] && touch $am_file
 
@@ -711,6 +721,18 @@ set_user_desktop_delay() {
     su -c "sed -r -i 's/^\s*(STARTUP_DELAY=).*/\1$delay/' $ds_conf" $user
 }
 
+set_user_automount() {
+    local  user=$1  home=$2  on=$3  off=$4
+    local file=$home/.desktop-session/automount.conf
+    if [ "$on" ]; then
+        echo_live "Automount enabled"
+        add_or_edit "^automount=" "automount=TRUE" $file $user create
+
+    elif [ "$off" ]; then
+        echo_live "Automount disabled"
+        add_or_edit "^automount=" "automount=FALSE" $file $user create
+    fi
+}
 
 #-------------------------------------------------------------------------------
 # DEFAULT USER stuff
