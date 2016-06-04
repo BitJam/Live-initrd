@@ -1371,7 +1371,7 @@ from_filter() {
                     hd_devs="$hd_devs $dev"
                 fi ;;
 
-       3|8|22) if is_usb_or_removable $dev; then
+   3|8|22|103) if is_usb_or_removable $dev; then
                     usb_devs="$usb_devs $dev"
                 else
                     hd_devs="$hd_devs $dev"
@@ -3400,7 +3400,7 @@ free_space() {
     local sparse new_free
     for sparse in $mp/*/rootfs $mp/*/homefs; do
         test -e $sparse || continue
-        real=$(( $( stat -c %s $sparse) / 1024 / 1024))
+        real=$(( $(stat -c %s $sparse) / 1024 / 1024))
         orig=$(du -m $sparse | cut -f1)
         new_free=$((free - $real + $orig))
         printf 'sparse: r=%4s o=%4s of=%5s nf=%5s %s\n' $real $orig $free $new_free $sparse >> $MY_LOG
@@ -3898,7 +3898,7 @@ mount_persist_device() {
     if [ -z "$from_persist" -a -z "$PERSIST_ID" ]; then
 
         case $(stat -c %t $SQFILE_DEV) in
-         [38]|22|b3) ;;
+         [38]|22|b3|103) ;;
             *) warn "Can't use %s as a persistence device" $(pqw $SQFILE_DEV)
                return 20 ;;
         esac
