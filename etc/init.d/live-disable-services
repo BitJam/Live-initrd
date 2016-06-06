@@ -62,6 +62,10 @@ ACPID_SERVICES="
     acpid
 "
 
+WICD_SERVICES="
+    wicd
+"
+
 XTRA_LEAN_SERVICES="
     bootlogd
     cryptdisks
@@ -158,6 +162,7 @@ do_start() {
         [ "${disable_param##*[g]*}"  ] ||   DISABLE_GPM=true
         [ "${disable_param##*[P]*}"  ] ||    ENABLE_PAM=true
         [ "${disable_param##*[a]*}"  ] || DISABLE_ACPID=true
+        [ "${disable_param##*[w]*}"  ] ||  DISABLE_WICD=true
         [ "${disable_param##*[n]*}"  ] ||   DISABLE_NFS=true
         [ "${disable_param##*[n]*}"  ] ||    NFS_REASON=n
     fi
@@ -199,6 +204,11 @@ do_start() {
         disable_services "acpid (a)" "$ACPID_SERVICES"
     fi
 
+    if [ "$DISABLE_WICD" ]; then
+        echo_live "Disabling %s services %s" "$(pquote wicd)" $(paren w)
+        disable_services "wicd (w)" "$WICD_SERVICES"
+    fi
+
     if [ "$MEAN" ]; then
         echo_live "Disabling network services %s" "$(paren M, mean)"
         disable_services "mean (m)" "$MEAN_SERVICES"
@@ -225,7 +235,7 @@ do_start() {
     fi
 
     if [ "$DISABLE_GPM" ]; then
-        echo_live "Disabling gpm (g)"
+        echo_live "Disabling %s services %s" $(pquote gpm) $(paren g)
         disable_services "gpm (g)" "$GPM_SERVICES"
     fi
 
