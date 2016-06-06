@@ -105,11 +105,7 @@ do_start() {
 
     [ "$PERSISTENCE" ] && return
 
-    local del_file=$root_dir/state/to-delete
     restore_desktop $root_dir/$USTATE_DIR
-
-    delete_files $del_file
-    rm -f $del_file
 }
 
 do_stop() {
@@ -135,8 +131,7 @@ do_stop() {
     save_desktop $root_dir/$USTATE_DIR
     save_state   $root_dir/$MSTATE_DIR "$(state_files "$MSTATE_FILES")" $(mach_id)
     save_state   $root_dir/$GSTATE_DIR "$(state_files "$GSTATE_FILES")"
-    local del_file=$root_dir/state/to-delete
-    [ ${#TO_DELETE} -gt 0 ] && echo -e "$TO_DELETE" > $del_file
+
 }
 
 read_create_config_files() {
@@ -198,13 +193,13 @@ restore_desktop() {
     local from_dir="$1"
 
     # There are many reasons to not restore
-    [ "$CMD_DESKTOP" ] && return
 
     test -e $from_dir/no-state && return
 
     local user dest_dir dest sorc base_file
     for user in $(ls $from_dir 2>/dev/null); do
         for base_file in default-desktop automount.conf; do
+            [ ${#CMD_DESKTOP} -gt 0 -a "$base_file" = "default-desktop" ] && continue
             sorc=$from_dir/$user/default-desktop
             dest=$(printf $DS_FILE $user)
             dest_dir=$(dirname $dest)
@@ -229,6 +224,7 @@ dummy() {
 save_state() {
     #. "general" (same on all machines) versus "machine specific"
     local state_dir="$1"  files="$2"  dir2="$3"  type="$(wq "general")"
+    local to_delete  del_file=$state_dir/to-delete
 
     test -e $state_dir/no-state && return
 
@@ -275,7 +271,7 @@ save_state() {
             rm -f $to
             # Don't add unmatched globs to the delete list
             [ -z "${from##*\**}" ] && continue
-            TO_DELETE="$TO_DELETE\n$from"
+            to_delete="$to_delete\n$from"
             continue
         fi
 
@@ -296,17 +292,24 @@ save_state() {
         else
             # echo "$file:$perm" >> $perm_file
             echo_cmd sed -i "$ a$file:$perm" $perm_file
-
         fi
     done
+
+    # Save list of files to delete when we restore state
+    [ ${#to_delete} -gt 0 ] && echo -e "$to_delete" > $del_file
 }
 
 restore_state() {
     local state_dir="$1"  files="$2"  dir2="$3" type="$(wq "general")"
+    [ ${#dir2} -gt 0 ] && type=$(wq "machine specific")
+
     test -e $state_dir/no-state && return
 
+    local del_file=$state_dir/to-delete
+    delete_files $del_file $type
+    rm -f $del_file
+
     # dir2 is typically/only a machine-id
-    [ ${#dir2} -gt 0 ] && type=$(wq "machine specific")
     state_dir=$state_dir${dir2:+/$dir2}
     local perm_file=$state_dir/permissions
 
@@ -350,12 +353,12 @@ restore_state() {
 }
 
 delete_files() {
-    local file  list_file=$1
+    local file  list_file=$1  type=$2
     test -r $list_file || return
     while read file; do
         test -e "$file" || continue
         #. Delete <general|machine specific> state file <file-name>
-        echo_live "Delete %s state file %s" "" "$(wq $file)"
+        echo_live "Delete %s state file %s" "$(wq $type)" "$(wq $file)"
         echo_cmd rm -f "$file"
     done<<Delete_Files
 $(cat $list_file)
