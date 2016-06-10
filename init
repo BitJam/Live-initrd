@@ -711,7 +711,7 @@ read_cmdline_params()
 
                livedir=*|ldir=*) FINAL_DIR=$value                                ;;
         pw|passwd|pw=*|passwd=*) FORCE_PASSWD=true                               ;;
-                      bootchart) INIT_COMMAND=/sbin/bootchartd                   ;;
+                      bootchart) INIT_COMMAND=/sbin/bootchartd ; BOOT_CHART=true ;;
                         noplink) NO_PLINK=,noplink                               ;;
                           plink) NO_PLINK=                                       ;;
 
@@ -4628,6 +4628,7 @@ Initrd_Out
     [ "$FORCE_PASSWD" ]                      && touch $dir/force-passwd
     [ "$DB_PLUS"      ]                      && touch $dir/db+
     [ -n "$BOOT_SAVE" ]                      && touch $dir/bootsave
+    [ "$BOOT_CHART"   ]                      && touch $dir/bootchart
 
     echo "$DISTRO_NAME"                             > $dir/distro
 
