@@ -25,8 +25,8 @@
 # that you don't want users to be able to adjust.
 
                      ME="initrd init"
-                VERSION="7.54.25"
-           VERSION_DATE="Mon Jun  6 21:05:52 MDT 2016"
+                VERSION="7.54.26"
+           VERSION_DATE="Thu Jun  9 22:18:27 MDT 2016"
               DEVELOPER="BitJam"
          BUG_REPORT_URL="liveboot@mxlinux.org"
 
