@@ -1126,11 +1126,10 @@ do_welcome() {
     vmsg 8 "$cpu_format"  '             Screen width' "$SCREEN_WIDTH"
     vmsg 8 "$cpu_format"  '              Kernel arch' "$(uname -m)"
 
-    local board_name board_vendor id_dir=/sys/class/dmi/id
-    read board_name   2>/dev/null  < $id_dir/board_name
+    local product_name board_vendor id_dir=/sys/class/dmi/id
+    read product_name 2>/dev/null  < $id_dir/product_name
     read board_vendor 2>/dev/null  < $id_dir/board_vendor
-    vmsg 8 "$cpu_format"  '             Mother board' "$board_vendor $board_name"
-
+    vmsg 8 "$cpu_format"  '                 Hardware' "$board_vendor $product_name"
     # vmsg 6  "$cpu_format" '                      CPU' "$(cpu_param 'model name' unknown)"
     # vmsg 6  "$cpu_format" '                    Cores' "$num_co$(cpu_param 'cpu cores'  1)"
     # vmsg 6  "$cpu_format" '                    Cache' "$(cpu_param 'cache size' unknown)"
