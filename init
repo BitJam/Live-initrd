@@ -1017,7 +1017,7 @@ select_breakpoints() {
             echo
             echo "${m_co}Remaining ${hi_co}$ME$m_co breakpoints:$nc_co"
             echo
-            sed -rn 's/^\s*breakpoint ([1-9a-z])\>/  \1)/p' $0 | sed "s/['\"]//g" | sort
+            sed -rn 's/^\s*breakpoint ([1-9a-z])\> */  \1) /p' $0 | sed "s/['\"]//g" | sort
             echo
             echo "${m_co}Use \"a\" to set most breakpoints$nc_co"
             echo "${m_co}Use \"A\" to set all breakpoints$nc_co"
