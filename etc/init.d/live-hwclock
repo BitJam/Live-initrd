@@ -149,7 +149,7 @@ set_timezone() {
 
 select_timezone() {
     local DISTRO distro_file=/live/config/distro
-    test -r distro_file && read DISTRO 2>/dev/null $distro_file
+    read DISTRO 2>/dev/null < $distro_file
     : ${DISTRO:=MX}
 
     local BOOT_MENU_DIR=/live/custom/$DISTRO/menus DO_MENUS=t
