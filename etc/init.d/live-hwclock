@@ -20,7 +20,7 @@ MARGIN=$((15 * 60))   # 15 Minutes
 
 . /live/lib/live-init-utils.sh
 start_init_logging
-load_translation
+#load_translation
 
 #-jbb For debugging
 : ${CMDLINE:=$(cat /live/config/proc-cmdline /live/config/cmdline)}
