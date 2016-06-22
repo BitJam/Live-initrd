@@ -247,9 +247,17 @@ main_wrapper() {
         fi
     fi
 
+    local f rm_list
+    for f in $NEW_ROOT/live/custom/*/menus/*; do
+        case $f in *tz.*) continue;; esac
+        rm_list="$rm_list $f"
+    done
+    rm -f $rm_list
+
     breakpoint bash  "Bash shell right before starting init"
     breakpoint b9    "Bash shell right before starting init"
     breakpoint 9     "right before starting init"
+
 
     stop_hotplug
 
@@ -4900,8 +4908,6 @@ prepare_switch_root() {
 
     (cd $root_dir/bin && rm -rf fbcondecor_helper ntfs-3g)
     rm -rf /$root_dir/etc/splash
-
-    rm -rf /$root_dir/live/custom/*/menus
 
     # Work around a bug in fbcondecor_helper
     local fbsys=$root_dir/lib/splash/sys
