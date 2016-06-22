@@ -216,7 +216,7 @@ main_wrapper() {
 
     # Try running live-usb-save first so it can restore an xorg.conf machine-state file
     confile remasterable && LIVE_SCRIPTS="live-usb-save $LIVE_SCRIPTS"
-    [ "$DO_HWCLOCK" ]    && LIVE_SCRIPTS="$LIVE_SCRIPTS live-hwclock"
+    confile hwclock      && LIVE_SCRIPTS="$LIVE_SCRIPTS live-hwclock"
     confile persist-root force-passwd && LIVE_SCRIPTS="$LIVE_SCRIPTS persist-password"
     confile save-persist && LIVE_SCRIPTS="$LIVE_SCRIPTS persist-autosave"
     # Do this after the above so the changes aren't saved until after a "real" persist-save
@@ -4628,6 +4628,7 @@ Initrd_Out
     [ "$DB_PLUS"      ]                      && touch $dir/db+
     [ -n "$BOOT_SAVE" ]                      && touch $dir/bootsave
     [ "$BOOT_CHART"   ]                      && touch $dir/bootchart
+    [ "$DO_HWCLOCK"   ]                      && touch $dir/hwclock
 
     echo "$DISTRO_NAME"                             > $dir/distro
 
