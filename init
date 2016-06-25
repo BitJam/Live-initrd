@@ -2429,7 +2429,7 @@ breakpoint() {
 
     custom_code "$bp" "$desc"
 
-    if [ "$DB_PLUS" ]; then
+    if [ "$DB_PLUS" -a -n "${bp##b*}" ]; then
         local now=$(get_time)
         local delta=$(get_seconds $((now - LAST_BP_TIME)))
         vmsg 9 "$green@bp$cyan[$num_co$bp$m_co]$hi_co $(get_seconds $now)s ($delta)$m_co: $desc"
