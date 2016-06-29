@@ -78,6 +78,7 @@ automount=off|amnt=off)                          AUTOMOUNT_OFF=true ;;
            deskdelay=*) DESKTOP_DELAY=$value                        ;;
              nomodeset)     NOMODESET=true                          ;;
             fontsize=*)     FONT_SIZE=$value                        ;;
+             vtblank=*)     VT_BLANK=$value                         ;;
     esac
 done
 
@@ -138,6 +139,9 @@ do_start() {
     # Unless NO_LOAD_KEYS
     [ -z "$NO_LOAD_KEYS" ] && set_keyboard
     set_utc_local $CMD_CLOCK
+
+    test -e /live/config/virtualbox && : ${VT_BLANK:=0}
+    [ ${#VT_BLANK} -gt 0 ] && set_console_blanking $VT_BLANK
 
     # Only do X stuff on systems that seem to have X
     if  [ "$HAVE_X" ]; then
@@ -735,6 +739,16 @@ set_user_automount() {
         echo_live "Automount disabled"
         add_or_edit "^automount=" "automount=FALSE" $file $user create
     fi
+}
+
+set_console_blanking() {
+    local blank=$1  conf_file=/etc/kbd/config
+    [ ${#blank} -gt 0 ] || return
+
+    echo_live "Setting console blanking timeout to %s minute(s)" "$(pquote $blank)"
+    setterm --blank $blank
+    test -w $conf_file || return
+    sed -ri "s/^(BLANK_TIME=).*/\1$blank/" $conf_file
 }
 
 #-------------------------------------------------------------------------------
