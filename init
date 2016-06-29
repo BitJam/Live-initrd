@@ -252,7 +252,7 @@ main_wrapper() {
     fi
 
     local f rm_list
-    for f in $NEW_ROOT/live/custom/*/menus/*; do
+    for f in $NEW_ROOT/live/menus/*; do
         case $f in *tz.*) continue;; esac
         rm_list="$rm_list $f"
     done
@@ -2987,6 +2987,7 @@ xlat_mfile() {
 
 do_early_menus() {
     local BOOT_MENU_DIR=/live/custom/$DISTRO_NAME/menus
+    local BOOT_MENU_DIR=/live/menus
     local MENU_VALUE BOOT_MENU_WARN=true
     local lang time_zone option persist desktop
     local cmdline
@@ -3000,7 +3001,7 @@ do_early_menus() {
 
     my_select_menu "Select Timezone"           "Timezones are listed by longitude"     t tz       "Timezone"      'tz=*'
     my_select_menu "Select Option"             "Only one option can be selected"       o options  "Options"       "$OPTIONS_ENTRIES"
-    my_select_menu "Select Mounting Option"    ""                                      m mount    "Mount"         "automount|mount=*"
+    my_select_menu "Select Mounting Option"    "Automounting is enabled by default"    m mount    "Mount"         "automount|mount=*"
     my_select_menu "Select Persistence Option" ""                                      p persist  "Persistence"   'persist_*|frugal_*'
     my_select_menu "Select font size"          "Scale fonts in graphics display.  Default is 1.0"  f fontsize "Font size" 'fontsize=*'
     #vmsg 6 "cmdline:$white $cmdline"
@@ -3016,6 +3017,7 @@ do_late_menus() {
 
     if [ "$REMASTERABLE" ]; then
         BOOT_MENU_DIR=/live/custom/$DISTRO_NAME/menus
+        BOOT_MENU_DIR=/live/menus
         my_select_menu "Save these changes?" "" s save "Save"
         echo "$cmdline" | grep -q bootsave && BOOT_SAVE=true
     fi
@@ -4923,7 +4925,7 @@ prepare_switch_root() {
     mountpoint $fbsys &>/dev/null && umount $fbsys
 
     local dir old new
-    for dir in bin config etc lib locale custom; do
+    for dir in bin config etc lib locale custom menus; do
         old=$root_dir/$dir
         test -e $old || old=$live_dir/$dir
         new=$new_live/$dir

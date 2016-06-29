@@ -152,7 +152,7 @@ select_timezone() {
     read DISTRO 2>/dev/null < $distro_file
     : ${DISTRO:=antiX}
 
-    local BOOT_MENU_DIR=/live/custom/$DISTRO/menus DO_MENUS=t
+    local BOOT_MENU_DIR=/live/menus DO_MENUS=t
     my_select_menu "Select Timezone" "Timezones are listed by longitude" t tz
     [ "$tz" = "default" ] && tz=$TZ
     TZ=${tz#tz=}
