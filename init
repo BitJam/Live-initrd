@@ -75,6 +75,8 @@
           USER_UID=1000
           USER_GID=1000
 
+            DO_DEB=true
+
    PLUG_LOOP_DELAY=50   # In 100ths of a second
 
         # Note: adding "crc32c-generic" works around a bug in the kernel:
@@ -223,6 +225,8 @@ main_wrapper() {
     confile systemd      || LIVE_SCRIPTS="$LIVE_SCRIPTS live-disable-services"
     confile toram-eject  && LIVE_SCRIPTS="$LIVE_SCRIPTS live-toram-eject"
     confile bootsave     && LIVE_SCRIPTS="$LIVE_SCRIPTS live-bootsave"
+    confile deb-install  && LIVE_SCRIPTS="$LIVE_SCRIPTS live-deb-install"
+
     unset CMDLINE
     PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin
     run_init_scripts $NEW_ROOT $LIVE_SCRIPTS
@@ -422,6 +426,8 @@ main_core() {
     ORIG_SQFILE_MP=$SQFILE_MP
     ORIG_SQFILE_DIR=$SQFILE_PATH
     ORIG_SQFILE_FULL=$ORIG_SQFILE_DIR/$SQFILE_NAME
+
+    test -d $SQFILE_MP/$SQFILE_PATH/deb || DO_DEB=
 
     # Check md5 of files in directory containing linuxfs file
     # 'fromiso' causes us to check md5sums in two places
@@ -683,6 +689,7 @@ read_cmdline_params()
             fancyprompt|fprompt) DO_FANCY=true                                   ;;
                autologin|alogin) DO_AUTO_LOGIN=true                              ;;
 
+                          nodeb) DO_DEB=                                         ;;
                     #toram-eject) TO_RAM=true ; TO_RAM_EJECT=true                 ;;
 
                      noremaster) NO_REMASTER=true                                ;;
@@ -4637,6 +4644,7 @@ Initrd_Out
     [ -n "$BOOT_SAVE" ]                      && touch $dir/bootsave
     [ "$BOOT_CHART"   ]                      && touch $dir/bootchart
     [ "$DO_HWCLOCK"   ]                      && touch $dir/hwclock
+    [ "$DO_DEB"       ]                      && touch $dir/deb-install
 
     echo "$DISTRO_NAME"                             > $dir/distro
 
