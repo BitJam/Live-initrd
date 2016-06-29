@@ -9,7 +9,7 @@
    9)  hwclock=utc     Hardware clock uses UTC (Linux-only systems)
   10)  hwclock=local   Hardware clock uses local time (Windows systems)
   11)  private         Change passwords before booting
-  12)  nostore         Disable LiveUSB-Storage feature
-  13)  dostore         Enable LiveUSB-Storage feature
+  12)  nostore         Disable LiveUSB-Storage feature (LiveUSB only)
+  13)  dostore         Enable LiveUSB-Storage feature (LiveUSB only)
   14)  savestate       Save some files across reboots (LiveUSB only)
   15)  nosavestate     Don't save files across reboots (LiveUSB only)
