@@ -4153,7 +4153,7 @@ default_makefs_size() {
     local avail=$1  size=$3  params
     eval params=\$$2
     eval local $params
-    [ "$avail" -lt $mid_size ] && factor=1
+    [ "$avail" -lt $mid_size ] && factor=100
     [ "$size" ] || size=$((mid_size + factor * ( avail - mid_size ) / 100))
     [ $size -gt $max_size ] && size=$max_size
     [ $size -gt $avail    ] && size=$avail
