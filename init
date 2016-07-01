@@ -730,6 +730,8 @@ read_cmdline_params()
              disable=*|nosysv=*) DISABLE_SERVICES="$DISABLE_SERVICES$value" ; DS_PARAM=$param  ;;
 
                    disablestore) DISABLE_STORE=true                              ;;
+                         nolazy) LAZYTIME=                                       ;;
+                       lazytime) LAZYTIME=,lazytime                              ;;
 
         #----- These get interpreted late but we don't want them to be unknown
                 hwclock=*|hwc=*)  ;;
@@ -2210,7 +2212,7 @@ try_mount() {
     local fatopts=$winopts,shortname=winnt,uid=$USER_UID,gid=$USER_GID
 
     case $type in
-            ext4) log_cmd mount -t $type   -o $opts,lazytime  $dev "$mp" 2>/dev/null ;;
+            ext4) log_cmd mount -t $type   -o $opts$LAZYTIME  $dev "$mp" 2>/dev/null ;;
         ext[234]) log_cmd mount -t $type   -o $opts           $dev "$mp" 2>/dev/null ;;
             vfat) log_cmd mount -t vfat    -o $fatopts        $dev "$mp" 2>/dev/null ;;
          iso9660) log_cmd mount -t iso9660 -o ro              $dev "$mp" 2>/dev/null ;;
@@ -2227,7 +2229,7 @@ try_file_mount() {
     local opts=loop,$rw,noatime
 
     #mount -t reiserfs         -o loop,$rw,noatime "$file" "$mp"  2>/dev/null || \
-        mount -t ext4 -o $opts,lazytime "$file" "$mp"  2>/dev/null || \
+        mount -t ext4 -o $opts$LAZYTIME "$file" "$mp"  2>/dev/null || \
         mount -t ext3 -o $opts          "$file" "$mp"  2>/dev/null || \
         mount -t ext2 -o $opts          "$file" "$mp"  2>/dev/null
     return $?
