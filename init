@@ -108,6 +108,8 @@ MKFS_FREE_MARGIN=10
    DEFAULT_UNIONFS="overlay"
    OPTIONS_ENTRIES="toram|from=usb|password|nousb2"
 
+         LAZYTIME=",lazytime"
+
 set_live_dirs() {
     local dir=$1
 
