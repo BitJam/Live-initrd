@@ -98,18 +98,14 @@
 MKFS_FREE_MARGIN=10
   rootfs_SIZE_PARAM="min_size=250 mid_size=100 max_size=2000 factor=50"
   homefs_SIZE_PARAM="min_size=10 mid_size=100 max_size=4000 factor=25"
-
-    VFAT_MKFS_SIZES="10 100 250 375 500 750 1000 1500 2000 2500 3000 4000"
-         MKFS_SIZES="10 100 250 375 500 750 1000 1500 2000 2500 3000 4000 5000 6000"
+         MKFS_SIZES="250 375 500 750 1000 1500 2000 2500 3000 4000"
+       BIGGER_SIZES="5000 6000"
+      SMALLER_SIZES="10 100 175"
 
       LIVE_SCRIPTS="live-L10n live-init"
-
       LAST_BP_TIME=0
-
           NO_PLINK=""
-
    DEFAULT_UNIONFS="overlay"
-
    OPTIONS_ENTRIES="toram|from=usb|private|nousb2"
 
 set_live_dirs() {
@@ -4040,11 +4036,14 @@ _persist_makefs() {
 
     # Make sure we don't exceed max size of 4G - 1 on vfat file systems
     mkdir -p $dir
-    local par_fstype=$(mntpnt_fstype $dir) mkfs_sizes vfat
+    local par_fstype=$(mntpnt_fstype $dir) mkfs_sizes=$MKFS_SIZES vfat
     case $par_fstype in
-        vfat) mkfs_sizes=$VFAT_MKFS_SIZES ; vfat=true ;;
-           *) mkfs_sizes=$MKFS_SIZES                  ;;
+        vfat) vfat=true ;;
+           *) mkfs_sizes="$mkfs_sizes $BIGGER_SIZES" ;;
     esac
+
+    [ "$base_file" = homefs ] && mkfs_sizes="$SMALLER_SIZES $mkfs_sizes" ;;
+
     local max_mkfs_size=${mkfs_sizes##* }
 
     # Create a menu of sizes.  Include the default size
@@ -4127,7 +4126,7 @@ _persist_makefs() {
     breakpoint m "before makefs"
 
     [ "$vfat" ] &&  warn "Warning: this can take several minutes per Gig on a %s file system" $(pqw $par_fstype)
-    if ! time_cmd makefs $full_file $fs_type $fs_size; then
+    if ! time_cmd makefs $full_file $fs_type $fs_size $par_fstype; then
         err "Failed to create filesystem.  Deleting %s file" $(pqe $file)
         rm -f $full_file
         return 3
