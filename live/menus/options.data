@@ -8,7 +8,7 @@
 8:hwclock=ask:hwclock=ask
 9:hwclock=utc:hwclock=utc
 10:hwclock=local:hwclock=local
-11:private:private
+11:password:password
 12:nostore:nostore
 13:dostore:dostore
 14:savestate:savestate
