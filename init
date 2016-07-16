@@ -4046,7 +4046,7 @@ _persist_makefs() {
            *) mkfs_sizes="$mkfs_sizes $BIGGER_SIZES" ;;
     esac
 
-    [ "$base_file" = homefs ] && mkfs_sizes="$SMALLER_SIZES $mkfs_sizes" ;;
+    [ "$base_file" = homefs ] && mkfs_sizes="$SMALLER_SIZES $mkfs_sizes"
 
     local max_mkfs_size=${mkfs_sizes##* }
 
