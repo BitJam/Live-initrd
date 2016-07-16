@@ -175,11 +175,11 @@ do_start() {
         if test -e /live/config/virtualbox; then
             echo_live "Enabling %s services" "$(pquote Virtual Box)"
             update-rc.d virtualbox-guest-utils defaults
-            update-rc.d virtualbox-guest-x11   defaults
+            test -e /etc/init.d/virtualbox-guest-x11 && update-rc.d virtualbox-guest-x11 defaults
         else
             echo_live "Disabling %s services" "$(pquote Virtual Box)"
             update-rc.d virtualbox-guest-utils remove
-            update-rc.d virtualbox-guest-x11   remove
+            test -e /etc/init.d/virtualbox-guest-x11 && update-rc.d virtualbox-guest-x11 remove
         fi
     fi
 
