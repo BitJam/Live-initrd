@@ -38,12 +38,13 @@ Usage
 }
 
 main() {
-    local param file fnct=0
+    local param file fnct=0 cheats
 
     [ $# -eq 0 ] && usage
 
     for param; do
         case $param in
+           --cheats=*) cheats=${param#--cheats=}        ;;
             -h|--help) usage                            ;;
            -q|--quiet) QUIET=true                       ;;
                    -*) fatal "Unknown argument: $param" ;;
@@ -59,7 +60,9 @@ main() {
 
     test -d "$file" && file=${file%/}/boot/grub/grub.cfg
     test -e "$file" || fatal "File $file does not exist"
-    update_grub2 "$file" $(gather_params)
+
+    : ${cheats:=$(gather_params)}
+    update_grub2 "$file" "$cheats"
    
 }
 
