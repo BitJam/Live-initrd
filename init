@@ -608,8 +608,8 @@ read_late_cmdline_params() {
 }
 
 set_frugal() {
-    FRUGAL_ID="label=$DISTRO_NAME-Frugal"
-    FRUGAL=true
+    : ${FRUGAL_ID:=label=$DISTRO_NAME-Frugal}
+    [ "$NO_LABEL_FRUGAL" ] || LABEL_FRUGAL=true
     PERSIST=$1
 }
 
@@ -656,9 +656,9 @@ read_cmdline_params()
 
                         fneed=*) FRUGAL_NEEDED=$value                            ;;
                          fforce) FORCE_FRUGAL=true                               ;;
-                         flab=*) FRUGAL_ID=label=$value         ; FRUGAL=        ;;
-                         fdev=*) FRUGAL_ID=name=$value          ; FRUGAL=        ;;
-                        fuuid=*) FRUGAL_ID=uuid=$value          ; FRUGAL=        ;;
+                         flab=*) FRUGAL_ID=label=$value ; NO_LABEL_FRUGAL=true   ;;
+                         fdev=*) FRUGAL_ID=name=$value  ; NO_LABEL_FRUGAL=true   ;;
+                        fuuid=*) FRUGAL_ID=uuid=$value  ; NO_LABEL_FRUGAL=true   ;;
 
                 iso=*|fromiso=*) ISO_FILE=${value/#}                             ;;
                     iso|fromiso) FROM_ISO=true                                   ;;
@@ -1872,7 +1872,7 @@ find_frugal_file() {
 
         [ -z "$device" -o "$device" = "quit" ] && return 1
 
-        [ "$FRUGAL" ] && label_device $device "$DISTRO_NAME-Frugal"
+        [ "$LABEL_FRUGAL" ] && label_device $device "$DISTRO_NAME-Frugal"
     fi
 
     if ! mkdir -p $FRUGAL_MP; then
