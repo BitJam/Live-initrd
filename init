@@ -2893,7 +2893,7 @@ my_select_menu() {
         return
     fi
 
-    local default_str=$(rpad "Default" 16)
+    local default_str=$(rpad 16 "Default")
     local menu=$(cat $mfile | sed -r \
         -e "s/Default( {8}| *$)/$default_str/" \
         -e "s/( [0-9]+)(\))/$green\1$white\2$cyan/g" \
@@ -2929,13 +2929,9 @@ my_select_menu() {
 }
 
 rpad() {
-    local str=$1 width=$2
-    local len=$(echo $str | wc -m)
-    local pad=$((width - len))
-    if [ $pad -le 0 ]; then
-        echo -n "$str"
-        return
-    fi
+    local width=$1  str=$2
+    local pad=$((width - $(echo $str | wc -m)))
+    [ $pad -le 0 ] && pad=0
     printf "%s%${pad}s" "$str" ""
 }
 
