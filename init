@@ -4148,10 +4148,10 @@ makefs() {
 
     case $par_fstype in
         ext4|btrfs) ld_path $fallocate --length ${size}M $file        1>> $MY_LOG 2>>$MY_LOG || return 2  ;;
-                 *) dd if=/dev/zero of=$file bs=1M count=0 seek=$size 1>> $MY_LOG 2>> $MY_LOG || return 2 ;;
+                 *) dd if=/dev/zero of=$file bs=1M count=0 seek=$size 1>> $MY_LOG 2>>$MY_LOG || return 2 ;;
     esac
     sync
-    ld_path /sbin/mkfs.$type -q -F $file              1>> $MY_LOG 2>> $MY_LOG || return 3
+    ld_path /sbin/mkfs.$type -q -F $file 1>> $MY_LOG 2>> $MY_LOG || return 3
 }
 
 default_makefs_size() {
