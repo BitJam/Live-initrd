@@ -256,10 +256,11 @@ main_wrapper() {
     done
     rm -f $rm_list
 
+    dmesg > $NEW_ROOT/live/config/dmesg.out
+
     breakpoint bash  "Bash shell right before starting init"
     breakpoint b9    "Bash shell right before starting init"
     breakpoint 9     "right before starting init"
-
 
     stop_hotplug
 
