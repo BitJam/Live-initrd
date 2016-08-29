@@ -165,6 +165,7 @@ do_start() {
         [ "${disable_param##*[w]*}"  ] ||  DISABLE_WICD=true
         [ "${disable_param##*[n]*}"  ] ||   DISABLE_NFS=true
         [ "${disable_param##*[n]*}"  ] ||    NFS_REASON=n
+        [ "${disable_param##*[N]*}"  ] ||   ENABLE_NTPD=true
     fi
 
     # Prevent other messages stepping on ours
@@ -183,7 +184,8 @@ do_start() {
         fi
     fi
 
-    [ "$ENABLE_PAM" ] || disable_pam_login
+    [ "$ENABLE_NTPD" ] || disable_services "ntpd disable by default" ntp
+    [ "$ENABLE_PAM" ]  || disable_pam_login
 
     [ -n "$must_run" -o -n "$DISABLE_NFS" ] || exit 0
 
