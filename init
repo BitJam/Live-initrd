@@ -36,7 +36,7 @@
           PERSIST_RETRY=10
     FAILSAFE_BOOT_RETRY=30
 
-    DISABLE_SERVICES_OPTS="(c[0-9]+(\.[0-9]*)?|c\.[0-9]+|[DLMPSXacdgklmnrsvwx])+"
+    DISABLE_SERVICES_OPTS="(c[0-9]+(\.[0-9]*)?|c\.[0-9]+|[DLMPSXacdgklmnNrsvwx])+"
 
            RW_MODE="ro"
        #DISTRO_NAME="Linux"
