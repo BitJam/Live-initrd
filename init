@@ -1860,9 +1860,7 @@ find_frugal_file() {
     local actual=$(file_usage_m $old_dir $FRUGAL_FILES)
 
     # Safety first!
-    local needed=$((actual + 10))
-
-    [ "$FRUGAL_NEEDED" ] && needed=$FRUGAL_NEEDED
+    local needed=${FRUGAL_NEEDED:=$((actual + 10))}
 
     if  [ -z "$device" ]; then
 
