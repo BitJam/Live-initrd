@@ -64,7 +64,8 @@
          FROM_TYPE="usb,cd"
      FROM_TYPE_ALL="usb,cd,hd"
 
-      FRUGAL_FILES="linuxfs linuxfs.md5 vmlinuz vmlinuz.md5 initrd.gz initrd.gz.md5 xtra xtra.tgz ../boot"
+      FRUGAL_FILES="linuxfs vmlinuz vmlinuz1 initrd.gz xtra xtra.tgz"
+      FRUGAL_FILES="$FRUGAL_FILES ../boot ../efi ../cdrom.ico ../version"
 
      MAX_MOUNT_CNT=30
        RETRY_DELAY=50               # in hundredths of a second
@@ -1917,7 +1918,7 @@ find_frugal_file() {
 
         msg "copy %s to %s" $(pq $(size_label_m $actual)) $(pq $sqfile_dir/)
 
-        if ! time_cmd copy_files $old_dir $sqfile_dir $FRUGAL_FILES; then
+        if ! time_cmd copy_files_md5 $old_dir $sqfile_dir $FRUGAL_FILES; then
             warn "Copy failed.  Erasing partial copy"
             log_cmd rm -f $sqfile_full
             return 40
@@ -3386,6 +3387,18 @@ file_usage_m() {
     done
     du -scxm $list >> $MY_LOG
     du -scxm $list | tail -n 1 | cut -f1
+}
+
+copy_files_md5() {
+    local f file sorc=$1  dest=$2
+    shift 2
+    [ "$sorc" -a "${sorc##*/}" ] && sorc=$sorc/
+    for f; do
+        for file in $sorc$f $sorc$f.md5
+        [ -e $file ] || continue
+        cp -a $sorc$f $dest/ || return $?
+    done
+    return 0
 }
 
 copy_files() {
