@@ -474,7 +474,7 @@ main_core() {
         vmsg 8 "$green@${cyan} Extras took$hi_co $delta${cyan} seconds"
     fi
 
-    test -e /$NEW_ROOT/etc/issue || cp /issue $NEW_ROOT/etc/issue
+    [ ! -e /$NEW_ROOT/etc/issue -o -n "$FORCE_ISSUE" ] && cp /issue $NEW_ROOT/etc/issue
 
     # FIXME: do this after copy_xtra for easy testing (for now) (????)
     PROC_CMDLINE=$(cat /live/config/proc-cmdline)
@@ -728,6 +728,8 @@ read_cmdline_params()
                    disablestore) DISABLE_STORE=true                              ;;
                          nolazy) LAZYTIME=                                       ;;
                        lazytime) LAZYTIME=,lazytime                              ;;
+
+                          issue) FORCE_ISSUE=true                                ;;
 
         #----- These get interpreted late but we don't want them to be unknown
                 hwclock=*|hwc=*)  ;;
