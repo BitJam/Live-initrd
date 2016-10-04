@@ -3405,6 +3405,7 @@ copy_files() {
 all_space()      { $LIVE_BIN/df -m "$1" | awk '{size=$2}END{print size}' ;}
 used_space()     { $LIVE_BIN/df -m "$1" | awk '{size=$3}END{print size}' ;}
 avail_space()    { $LIVE_BIN/df -m "$1" | awk '{size=$4}END{print size}' ;}
+du_size()        { du -scm "$@"         | tail -n1 | cut -f1             ;}
 get_mountpoint() { grep "^$1 " /proc/mounts | cut -d" " -f2              ;}
 
 # This compensates for sparse rootfs and homefs files one directory down from
