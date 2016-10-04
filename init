@@ -242,9 +242,12 @@ main_wrapper() {
         else
             confile remasterable && run_init_scripts $NEW_ROOT live-usb-storage
 
-            local new_config=$NEW_ROOT/etc/live/config
-            mkdir -p $new_config
-            mount --bind /live/aufs/live/config $new_config
+            local dir new_dir
+            for dir in config bin; do
+                local new_dir=$NEW_ROOT/etc/live/$dir
+                mkdir -p $new_dir
+                mount --bind /live/aufs/live/$dir $new_dir
+            done
 
             chmod 700 $NEW_ROOT/live
         fi
