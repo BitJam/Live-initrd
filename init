@@ -4368,7 +4368,7 @@ mount_homefs() {
     fi
 
     if ! offer_copy_home_dir  $real_home  $temp_home; then
-        if YES_no "Do you want to enable home persistence anyway"; then
+        if ! YES_no "Do you want to enable home persistence anyway"; then
             log_cmd umount $temp_home
             return
         fi
