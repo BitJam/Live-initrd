@@ -4387,13 +4387,15 @@ mount_homefs() {
 
 offer_copy_home_dir() {
     local real=$1  temp=$2
-    empty_dir $real || ! empty_dir $temp || return 0
+
+    empty_dir $real && return 0
+    empty_dir $temp || return 0
 
     local needed=$(du_size $real)
     local avail=$(avail_space $temp)
     local margin=$((avail - needed))
-    msg "There are %s Meg of files that will get hidden by home persistence"  $(nq $needed)
-    msg "Thare are %s Meg free on the home persistence device"                $(nq $avail)
+    msg "There are %4s Meg of files that will get hidden by home persistence"  $(nq $needed)
+    msg "There are %4s Meg free on the home persistence device"                $(nq $avail)
 
     if [ $margin -lt 50 ]; then
         msg "There's not enough space to copy all the files"
@@ -4408,12 +4410,13 @@ offer_copy_home_dir() {
     local ret=$?
 
     # FIXME:  Then offer to erase if extra not in linuxfs?
-
 }
 
 empty_dir() {
     local dir=$1
     local cnt=$(ls "$dir" | grep -v "^lost+found$" | wc -l)
+    msg "files in $dir: $cnt"
+
     [ $cnt -eq 0 ]
     return $?
 }
