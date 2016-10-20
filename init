@@ -25,8 +25,8 @@
 # that you don't want users to be able to adjust.
 
                      ME="initrd init"
-                VERSION="7.60.01"
-           VERSION_DATE="Mon Oct  3 21:25:12 MDT 2016"
+                VERSION="7.60.02"
+           VERSION_DATE="Thu Oct 20 03:15:35 MDT 2016"
               DEVELOPER="BitJam"
          BUG_REPORT_URL="liveboot@mxlinux.org"
 
@@ -1129,7 +1129,7 @@ do_welcome() {
     vmsg 8 "$mem_format"  '              Used Memory'  $used_mem
 
     local cpu_format="%s:$white %s"
-    vmsg 8 "$cpu_format"  '             Linux kernel' "$(uname -r)"
+    vmsg 5 "$cpu_format"  '             Linux kernel' "$(uname -r)"
     vmsg 8 "$cpu_format"  '             Screen width' "$SCREEN_WIDTH"
     vmsg 8 "$cpu_format"  '              Kernel arch' "$(uname -m)"
 
@@ -4378,7 +4378,7 @@ mount_homefs() {
     if mount -o move $temp_home $real_home; then
         HOMEFS_DEV=$PERSIST_DEVICE
         msg "Enabled %s persistence" "$(cq home)"
-        PERSISTENCE="$PERSISTENCE,home"
+        PERSISTENCE="$PERSISTENCE${PERSISTENCE:+,}home"
     else
         err "Strange, couldn't move the homefs mountpoint"
         [ "$need" ] && non_fatal "Could not enable required %s persistence" "$(pqh home!)"
