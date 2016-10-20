@@ -96,7 +96,6 @@ load_translation
         update-menus
     fi
 
-
     KEYTABLE=${CMD_KEYS:-$KEYTABLE}
     if [ -n "$KEYTABLE" -a -z "$NO_LOAD_KEYS" ]; then
         echo_live "Configuring console for a %s keymap" "$(pquote $KEYTABLE)"
