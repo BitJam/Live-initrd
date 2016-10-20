@@ -183,8 +183,7 @@ read_params() {
 }
 
 fatal() {
-    local fmt=$1
-    shift
+    local fmt=$1; shift
     printf "$ME fatal error: $fmt\n" "$@" >&2
     exit 2
 }
