@@ -18,6 +18,7 @@ MSTATE_FILES="# File: machine-state-files
 /etc/modprobe.d/hang-on-shutdown.conf
 /etc/modprobe.d/i915-power-saving.conf
 /etc/modprobe.d/iwlwifi-no-blink.conf
+/etc/modules
 /etc/udev/rules.d/*-persistent-net.rules
 # /etc/X11/xorg.conf
 /var/lib/alsa/asound.state"
