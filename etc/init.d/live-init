@@ -492,7 +492,7 @@ make_xorg_conf() {
     #     && args=vbox${args:+,}$args
 
     if  [ -z "$no_default" -a -z "$safe_mode" ]; then
-        echo_live "Forcing X-windows to use default mode"
+        echo_live "Forcing X-Windows to use default mode"
         args=default${args:+,}$args
     fi
 
