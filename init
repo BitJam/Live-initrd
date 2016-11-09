@@ -2776,7 +2776,7 @@ _yes_no() {
 
     local err_msg=$(printf "You must answer %s or %s. Please try again" $(pqe y) $(pqe n))
     while true; do
-        echo -e "$title?"
+        echo -e "$title"
         printf "${m_co}$y_lett=$yes. $n_lett=$no. %s $def_lab\n" "The default is"
         echo -n "$green>$nc_co "
 
@@ -3214,10 +3214,10 @@ label_device() {
 
     if [ "$old" ]; then
         vmsg 1 "The device %s already has label %s" $(pq $dev) "$(pq $old)"
-        yes_NO "Update label on %s from %s to %s" $(pq $dev) "$(pq "$old")" "$(pq "$new")" || return
+        yes_NO "Update label on %s from %s to %s?" $(pq $dev) "$(pq "$old")" "$(pq "$new")" || return
     else
         vmsg 1 "The device %s has no label" $(pq $dev)
-        yes_NO "Give %s the label %s" $(pq $dev) "$(pq "$new")" || return
+        yes_NO "Give %s the label %s?" $(pq $dev) "$(pq "$new")" || return
     fi
 
     log_cmd ld_path $pre "$new" $post 2>&1 || return
@@ -4368,7 +4368,7 @@ mount_homefs() {
     fi
 
     if ! offer_copy_home_dir  $real_home  $temp_home; then
-        if ! YES_no "Do you want to enable home persistence anyway"; then
+        if ! YES_no "Do you want to enable home persistence anyway?"; then
             log_cmd umount $temp_home
             return
         fi
@@ -4402,7 +4402,7 @@ offer_copy_home_dir() {
         return 1
     fi
 
-    YES_no "Do you want to copy the files to the home persistence device" \
+    YES_no "Do you want to copy the files to the home persistence device?" \
         || return 2
 
     # copy files here
