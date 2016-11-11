@@ -589,7 +589,7 @@ read_late_cmdline_params() {
         # Convenience short cuts from our menus
                     persist_all) PERSIST='root!,home'                 ;;
                    persist_root) PERSIST='root!'                      ;;
-                persist_statict) PERSIST='root!,home,static'          ;;
+                 persist_static) PERSIST='root!,home,static'          ;;
                    persist_home) PERSIST='home!'                      ;;
 
                  frugal_persist) set_frugal 'root!,home'              ;;
