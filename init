@@ -4976,7 +4976,11 @@ prepare_switch_root() {
 
     ln -s . $new_live/live
 
-    test -e /live/README && cp /live/README $new_live/
+    local f
+    for f in README LICENSE; do
+        test -e /live/$f && cp /live/$f $new_live/
+    done
+
     # cp -a /bin/shutdown $new_live/
 
     mkdir -p $new_live/oldroot
