@@ -26,7 +26,7 @@
 
                      ME="initrd init"
                 VERSION="7.60.11"
-           VERSION_DATE="Wed Nov 23 03:40:58 MST 2016"
+           VERSION_DATE="Wed Nov 23 16:01:54 MST 2016"
               DEVELOPER="BitJam"
          BUG_REPORT_URL="liveboot@mxlinux.org"
 
