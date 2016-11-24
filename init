@@ -1068,8 +1068,10 @@ read_xlat() {
     [ -e "$font" ] || font=$def_font
 
     # Clear screen if we have previously set a font
-    [ -n "$PREVIOUS_FONT" -a -z "$NO_CLEAR" ] && clear
-    [ "$font" != "$def_font" ] && PREVIOUS_FONT=$font
+    #[ -n "$PREVIOUS_FONT" -a -z "$NO_CLEAR" ] && clear
+    #[ "$font" != "$def_font" ] && PREVIOUS_FONT=$font
+
+    [ "$NO_CLEAR" ] || clear   # Clear and reset screen
 
     vmsg 7 'Setting font to %s' $(pq $(basename $font))
     log_cmd setfont $font -C $(tty)
