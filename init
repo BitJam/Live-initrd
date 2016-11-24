@@ -1059,13 +1059,20 @@ read_xlat() {
     local prog=$1  lang=${2%%_*}
     local xdir=$LOCALE_DIR/xlat
     local fdir=$LOCALE_DIR/fonts
+    local def_font=$fdir/default
 
     local xlat=$xdir/en/$prog.xlat
     [ -r $xlat ] && . $xlat
 
-    # Always load a font
-    local font=$fdir/${lang:-default}
-    [ -e "$font" ] && log_cmd setfont $font -C $(tty)
+    local font=$fdir/${lang:-default}  # don't want an empty $lang
+    [ -e "$font" ] || font=$def_font
+
+    # Clear screen if we have previously set a font
+    [ -n "$PREVIOUS_FONT" -a -z "$NO_CLEAR" ] && clear
+    [ "$font" != "$def_font" ] && PREVIOUS_FONT=$font
+
+    vmsg 7 'Setting font to %s' $(pq $(basename $font))
+    log_cmd setfont $font -C $(tty)
 
     local alt=$DISTRO_ASCII_PRETTY_NAME
     [ -n "$lang" -a -e $fdir/$lang -a -n "$alt" ] && DISTRO_PRETTY_NAME=$alt
@@ -1075,7 +1082,7 @@ read_xlat() {
     xlat=$xdir/$lang/$prog.xlat
     [ -r "$xlat" ] || return
     . $xlat
-    vmsg 7 'Translate to %s' $lang
+    vmsg 7 'Translate to %s' $(pq $lang)
 }
 
 do_welcome() {
