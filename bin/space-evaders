@@ -371,7 +371,7 @@ draw_shot() {
     # Trim rows and columns if sides or bottom are empty
     [ $hit_row = $rows ] && remove_rows
 
-    [ $hit_col = 1 ]           && trim_lead_cols
+    [ $hit_col = 1 ]     && trim_lead_cols
     [ $hit_col = $cols ] && trim_trail_cols
 
 }
