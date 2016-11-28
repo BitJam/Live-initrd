@@ -325,7 +325,7 @@ draw_shot() {
 
     # Grab 3 (or 2) chars where possible hit occurred
     local row=$(( 1 + rel_y / 2 ))
-    local hit="$(eval echo -e \"\$A_0$row\" | sed -n "s/.\{$rel_x\}\(...\?\).*/\1/p")"
+    local hit="$(eval echo -ne \"\$A_0$row\" | sed -n "s/.\{$rel_x\}\(...\?\).*/\1/p")"
     local bonus
 
     [ ${#hit} -lt 2 ] && return 1
@@ -343,7 +343,7 @@ draw_shot() {
     # Erase the alien that was hit
     local start_x=$((rel_x - rel_x % alien_chars))
     for type in $seq_alien_types; do
-        eval A_$type$row='"$(eval echo -e \"\$A_$type$row\" | sed "s/\(.\{$start_x\}\).../\1   /")"'
+        eval A_$type$row='"$(eval echo -ne \"\$A_$type$row\" | sed "s/\(.\{$start_x\}\).../\1   /")"'
     done
 
     # Align explosion on alien
@@ -381,7 +381,7 @@ remove_rows() {
 
     # Remove consecutive empty rows starting at the bottom
     for row in $(seq $rows -1 1); do
-        eval echo -e \"\$A_0$row\" | grep -q  '[^\ ]' && return
+        eval echo -ne \"\$A_0$row\" | grep -q  '[^\ ]' && return
         echo "remove row: $row" >&2
         rows=$((rows - 1))
         alien_height=$((2 * rows))
@@ -394,13 +394,13 @@ trim_lead_cols() {
 
     # Is the first column empty in all rows?
     for row in $seq_rows; do
-        eval echo -e \"\$A_0$row\" | grep -q "^   " || return
+        eval echo -ne \"\$A_0$row\" | grep -q "^   " || return
     done
 
     #echo "Trim lead column" >&2
     for row in $seq_rows; do
         for type in $seq_alien_types; do
-            eval A_$type$row='"$(eval echo -e \"\$A_$type$row\" | sed "s/^   $pad//")"'
+            eval A_$type$row='"$(eval echo -ne \"\$A_$type$row\" | sed "s/^   $pad//")"'
         done
     done
     cols=$((cols - 1))
@@ -416,13 +416,13 @@ trim_trail_cols() {
 
     # Only trim of the last column is empty in all rows
     for row in $seq_rows; do
-        eval echo -e \"\$A_0$row\" | grep -q "   $pad$" || return
+        eval echo -ne \"\$A_0$row\" | grep -q "   $pad$" || return
     done
 
     #echo "Trim trailing column" >&2
     for row in $seq_rows; do
         for type in $seq_alien_types; do
-            eval A_$type$row='"$(eval echo -e \"\$A_$type$row\" | sed "s/   $pad$//")"'
+            eval A_$type$row='"$(eval echo -ne \"\$A_$type$row\" | sed "s/   $pad$//")"'
         done
     done
     cols=$((cols - 1))
@@ -436,7 +436,7 @@ trim_trail_cols() {
 
 hide_tty() {
     stty cbreak -echo
-    echo -e $cursor_off
+    echo -ne $cursor_off
 }
 
 refresh() {
