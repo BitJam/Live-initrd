@@ -641,8 +641,8 @@ start_space_evaders() {
     done
 
     # We need the getch helper for non-blocking stdin
-    local getch=
-    for try_getch in $getch ./getch getch ./getch-64 getch-64; do
+    local getch=  my_dir=$(readlink -f "$(dirname "$0")")
+    for try_getch in $getch $my_dir/getch $my_dir/getch-64 ./getch getch ./getch-64 getch-64; do
         [ -n "$($try_getch 2>&1)" ] && continue
         getch=$try_getch
         break
