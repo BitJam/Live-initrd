@@ -247,12 +247,11 @@ draw_alien_row() {
     local y=$((alien_y + 2 * row - 2))
 
     # Erase row when move down
-    [ $alien_x -eq $alien_max_x ] && eval echo -e "$e[$((y - 1))\;${alien_x}H'${line}'"
+    [ $alien_x -eq $alien_max_x ] && echo -ne "$e[$((y - 1));${alien_x}H${line}"
 
     # Draw row
     eval local co_row=\$co_$row local b_type=\$A_$a_type$row
-    #eval echo -e \"$e[$y\;${alien_x}H$co_row \$A_$a_type$row\"
-    printf "$e[$y;${alien_x}H$co_row $b_type"
+    echo -ne "$e[$y;${alien_x}H$co_row $b_type"
 }
 
 update_aliens() {
