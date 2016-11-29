@@ -110,6 +110,7 @@ MKFS_FREE_MARGIN=10
    OPTIONS_ENTRIES="toram|from=usb|password|nousb2"
 
           LAZYTIME=""
+      MADE_BY_FILE="made-by-live-usb-maker"
 
 set_live_dirs() {
     local dir=$1
@@ -4750,6 +4751,12 @@ Initrd_Out
     [ -d /sys/class/power_supply ] \
         && grep -q Battery /sys/class/power_supply/*/type 2>/dev/null \
         && touch $dir/laptop
+
+    local f full
+    for f in version $MADE_BY_FILE; do
+        full=$BOOT_MP/$f
+        test -e $fill && cp $full $dir/
+    done
 }
 
 old_write_output_files() {
