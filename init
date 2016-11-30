@@ -25,8 +25,8 @@
 # that you don't want users to be able to adjust.
 
                      ME="initrd init"
-                VERSION="7.60.15"
-           VERSION_DATE="Tue Nov 29 14:45:37 MST 2016"
+                VERSION="7.60.16"
+           VERSION_DATE="Wed Nov 30 14:43:50 MST 2016"
               DEVELOPER="BitJam"
          BUG_REPORT_URL="liveboot@mxlinux.org"
 
@@ -4755,7 +4755,7 @@ Initrd_Out
     local f full
     for f in version $MADE_BY_FILE; do
         full=$BOOT_MP/$f
-        test -e $fill && cp $full $dir/
+        test -e $full && cp $full $dir/
     done
 }
 
