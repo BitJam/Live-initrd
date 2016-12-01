@@ -110,11 +110,8 @@ MKFS_FREE_MARGIN=10
    OPTIONS_ENTRIES="toram|from=usb|password|nousb2"
 
           LAZYTIME=""
-<<<<<<< HEAD
       MADE_BY_FILE="made-by-live-usb-maker"
-=======
     PROG_BAR_WIDTH=85
->>>>>>> prog-bar
 
 set_live_dirs() {
     local dir=$1
