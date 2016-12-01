@@ -25,8 +25,8 @@
 # that you don't want users to be able to adjust.
 
                      ME="initrd init"
-                VERSION="7.62.01"
-           VERSION_DATE="Thu Nov 24 22:19:31 MST 2016"
+                VERSION="7.62.02"
+           VERSION_DATE="Wed Nov 30 17:08:56 MST 2016"
               DEVELOPER="BitJam"
          BUG_REPORT_URL="liveboot@mxlinux.org"
 
@@ -333,12 +333,11 @@ main_core() {
     show_bootcodes "$(live_param_filter $UNKNOWN_BOOTCODES)"
     show_integer_errors "$INTEGER_ERRORS"
     show_disable_errors "$DISABLE_SERVICES" "$DS_PARAM"
+
     breakpoint 2 "before coldplug"
 
     check_unionfs
-
     coldplug_delay
-
     coldplug_modules
 
     # local orig_fb_name
@@ -390,6 +389,7 @@ main_core() {
 
     BOOT_UUID=$(device_uuid $SQFILE_DEV)
     [ "$BOOT_UUID" ] && vmsg 6 "boot device uuid: $BOOT_UUID"
+
     breakpoint 4 "after mounting boot device"
 
     mount -o remount,rw $SQFILE_DEV 2>/dev/null
