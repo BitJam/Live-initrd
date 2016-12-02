@@ -4347,8 +4347,8 @@ mount_and_copy_rootfs() {
 _mount_and_copy_rootfs() {
     mount_persist_file rootfs "$ROOTFS_MP" root "$WANT_ROOTFS" "$NEED_ROOTFS" || return 1
     PERSIST_ROOT_FULL="$PERSIST_FULL_PATH/rootfs"
-    check_vid "$SQFS_VID" "$ROOTFS_BASE" rootfs.ver                           || return 1
     check_existing_unionfs $ROOTFS_MP                                         || return 1
+    check_vid "$SQFS_VID" "$ROOTFS_BASE" rootfs.ver                           || return 1
     [ "$STATIC_ROOT" ] || copy_persist_to_ram                                 || return 1
 
     return 0
