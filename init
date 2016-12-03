@@ -737,6 +737,9 @@ read_cmdline_params()
                           issue) FORCE_ISSUE=true                                ;;
 
                          noprog) NO_PROGRESS=true                                ;;
+
+                      confont=*) CON_FONT=$value                                 ;;
+
         #----- These get interpreted late but we don't want them to be unknown
                 hwclock=*|hwc=*)  ;;
                          frugal)  ;;
@@ -1070,6 +1073,7 @@ read_xlat() {
     local font=$fdir/${lang:-default}  # don't want an empty $lang
     [ -e "$font" ] || font=$def_font
 
+    [ "$CON_FONT" -a -e "$fdir/$CON_FONT" ] && font=$fdir/$CON_FONT
     # Clear screen if we have previously set a font
     #[ -n "$PREVIOUS_FONT" -a -z "$NO_CLEAR" ] && clear
     #[ "$font" != "$def_font" ] && PREVIOUS_FONT=$font
