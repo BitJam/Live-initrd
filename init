@@ -3000,7 +3000,7 @@ do_early_menus() {
     case $MENU_VALUE in
         lang=*) LANG=${MENU_VALUE#lang=}
                 read_xlat init $LANG       ;;
-         reset) read_xlat                  ;;
+         reset) read_xlat init             ;;
     esac
 
     my_select_menu "Select Timezone"           "Timezones are listed by longitude"     t tz       "Timezone"      'tz=*'
