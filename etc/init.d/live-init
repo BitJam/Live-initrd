@@ -409,7 +409,7 @@ localize_repo() {
     sources_dir=/etc/apt/sources.list.d
     first_write $sources_dir || [ "$mirror" -o "$tz" -o "${IGNORE_REPO}" ] || return
 
-    [ "$DB_PLUS" ] && args="--verbose${args:+ }$args"
+    #[ "$DB_PLUS" ] && args="--verbose${args:+ }$args"
 
     #. Localizing source repos using <timezone|country-code>
     echo_live "Localizing source repos using %s" "$(wq $args)"
