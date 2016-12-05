@@ -46,6 +46,9 @@ for param in $CMDLINE; do
     esac
 done
 
+test -e /live/config/low-color && COLOR_LOW=true
+test -e /live/config/no-color  && COLOR_OFF=true
+
 if ! [ "$COLOR_OFF" ]; then
     NO_COLOR="[0m"
     RED="[1;31m"
