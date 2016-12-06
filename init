@@ -30,7 +30,7 @@
               DEVELOPER="BitJam"
          BUG_REPORT_URL="liveboot@mxlinux.org"
 
-# This are all times in seconds, not attempts
+# These are all times in seconds, not attempts
              BOOT_RETRY=15
            FRUGAL_RETRY=10
           PERSIST_RETRY=10
