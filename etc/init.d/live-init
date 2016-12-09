@@ -414,7 +414,7 @@ localize_repo() {
     #. Localizing source repos using <timezone|country-code>
     echo_live "Localizing source repos using %s" "$(wq $args)"
 
-    localize-repo $args
+    localize-repo --quiet $args
 }
 
 set_utc_local() {
