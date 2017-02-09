@@ -15,13 +15,15 @@ usage() {
     cat <<Usage
 Usage:  $ME [options]
 
+Unpack and repack the live initrd.gz for antiX and MX.
+
 Options:
   -c  --clear          Delete directory before unpacking
   -d  --dir=<dir>      Unpack in <dir> instead of $INITRD_DIR
   -i  --initrd=<file>  Unpack <file> instead of $INITRD_FILE
   -h, --help           Show this usage
   -p, --pretend        Show commands without running them
-  -r  --repack         Repack the init
+  -r  --repack         Repack the initrd
   -v  --verbose        Show commands in addition to running them
 Usage
 
