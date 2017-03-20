@@ -28,7 +28,7 @@
                 VERSION="7.70.01"
            VERSION_DATE="Sun Mar 19 22:16:58 MDT 2017"
               DEVELOPER="BitJam"
-         BUG_REPORT_URL="liveboot@mxlinux.org"
+         BUG_REPORT_URL="liveboot@antixlinux.org"
 
 # These are all times in seconds, not attempts
              BOOT_RETRY=15
