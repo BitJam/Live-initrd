@@ -113,6 +113,10 @@ MKFS_FREE_MARGIN=10
       MADE_BY_FILE="made-by-live-usb-maker"
     PROG_BAR_WIDTH=85
 
+    #           HUP INT QUIT SEGV TERM
+    SIGNAL_LIST="1   2   3    11   15"
+
+
 set_live_dirs() {
     local dir=$1
 
@@ -152,9 +156,7 @@ main_wrapper() {
     set_live_dirs $LIVE_DIR
     mkdir -p $OUTPUT_DIR
 
-    # Don't allow interrupts to ruin our day
-    #       HUP INT QUIT SEGV TERM
-    trap "" 1   2   3    11   15
+    trap "" $SIGNAL_LIST
 
     umask 022
 
@@ -2472,9 +2474,16 @@ breakpoint() {
     echo "$green    Use$white safe-poweroff$green and$white safe-reboot$green to poweroff and reboot"
 
     local bp_time_1=$(get_time)
+
+    trap - $SIGNAL_LIST
+
     env PS1="${green}bp $red$bp$cyan>$nc_co " BP=$bp PATH=$LIVE_BIN:$PATH \
         setsid cttyhack sh 17>/dev/null
+
+    trap "" $SIGNAL_LIST
+
     bp_time_2=$(get_time)
+
     time_0=$((time_0 + bp_time_2 - bp_time_1))
     echo
 }
@@ -2497,7 +2506,13 @@ Chroot_RC
     echo "$green    Use$white poweroff$green and$white reboot$green to poweroff and reboot"
 
     rm -f $root_dir/poweroff $/root_dir/reboot
+
+    trap - $SIGNAL_LIST
+
     setsid cttyhack aufs-chroot bash --init-file $rc_file
+
+    trap "" $SIGNAL_LIST
+
     local do_poweroff do_reboot
     test -e $root_dir/poweroff && do_poweroff=true
     test -e $root_dir/reboot   && do_reboot=true
