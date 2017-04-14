@@ -20,10 +20,11 @@ Unpack and repack the live initrd.gz for antiX and MX.
 Options:
   -c  --clear          Delete directory before unpacking
   -d  --dir=<dir>      Unpack in <dir> instead of $INITRD_DIR
-  -i  --initrd=<file>  Unpack <file> instead of $INITRD_FILE
+  -f  --from=<file>    Unpack <file> instead of $INITRD_FILE
   -h, --help           Show this usage
   -p, --pretend        Show commands without running them
   -r  --repack         Repack the initrd
+  -q  --quiet          Don't say anything
   -v  --verbose        Show commands in addition to running them
 Usage
 
@@ -37,10 +38,11 @@ eval_argument() {
                -dir|d) INITRD_DIR=$val                 ;;
                -dir=*) INITRD_DIR=$val                 ;;
               -help|h) usage                           ;;
-            -initrd|i) INITRD_FILE=$val                ;;
-            -initrd=*) INITRD_FILE=$val                ;;
+              -from|f) INITRD_FILE=$val                ;;
+              -from=*) INITRD_FILE=$val                ;;
            -pretend|p) PRETEND=true                    ;;
             -repack|r) REPACK=true                     ;;
+             -quiet|q) QUIET=true                      ;;
            -verbose|v) VERBOSE=true                    ;;
                     *) fatal "Unknown parameter -$arg" ;;
     esac
@@ -49,7 +51,7 @@ eval_argument() {
 takes_param() {
     case $1 in
         -dir|[d]) return 0 ;;
-     -initrd|[i]) return 0 ;;
+       -from|[f]) return 0 ;;
     esac
     return 1
 }
@@ -65,8 +67,10 @@ main() {
     [ $# -gt 0 ] && fatal "Unexpected arguments: %s" "$*"
 
     if [ "$REPACK" ]; then
+        qsay "Repack <%s> from directory <%s>" "$INITRD_FILE" "$INITRD_DIR"
         repack_initrd "$INITRD_FILE" "$INITRD_DIR"
     else
+        qsay "Unpack <%s> to directory <%s>" "$INITRD_FILE" "$INITRD_DIR"
         unpack_initrd "$INITRD_FILE" "$INITRD_DIR"
     fi
 
@@ -107,7 +111,8 @@ repack_initrd() {
     (cd "$dir" && cmd find . | grep -v "^\./\." | cmd cpio $CPIO_OPTS) \
         | gzip -9 | cmd write_file "$file" 
 
-    (cd "$targ_dir" && cmd md5sum "$(basename "$file")" | cmd write_file "$file.md5")
+    local fname=$(basename $file)
+    (cd "$targ_dir" && cmd md5sum "$(basename "$fname")" | cmd write_file "$fname.md5")
 }
 
 empty_dir() {
@@ -182,6 +187,13 @@ read_params() {
 
         eval_argument "$arg" "$val"
     done
+}
+
+qsay() {
+    [ "$QUIET" ] && return
+    local fmt=$1
+    shift
+    printf "$fmt\n" "$@"
 }
 
 fatal() {
