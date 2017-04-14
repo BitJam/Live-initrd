@@ -86,6 +86,8 @@
 
           VID_NAME=VID
       LINUXFS_NAME=linuxfs
+        CRYPT_NAME=crypt
+      CRYPT_MAPPER=live-boot
 
         BLACK_LIST=
    BLACK_LIST_FILE=/etc/modprobe.d/initrd.conf
@@ -131,6 +133,7 @@ set_live_dirs() {
         PERSIST_MP="$dir/persist-dev"
            SQFS_MP="$dir/linux"         # where the linuxfs file gets *mounted*
       WRAP_FILE_MP="$dir/wrapper"
+          PLAIN_MP="$dir/plain"
         OUTPUT_DIR="$dir/config"
         LOCALE_DIR="$dir/locale"
         CUSTOM_DIR="$dir/custom"
@@ -372,6 +375,8 @@ main_core() {
     # will always work
     #[ "$NO_EHCI" ] && disable_hcd ehci
 
+    #[ "$SET_CRYPT" -a -z "$NO_CRYPT" ] && setup_crypt "$CRYPT_ID" "$BOOT_DIR/$CRYPT_NAME" "$BOOT_MP"
+
     breakpoint 3 "before looking for linuxfs file"
 
     RW_MODE=ro
@@ -543,7 +548,6 @@ system_mount() {
     mount -t devpts devpts $dir/dev/pts
 }
 
-
 make_nodes() {
     local dir=$1
     mkdir -p $dir
@@ -653,6 +657,13 @@ read_cmdline_params()
           persistuuid=*|puuid=*) PERSIST_ID=uuid=$value   ;  SET_PERSIST=true    ;;
             persistdev=*|pdev=*) PERSIST_ID=name=$value   ;  SET_PERSIST=true    ;;
 
+                        nocrypt) NO_CRYPT=true                                   ;;
+#-?                          crypt)                             SET_CRYPT=true      ;;
+#-?                        crypt=*) CRYPT_NAME=$value        ;  SET_CRYPT=true      ;;
+#-?   cryptlabel=*|clabel=*|clab=*) CRYPT_ID=label=$value    ;  SET_CRYPT=true      ;;
+#-?            cryptuuid=*|cuuid=*) CRYPT_ID=uuid=$value     ;  SET_CRYPT=true      ;;
+#-?              cryptdev=*|cdev=*) CRYPT_ID=dev=$value      ;  SET_CRYPT=true      ;;
+#-?
                          btry=*) small_int CMD_BOOT_RETRY $param                 ;;
                          ftry=*) small_int CMD_FRUGAL_RETRY $param               ;;
                          ptry=*) small_int CMD_PERSIST_RETRY $param              ;;
@@ -944,6 +955,8 @@ read_cmdline_params()
         USER_UID=0
         USER_GID=0
     fi
+
+    #-??? test -e /bin/cryptsetup || NO_CRYPT=true
 }
 
 
@@ -1358,6 +1371,58 @@ get_drive() {
     esac
 }
 
+setup_crypt() {
+
+    local crypt_id=$1  crypt_files=$2  boot_mp=$3  plain_mp=${4:-$PLAIN_MP}
+
+    msg "Looking for crypt partition ..."
+
+    local crypt_dev
+    if [ "$crypt_id" ]; then
+
+        fatal "FIXME: find crypt device"
+
+    else
+        # Search for traditional boot partition with "crypt" file (a bit lame)
+        find_files 'crypt' "$crypt_files" "$plain_mp"  "" "$BOOT_RETRY" \
+            || fatal  "%s file not found" "$crypt_files"
+
+        umount $plain_mp
+        crypt_dev=$FOUND_DEV
+    fi
+
+    # yes, redundant
+    [ -z "$crypt_id" -o -z "${crypt_id##label=*}" ] && crypt_dev=$(next_partition $crypt_dev)
+
+    msg "Found_crypt: %s" "$crypt_dev"
+
+    if cryptsetup isLuks $crypt_dev; then
+        cryptsetup luksOpen $crypt_dev $CRYPT_MAPPER
+    else
+        #. Device </dev/sdb2> does not appear to be a <LUKS> device
+        fatal "Device %s does not appear to be a %s device" "$crypt_dev" "LUKS"
+    fi
+
+    for module in dm-crypt dm-mod serpent sha256 blowfish aes; do
+        load_module $module
+    done
+}
+
+next_partition() {
+    local device=$1  dev=${1##*/}
+    local pre=${device%%$dev}
+    local root  part
+    case $dev in
+        mmcblk*p[1-9]) root=${dev%[1-9]}  ; part=${dev#${root}}  ;;
+          nvme*p[1-9]) root=${dev%[1-9]}  ; part=${dev#${root}}  ;;
+                    *) root=${dev%[0-9]}  ; root=${root%[0-9]}
+                       part=${dev#$root}                         ;;
+    esac
+    part=$((part + 1))
+    echo "$pre$root$part"
+}
+
+
 #------------------------------------------------------------------------------
 # Function: from_filter <device-list>
 #
@@ -1460,7 +1525,7 @@ find_boot_file() {
 }
 
 #------------------------------------------------------------------------------
-# Function: find_files <files> <mntpnt> <dev> <label> <uuid> <retry>
+# Function: find_files <type> <files> <mntpnt> <device_id> <retry_time>
 #
 # The outer wrapper lets us show the loop times regardless of how we left the
 # main code in _find_files().
@@ -1723,6 +1788,7 @@ _find_files() {
                 fi
                 FOUND_DEV=$dev
                 FOUND_MP=$mntpnt
+                FOUND_FNAME=$fname
                 return 0
             done
             [ "$mounted" ] && mountpoint -q $mp_orig && umount $mp_orig
@@ -1995,8 +2061,35 @@ find_linuxfs_file() {
 
         DID_ISO=true
     else
-        find_boot_file "$SQFILE_FILE" "$BOOT_MP" "$BOOT_ID" "$BOOT_RETRY" \
-            || linuxfs_error "Could not find %s file %s" "$LINUXFS_NAME" "$(fqe \"$SQFILE_FILE\")"
+        if [ "$NO_CRYPT" ]; then
+            # Normal path
+            find_boot_file "$SQFILE_FILE" "$BOOT_MP" "$BOOT_ID" "$BOOT_RETRY" \
+                || linuxfs_error "Could not find %s file %s" "$LINUXFS_NAME" "$(fqe \"$SQFILE_FILE\")"
+        else
+            # Look for crypt file as well as sqfile_file
+            local boot_dir=$(dirname $SQFILE_FILE)
+            local crypt_full=$boot_dir/$CRYPT_NAME
+            local files="$crypt_full $SQFILE_FILE"
+            msg "Trying encrypted boot ..."
+            msg "Look for files %s" "<$(fq $files)>"
+            # FIXME: error message
+            find_boot_file "$files" "$BOOT_MP" "$BOOT_ID" "$BOOT_RETRY" \
+                || linuxfs_error "Could not find %s file %s" "$LINUXFS_NAME" "$(fqe \"$SQFILE_FILE\")"
+
+            if [ "$FOUND_FNAME" = "$crypt_full" ] ; then
+                local crypt_dev=$(next_partition $FOUND_DEV)
+                msg "Trying encrypted boot on %s ..." "$crypt_dev"
+                test -e $crypt_dev || fatal "Crypt device %s does not exist"        $crypt_dev
+                test -b $crypt_dev || fatal "Crypt device %s is not a block device" $crypt_dev
+                cryptsetup isLuks $crypt_dev || fatal "Crypt device %s is not a LUKS device" $crypt_dev
+                cttyhack cryptsetup luksOpen $crypt_dev $CRYPT_MAPPER || fatal "Could not open LUKS device %s" $crypt_dev
+                local mapper_dev=/dev/mapper/$CRYPT_MAPPER
+                msg "Opened encrypted device %s at %s" "$crypt_dev" "$mapper_dev"
+                try_mount "$mapper_dev" "$BOOT_MP" || fatal "Could not mount encrypted device"
+                test -e "$BOOT_MP/$SQFILE_FILE" || fatal "Could not find file %s on encrypted partition" "$SQFILE_FILE"
+                BOOT_FSTYPE=$(mntpnt_fstype $BOOT_MP)
+            fi
+        fi
 
         SQFILE_MP=$BOOT_MP
 
