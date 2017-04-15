@@ -1371,43 +1371,6 @@ get_drive() {
     esac
 }
 
-setup_crypt() {
-
-    local crypt_id=$1  crypt_files=$2  boot_mp=$3  plain_mp=${4:-$PLAIN_MP}
-
-    msg "Looking for crypt partition ..."
-
-    local crypt_dev
-    if [ "$crypt_id" ]; then
-
-        fatal "FIXME: find crypt device"
-
-    else
-        # Search for traditional boot partition with "crypt" file (a bit lame)
-        find_files 'crypt' "$crypt_files" "$plain_mp"  "" "$BOOT_RETRY" \
-            || fatal  "%s file not found" "$crypt_files"
-
-        umount $plain_mp
-        crypt_dev=$FOUND_DEV
-    fi
-
-    # yes, redundant
-    [ -z "$crypt_id" -o -z "${crypt_id##label=*}" ] && crypt_dev=$(next_partition $crypt_dev)
-
-    msg "Found_crypt: %s" "$crypt_dev"
-
-    if cryptsetup isLuks $crypt_dev; then
-        cryptsetup luksOpen $crypt_dev $CRYPT_MAPPER
-    else
-        #. Device </dev/sdb2> does not appear to be a <LUKS> device
-        fatal "Device %s does not appear to be a %s device" "$crypt_dev" "LUKS"
-    fi
-
-    for module in dm-crypt dm-mod serpent sha256 blowfish aes; do
-        load_module $module
-    done
-}
-
 next_partition() {
     local device=$1  dev=${1##*/}
     local pre=${device%%$dev}
@@ -1421,7 +1384,6 @@ next_partition() {
     part=$((part + 1))
     echo "$pre$root$part"
 }
-
 
 #------------------------------------------------------------------------------
 # Function: from_filter <device-list>
