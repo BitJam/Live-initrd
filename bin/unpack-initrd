@@ -21,8 +21,8 @@ Options:
   -c  --clear          Delete directory before unpacking
   -d  --dir=<dir>      Unpack in <dir> instead of $INITRD_DIR
   -f  --from=<file>    Unpack <file> instead of $INITRD_FILE
-  -h, --help           Show this usage
-  -p, --pretend        Show commands without running them
+  -h  --help           Show this usage
+  -p  --pretend        Show commands without running them
   -r  --repack         Repack the initrd
   -q  --quiet          Don't say anything
   -v  --verbose        Show commands in addition to running them
