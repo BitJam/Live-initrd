@@ -48,7 +48,9 @@ do_gfxsave() {
     export CMDLINE
     export GFX_LOG_FILE=/var/log/live/gfxsave.log
 
-    local dir=/live/boot-dev/boot
+    local dir=/live/bios-dev/boot
+    test -d $dir || dir=/live/boot-dev/boot
+
     local script=/live/bin/gfxsave
 
     if ! [ -e /live/config/remasterable ]; then
