@@ -2045,12 +2045,13 @@ find_linuxfs_file() {
                 test -e $crypt_dev || fatal "Crypt device %s does not exist"        $crypt_dev
                 test -b $crypt_dev || fatal "Crypt device %s is not a block device" $crypt_dev
                 cryptsetup isLuks $crypt_dev || fatal "Crypt device %s is not a LUKS device" $crypt_dev
-                cttyhack cryptsetup luksOpen $crypt_dev $CRYPT_MAPPER || fatal "Could not open LUKS device %s" $crypt_dev
+                cttyhack cryptsetup open --type luks $crypt_dev $CRYPT_MAPPER || fatal "Could not open LUKS device %s" $crypt_dev
                 local mapper_dev=/dev/mapper/$CRYPT_MAPPER
                 msg "Opened encrypted device %s at %s" "$crypt_dev" "$mapper_dev"
                 try_mount "$mapper_dev" "$BOOT_MP" || fatal "Could not mount encrypted device"
                 test -e "$BOOT_MP/$SQFILE_FILE" || fatal "Could not find file %s on encrypted partition" "$SQFILE_FILE"
                 BOOT_FSTYPE=$(mntpnt_fstype $BOOT_MP)
+                DID_CRYPT=true
             fi
         fi
 
@@ -4928,6 +4929,7 @@ Initrd_Out
     [ "$DO_DEB"       ]                      && touch $dir/deb-install
     [ "$LOW_COLOR"    ]                      && touch $dir/low-color
     [ "$NO_COLOR"     ]                      && touch $dir/no-color
+    [ "$DID_CRYPT"    ]                      && touch $dir/encrypted
 
     echo "$DISTRO_NAME"                             > $dir/distro
 
@@ -5132,6 +5134,7 @@ late_umount() {
     #[ "$TO_RAM_EJECT" ] || return
 
     local dep
+    # Don't umount these devcies because they are actively used
     for dep in $HOMEFS_DEV $ROOTFS_DEV $LINUXFS_DEV; do
         [ "$dep" = "$dev" ] && return
     done
