@@ -87,7 +87,7 @@
           VID_NAME=VID
       LINUXFS_NAME=linuxfs
         CRYPT_NAME=crypt
-      CRYPT_MAPPER=live-boot
+         CRYPT_MAP=live-boot
 
         BLACK_LIST=
    BLACK_LIST_FILE=/etc/modprobe.d/initrd.conf
@@ -124,7 +124,7 @@ set_live_dirs() {
 
          FRUGAL_MP="$dir/frugal"
            BOOT_MP="$dir/boot-dev"
-           BIOS_MP="$dir/bios-mp"
+           BIOS_MP="$dir/bios-dev"
         ISO_DEV_MP="$dir/iso-dev"
        ISO_FILE_MP="$dir/iso-file"
           TORAM_MP="$dir/to-ram"
@@ -244,6 +244,7 @@ main_wrapper() {
     sync
     late_umount $PERSIST_DEVICE
     late_umount $SQFILE_DEV
+    late_umount $BIOS_DEV
 
     if [ -z "$DISABLE_STORE" ]; then
         if detect_old_persist_scripts $NEW_ROOT; then
@@ -529,6 +530,8 @@ SQFILE_DEV="$SQFILE_DEV"
 HOMEFS_DEV="$HOMEFS_DEV"
 ROOTFS_DEV="$ROOTFS_DEV"
 LINUXFS_DEV="$LINUXFS_DEV"
+BIOS_DEV="$BIOS_DEV"
+CRYPT_DEV="$CRYPT_DEV"
 Late_Umount
 }
 
@@ -2036,22 +2039,30 @@ find_linuxfs_file() {
             msg "Trying encrypted boot ..."
             msg "Look for files %s" "<$(fq $files)>"
             # FIXME: error message
-            find_boot_file "$files" "$BIOS_MP" "$BOOT_ID" "$BOOT_RETRY" \
+            find_boot_file "$files" "$BOOT_MP" "$BOOT_ID" "$BOOT_RETRY" \
                 || linuxfs_error "Could not find %s file %s" "$LINUXFS_NAME" "$(fqe \"$SQFILE_FILE\")"
 
             if [ "$FOUND_FNAME" = "$crypt_full" ] ; then
+                BIOS_UUID=$(device_uuid $FOUND_DEV)
+
+                # Move mounted "bios" device out of the way
+                mkdir -p $BIOS_MP
+                log_cmd mount --move $BOOT_MP $BIOS_MP
+
                 local crypt_dev=$(next_partition $FOUND_DEV)
                 msg "Trying encrypted boot on %s ..." "$crypt_dev"
+
                 test -e $crypt_dev || fatal "Crypt device %s does not exist"        $crypt_dev
                 test -b $crypt_dev || fatal "Crypt device %s is not a block device" $crypt_dev
                 cryptsetup isLuks $crypt_dev || fatal "Crypt device %s is not a LUKS device" $crypt_dev
-                cttyhack cryptsetup open --type luks $crypt_dev $CRYPT_MAPPER || fatal "Could not open LUKS device %s" $crypt_dev
-                local mapper_dev=/dev/mapper/$CRYPT_MAPPER
+                cttyhack cryptsetup open --type luks $crypt_dev $CRYPT_MAP || fatal "Could not open LUKS device %s" $crypt_dev
+                local mapper_dev=/dev/mapper/$CRYPT_MAP
                 msg "Opened encrypted device %s at %s" "$crypt_dev" "$mapper_dev"
                 try_mount "$mapper_dev" "$BOOT_MP" || fatal "Could not mount encrypted device"
                 test -e "$BOOT_MP/$SQFILE_FILE" || fatal "Could not find file %s on encrypted partition" "$SQFILE_FILE"
                 BOOT_FSTYPE=$(mntpnt_fstype $BOOT_MP)
                 DID_CRYPT=true
+                CRYPT_DEV=crypt_dev
             fi
         fi
 
@@ -4874,6 +4885,7 @@ write_output_files() {
 AUFS_MP="$AUFS_MP"
 AUFS_RAM_MP="$AUFS_RAM_MP"
 AUFS_VID_FILE="$AUFS_MP$VID_FILE"
+BIOS_UUID="$BIOS_UUID"
 BOOT_DEV="$SQFILE_DEV"
 BOOT_FSTYPE="$BOOT_FSTYPE"
 BOOT_MP="$ORIG_SQFILE_MP"
@@ -5142,20 +5154,21 @@ late_umount() {
     # Don't umount if not mounted
     cut -d" " -f1 /proc/mounts | grep -q "^$dev$" || return
 
-    # if [ -z "$TO_RAM_EJECT" ]; then
-    #     case $(stat -c %t $dev) in
-    #         b) msg 'Will not late umount cd/dvd device %s' $(pq $dev)
-    #            return ;;
-    #     esac
-    # fi
-
     msg "umount %s" $(pq $dev)
+    local success
     for i in $(seq 1 5); do
         log_cmd umount $dev 2>/dev/null
-        cut -d" " -f1 /proc/mounts | grep -q "^$dev$" || return
-        usleep 500000
+        if cut -d" " -f1 /proc/mounts | grep -q "^$dev$"; then
+            usleep 500000
+            continue
+        fi
+        success=true
+        break
     done
-    err "umount of %s failed" $(pqe $dev)
+    [ "$success" ] || err "umount of %s failed" $(pqe $dev)
+
+    # If this was the encrypted device then close the mapping
+    [ "$dev" = "$CRYPT_DEV" ] && cryptsetup close "$CRYPT_MAP"
 }
 
 write_ntfs_pids() {
