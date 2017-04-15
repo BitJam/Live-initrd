@@ -956,7 +956,7 @@ read_cmdline_params()
         USER_GID=0
     fi
 
-    #-??? test -e /bin/cryptsetup || NO_CRYPT=true
+    test -e /bin/cryptsetup || NO_CRYPT=true
 }
 
 
