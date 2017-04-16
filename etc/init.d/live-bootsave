@@ -53,7 +53,8 @@ do_gfxsave() {
     test -d $dir || dir=$BOOT_MP/boot
     test -d $dir || return
 
-    echo_live "found directory %s" $dir
+    local dev=$(df -P $dir | tail -n1 | cut -d" " -f1)
+    mount -o remount,rw $dev
 
     local script=/live/bin/gfxsave
 
