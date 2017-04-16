@@ -1819,7 +1819,7 @@ device_fstype() {
 }
 
 mntpnt_fstype() {
-    local dev=$(df $1 | tail -n1 | cut -d" " -f1)
+    local dev=$(df -P $1 | tail -n1 | cut -d" " -f1)
     device_fstype $dev
 }
 
@@ -2137,7 +2137,7 @@ mount_linuxfs() {
             || fatal "Could not mount %s as a %s file" $sqfile_full 'filesystem'
     fi
 
-    LINUXFS_DEV=$(df $sqfile_full | tail -n1 | cut -d" " -f1)
+    LINUXFS_DEV=$(df -P $sqfile_full | tail -n1 | cut -d" " -f1)
 
     SQFS_VID=$(get_vid $vid_file)
 
@@ -3602,9 +3602,9 @@ copy_files() {
     return 0
 }
 
-all_space()      { $LIVE_BIN/df -m "$1" | awk '{size=$2}END{print size}' ;}
-used_space()     { $LIVE_BIN/df -m "$1" | awk '{size=$3}END{print size}' ;}
-avail_space()    { $LIVE_BIN/df -m "$1" | awk '{size=$4}END{print size}' ;}
+all_space()      { $LIVE_BIN/df -Pm "$1" | awk '{size=$2}END{print size}' ;}
+used_space()     { $LIVE_BIN/df -Pm "$1" | awk '{size=$3}END{print size}' ;}
+avail_space()    { $LIVE_BIN/df -Pm "$1" | awk '{size=$4}END{print size}' ;}
 du_size()        { du -scm "$@"         | tail -n1 | cut -f1             ;}
 get_mountpoint() { grep "^$1 " /proc/mounts | cut -d" " -f2              ;}
 
@@ -3613,7 +3613,7 @@ get_mountpoint() { grep "^$1 " /proc/mounts | cut -d" " -f2              ;}
 # compromise that will work well for most people in most situations.
 free_space() {
     local mp=$1
-    local free=$($LIVE_BIN/df -m $mp | awk '{size=$4}END{print size}')
+    local free=$($LIVE_BIN/df -Pm $mp | awk '{size=$4}END{print size}')
     local sparse new_free
     for sparse in $mp/*/rootfs $mp/*/homefs; do
         test -e $sparse || continue
@@ -3632,7 +3632,7 @@ dir_has_param() {
 
     [ -d "$dir" ] || return 1
 
-    local dev=$(df $dir | tail -n1 | cut -d" " -f1)
+    local dev=$(df -P $dir | tail -n1 | cut -d" " -f1)
     local params=$(grep "^$dev " /proc/mounts | cut -d" " -f4)
     case ,$params, in
         *,$want_param,*) return 0;;
@@ -4005,7 +4005,7 @@ _copy_to_ram() {
         format="%s: ${num_co}%12d${m_co} bytes"
         vmsg 1 "      Size of original %12s" $orig_bytes
         vmsg 1 "          Size of copy %12s" $dest_bytes
-        vmsg_nc 1 "$(df -m | grep $toram_mp)"
+        vmsg_nc 1 "$(df -Pm | grep $toram_mp)"
         return 5
     fi
 
@@ -4481,7 +4481,7 @@ copy_persist_to_ram() {
     vmsg 7 "$format" '              Persistence uses' $persist_used
     vmsg 6 "${hi_co}%s" "Copy persistent root to RAM succeeded"
 
-    DF_ROOTFS=$(df -P -m $ROOTFS_MP | tail -n 1 | sed 's/ \+/ /g')
+    DF_ROOTFS=$(df -Pm $ROOTFS_MP | tail -n 1 | sed 's/ \+/ /g')
     sync
     log_cmd umount $ROOTFS_MP
     return 0
