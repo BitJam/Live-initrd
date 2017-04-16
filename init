@@ -87,7 +87,8 @@
           VID_NAME=VID
       LINUXFS_NAME=linuxfs
         CRYPT_NAME=crypt
-         CRYPT_MAP=live-boot
+         CRYPT_MAP=boot
+     PHRASE_FNAME=.passphrase
 
         BLACK_LIST=
    BLACK_LIST_FILE=/etc/modprobe.d/initrd.conf
@@ -2026,14 +2027,17 @@ find_linuxfs_file() {
         SQFILE_PATH=${SQFILE_FILE%/*}
 
         DID_ISO=true
+
     else
+
         if [ "$NO_CRYPT" ]; then
             # Normal path
             find_boot_file "$SQFILE_FILE" "$BOOT_MP" "$BOOT_ID" "$BOOT_RETRY" \
                 || linuxfs_error "Could not find %s file %s" "$LINUXFS_NAME" "$(fqe \"$SQFILE_FILE\")"
         else
             # Look for crypt file as well as sqfile_file
-            local crypt_full="$(dirname $SQFILE_FILE)/$CRYPT_NAME"
+            local boot_dir=$(dirname $SQFILE_FILE)
+            local crypt_full="$boot_dir/$CRYPT_NAME"
             local files="$crypt_full $SQFILE_FILE"
             msg "Look for files %s" "<$(fq $files)>"
 
@@ -2055,6 +2059,11 @@ find_linuxfs_file() {
                 test -e $crypt_dev || fatal "Crypt device %s does not exist"        $crypt_dev
                 test -b $crypt_dev || fatal "Crypt device %s is not a block device" $crypt_dev
                 cryptsetup isLuks $crypt_dev || fatal "Crypt device %s is not a LUKS device" $crypt_dev
+
+                local phrase_full=$BIOS_MP/$boot_dir/$PHRASE_FNAME
+                test -f $phrase_full && reset_passphrase $phrase_full $crypt_dev
+
+                warn "Found encrypted device.  You will be asked to enter your passphrase below."
                 cttyhack cryptsetup open --type luks $crypt_dev $CRYPT_MAP || fatal "Could not open LUKS device %s" $crypt_dev
                 local mapper_dev=/dev/mapper/$CRYPT_MAP
                 msg "Opened encrypted device %s at %s" "$crypt_dev" "$mapper_dev"
@@ -2062,13 +2071,12 @@ find_linuxfs_file() {
                 test -e "$BOOT_MP/$SQFILE_FILE" || fatal "Could not find file %s on encrypted partition" "$SQFILE_FILE"
                 BOOT_FSTYPE=$(mntpnt_fstype $BOOT_MP)
                 DID_CRYPT=true
-                CRYPT_DEV=$crypt_dev
+                CRYPT_DEV=$mapper_dev
                 FOUND_DEV=$mapper_dev
             fi
         fi
 
         SQFILE_MP=$BOOT_MP
-
         SQFILE_DEV=$FOUND_DEV
 
         SQFILE_FULL=$BOOT_MP/$SQFILE_FILE
@@ -2079,6 +2087,34 @@ find_linuxfs_file() {
 
     SQFILE_DIR=$(dirname $SQFILE_FULL)
     DEFAULT_DIR=$SQFILE_DIR
+}
+
+reset_passphrase() {
+    local file=$1  dev=$2
+    test -f $file || return
+    local size=$(wc -c $file)
+
+    msg "Preparing for passphrase first-boot reset"
+
+    if [ $size -eq 0 ]; then
+        warn "Reset aborted: phrase-file is empty"
+        return 1
+    fi
+    if ! cryptsetup open -type luks --test-passphrase --key-file $file &>/dev/null; then
+        warn "Reset aborted: wrong passphrase in phrase-file"
+        return 2
+    fi
+
+    warn "You will be asked to enter your new passphrase twice"
+    warn "DO NOT forget it!"
+    if ! cryptsetup luksChangeKey --key-file $file; then
+        warn "Passphrase was not changed!"
+        return 10
+    fi
+
+    mv $file $file.old
+
+    return 0
 }
 
 # FIXME: mention failsafe option or load=all.
