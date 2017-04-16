@@ -48,8 +48,12 @@ do_gfxsave() {
     export CMDLINE
     export GFX_LOG_FILE=/var/log/live/gfxsave.log
 
-    local dir=/live/bios-dev/boot
-    test -d $dir || dir=/live/boot-dev/boot
+    . $INITRD_OUT
+    local dir=$BIOS_MP/boot
+    test -d $dir || dir=$BOOT_MP/boot
+    test -d $dir || return
+
+    echo_live "found directory %s" $dir
 
     local script=/live/bin/gfxsave
 
