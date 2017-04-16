@@ -759,7 +759,7 @@ read_cmdline_params()
 
                       confont=*) CON_FONT=$value                                 ;;
                       nomodeset) NO_MODESET=true                                 ;;
-                noumount|noumnt) NO_UMOUNT=true                                  ;;
+            noumount|noumnt|noU) NO_UMOUNT=true                                  ;;
 
         #----- These get interpreted late but we don't want them to be unknown
                 hwclock=*|hwc=*)  ;;
