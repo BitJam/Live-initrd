@@ -4939,6 +4939,7 @@ DID_TORAM="$DID_TORAM"
 DISTRO="$DISTRO_NAME"
 DISTRO_CODENAME="$DISTRO_CODENAME"
 DISTRO_VERSION="$DISTRO_VERSION"
+ENCRYPTED="$ENCRYPTED"
 FULL_DISTRO="$DISTRO_NAME-$DISTRO_VERSION"
 INITRD_VERSION="$VERSION"
 INITRD_DATE="$VERSION_DATE"
@@ -4983,7 +4984,7 @@ Initrd_Out
     [ "$DO_DEB"       ]                      && touch $dir/deb-install
     [ "$LOW_COLOR"    ]                      && touch $dir/low-color
     [ "$NO_COLOR"     ]                      && touch $dir/no-color
-    [ "$DID_CRYPT"    ]                      && touch $dir/encrypted
+    [ "$ENCRYPTED"    ]                      && touch $dir/encrypted
 
     echo "$DISTRO_NAME"                             > $dir/distro
 
