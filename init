@@ -88,7 +88,7 @@
       LINUXFS_NAME=linuxfs
         CRYPT_NAME=crypt
          CRYPT_MAP=boot
-     PHRASE_FNAME=.passphrase
+      PHRASE_FNAME=.passphrase
 
         BLACK_LIST=
    BLACK_LIST_FILE=/etc/modprobe.d/initrd.conf
@@ -2054,23 +2054,25 @@ find_linuxfs_file() {
                 log_cmd mount --move $BOOT_MP $BIOS_MP
 
                 local crypt_dev=$(next_partition $FOUND_DEV)
-                msg "Trying encrypted boot on device %s ..." "$crypt_dev"
+                msg "Checking for encrypt partition on device %s ..." "$crypt_dev"
 
                 test -e $crypt_dev || fatal "Crypt device %s does not exist"        $crypt_dev
                 test -b $crypt_dev || fatal "Crypt device %s is not a block device" $crypt_dev
                 cryptsetup isLuks $crypt_dev || fatal "Crypt device %s is not a LUKS device" $crypt_dev
 
+                mount -o remount,rw $BIOS_DEV
+
                 local phrase_full=$BIOS_MP/$boot_dir/$PHRASE_FNAME
                 test -f $phrase_full && reset_passphrase $phrase_full $crypt_dev
 
-                warn "Found encrypted device.  You will be asked to enter your pass-phrase below."
+                warn "Found encrypted device.  You will be asked to enter your passphrase below."
                 cttyhack cryptsetup open --type luks $crypt_dev $CRYPT_MAP || fatal "Could not open LUKS device %s" $crypt_dev
                 local mapper_dev=/dev/mapper/$CRYPT_MAP
                 msg "Opened encrypted device %s at %s" "$crypt_dev" "$mapper_dev"
                 try_mount "$mapper_dev" "$BOOT_MP" || fatal "Could not mount encrypted device"
                 test -e "$BOOT_MP/$SQFILE_FILE" || fatal "Could not find file %s on encrypted partition" "$SQFILE_FILE"
                 BOOT_FSTYPE=$(mntpnt_fstype $BOOT_MP)
-                DID_CRYPT=true
+                ENCRYPTED=true
                 CRYPT_DEV=$mapper_dev
                 FOUND_DEV=$mapper_dev
             fi
@@ -2092,26 +2094,28 @@ find_linuxfs_file() {
 reset_passphrase() {
     local file=$1  dev=$2
     test -f $file || return
-    local size=$(wc -c $file)
+    local size=$(wc -c $file | cut -d" " -f1)
 
-    msg "Preparing for pass-phrase first-boot reset"
+    msg "Preparing for passphrase first-boot reset ..."
 
     if [ $size -eq 0 ]; then
         warn "Reset aborted: phrase-file is empty"
         return 1
     fi
-    if ! cryptsetup open -type luks --test-passphrase --key-file $file &>/dev/null; then
-        warn "Reset aborted: wrong pass-phrase in phrase-file"
+
+    if ! cryptsetup open --type luks --test-passphrase --key-file $file $dev &>/dev/null; then
+        warn "Reset aborted: wrong passphrase in phrase-file"
         return 2
     fi
 
-    warn "You will be asked to enter a new pass-phrase twice"
-    warn "Please DO NOT forget it!"
-    if ! cryptsetup luksChangeKey --key-file $file; then
-        warn "Pass-phrase was not changed!"
+    warn "You will be asked to enter a new passphrase twice"
+    warn "Please DO NOT forget it! You will need it every time you boot"
+    if ! cryptsetup luksChangeKey --key-file $file $dev 2>&1 ; then
+        warn "Passphrase was not changed!"
         return 10
     fi
-
+    warn "You will be asked for the new passphrase a third time"
+    warn
     mv $file $file.old
 
     return 0
