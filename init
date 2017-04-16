@@ -2063,7 +2063,7 @@ find_linuxfs_file() {
                 local phrase_full=$BIOS_MP/$boot_dir/$PHRASE_FNAME
                 test -f $phrase_full && reset_passphrase $phrase_full $crypt_dev
 
-                warn "Found encrypted device.  You will be asked to enter your passphrase below."
+                warn "Found encrypted device.  You will be asked to enter your pass-phrase below."
                 cttyhack cryptsetup open --type luks $crypt_dev $CRYPT_MAP || fatal "Could not open LUKS device %s" $crypt_dev
                 local mapper_dev=/dev/mapper/$CRYPT_MAP
                 msg "Opened encrypted device %s at %s" "$crypt_dev" "$mapper_dev"
@@ -2094,21 +2094,21 @@ reset_passphrase() {
     test -f $file || return
     local size=$(wc -c $file)
 
-    msg "Preparing for passphrase first-boot reset"
+    msg "Preparing for pass-phrase first-boot reset"
 
     if [ $size -eq 0 ]; then
         warn "Reset aborted: phrase-file is empty"
         return 1
     fi
     if ! cryptsetup open -type luks --test-passphrase --key-file $file &>/dev/null; then
-        warn "Reset aborted: wrong passphrase in phrase-file"
+        warn "Reset aborted: wrong pass-phrase in phrase-file"
         return 2
     fi
 
-    warn "You will be asked to enter your new passphrase twice"
-    warn "DO NOT forget it!"
+    warn "You will be asked to enter a new pass-phrase twice"
+    warn "Please DO NOT forget it!"
     if ! cryptsetup luksChangeKey --key-file $file; then
-        warn "Passphrase was not changed!"
+        warn "Pass-phrase was not changed!"
         return 10
     fi
 
