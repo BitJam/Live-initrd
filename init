@@ -758,6 +758,7 @@ read_cmdline_params()
 
                       confont=*) CON_FONT=$value                                 ;;
                       nomodeset) NO_MODESET=true                                 ;;
+                noumount|noumnt) NO_UMOUNT=true                                  ;;
 
         #----- These get interpreted late but we don't want them to be unknown
                 hwclock=*|hwc=*)  ;;
@@ -5059,7 +5060,9 @@ detect_old_persist_scripts() {
 
 late_umount() {
     local dev=$1
-    [ "$dev" ] || return
+
+    [ "$dev" ]       || return
+    [ "$NO_UMOUNT" ] && return
 
     ## It does not suffice to only disable the liveCD (see below)
     #[ "$TO_RAM_EJECT" ] || return
@@ -5087,7 +5090,8 @@ late_umount() {
     [ "$success" ] || err "umount of %s failed" $(pqe $dev)
 
     # If this was the encrypted device then close the mapping
-    [ "$dev" = "$CRYPT_DEV" ] && cryptsetup close "$CRYPT_MAP"
+    [ "$dev" = "$CRYPT_DEV" ] || return
+    log_cmd chroot /live/aufs /sbin/cryptsetup close "$CRYPT_MAP"
 }
 
 write_ntfs_pids() {
