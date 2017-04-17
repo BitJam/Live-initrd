@@ -661,6 +661,7 @@ read_cmdline_params()
           persistuuid=*|puuid=*) PERSIST_ID=uuid=$value   ;  SET_PERSIST=true    ;;
             persistdev=*|pdev=*) PERSIST_ID=name=$value   ;  SET_PERSIST=true    ;;
 
+                     passphrase) CHANGE_PASSPHRASE=true                          ;;
                         nocrypt) NO_CRYPT=true                                   ;;
 #-?                          crypt)                             SET_CRYPT=true      ;;
 #-?                        crypt=*) CRYPT_NAME=$value        ;  SET_CRYPT=true      ;;
@@ -2054,16 +2055,20 @@ find_linuxfs_file() {
                 log_cmd mount --move $BOOT_MP $BIOS_MP
 
                 local crypt_dev=$(next_partition $FOUND_DEV)
-                msg "Checking for encrypt partition on device %s ..." "$crypt_dev"
+                msg "Checking for encrypted partition on device %s ..." "$crypt_dev"
 
-                test -e $crypt_dev || fatal "Crypt device %s does not exist"        $crypt_dev
-                test -b $crypt_dev || fatal "Crypt device %s is not a block device" $crypt_dev
-                cryptsetup isLuks $crypt_dev || fatal "Crypt device %s is not a LUKS device" $crypt_dev
+                test -e $crypt_dev || fatal "Encrypted device %s does not exist"        $crypt_dev
+                test -b $crypt_dev || fatal "Encrypted device %s is not a block device" $crypt_dev
+                cryptsetup isLuks $crypt_dev || fatal "Encrypted device %s is not a LUKS device" $crypt_dev
 
                 mount -o remount,rw $BIOS_DEV
 
                 local phrase_full=$BIOS_MP/$boot_dir/$PHRASE_FNAME
-                test -f $phrase_full && reset_passphrase $phrase_full $crypt_dev
+                if test -f $phrase_full; then
+                    reset_passphrase $phrase_full $crypt_dev
+                elif [ "$CHANGE_PASSPHRASE" ]; then
+                    change_passphrase $crypt_dev
+                fi
 
                 warn "Found encrypted device.  You will be asked to enter your passphrase below."
                 cttyhack cryptsetup open --type luks $crypt_dev $CRYPT_MAP || fatal "Could not open LUKS device %s" $crypt_dev
@@ -2089,6 +2094,36 @@ find_linuxfs_file() {
 
     SQFILE_DIR=$(dirname $SQFILE_FULL)
     DEFAULT_DIR=$SQFILE_DIR
+}
+
+change_passphrase() {
+    local dev=$1
+
+    warn "Changing encryption passphrase ..."
+
+    local old file=/passphrase
+    while true; do
+        echo -en "Please enter current passphrase (in clear text)\n> "
+        read old
+        echo -n "$old" > $file
+        cryptsetup open --type luks --test-passphrase --key-file $file $dev &>/dev/null && break
+
+        warn "The entered passphrase does not match"
+        YES_no "Do you want to try again?" && continue
+        warn "Passphrase change aborted"
+        return 3
+    done
+
+    # FIXME: should this be in a loop?
+    warn "You will be asked to enter the new passphrase twice"
+    warn "Please DO NOT forget it! You will need it every time you boot"
+    if ! cryptsetup luksChangeKey --key-file $file $dev 2>&1 ; then
+        warn "Passphrase was not changed!"
+        rm $file
+        return 10
+    fi
+    warn "You will be asked for the new passphrase a third time"
+    rm $file
 }
 
 reset_passphrase() {
