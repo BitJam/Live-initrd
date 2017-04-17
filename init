@@ -2042,9 +2042,8 @@ find_linuxfs_file() {
             local files="$crypt_full $SQFILE_FILE"
             msg "Look for files %s" "<$(fq $files)>"
 
-            # FIXME: error message!
             find_boot_file "$files" "$BOOT_MP" "$BOOT_ID" "$BOOT_RETRY" \
-                || linuxfs_error "Could not find %s file %s" "$LINUXFS_NAME" "$(fqe \"$SQFILE_FILE\")"
+                || linuxfs_error "Could not find files %s or %s" "$LINUXFS_NAME" "$(fqe \"$SQFILE_FILE\")" "$(fqe \"$crypt_full\")"
 
             if [ "$FOUND_FNAME" = "$crypt_full" ] ; then
                 BIOS_UUID=$(device_uuid $FOUND_DEV)
