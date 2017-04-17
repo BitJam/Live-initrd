@@ -2113,7 +2113,6 @@ change_passphrase() {
         return 3
     done
 
-    # FIXME: should this be in a loop?
     warn "You will be asked to enter the new passphrase twice"
     warn "Please DO NOT forget it! You will need it every time you boot"
     if ! cryptsetup luksChangeKey --key-file $file $dev 2>&1 ; then
