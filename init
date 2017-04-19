@@ -87,7 +87,7 @@
           VID_NAME=VID
       LINUXFS_NAME=linuxfs
         CRYPT_NAME=crypt
-         CRYPT_MAP=boot
+         CRYPT_MAP=live
       PHRASE_FNAME=.passphrase
 
         BLACK_LIST=
