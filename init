@@ -2058,7 +2058,7 @@ find_linuxfs_file() {
 
                 [ -n "$CRYPT_UUID" ] && crypt_dev=$(blkid | grep 'UUID="'$CRYPT_UUID'"' | cut -d: -f1)
 
-                msg "crypt_uuid:$CRYPT_UUID   crypt_dev:$crypt_dev"
+                vmsg 7 "crypt_uuid:$CRYPT_UUID   crypt_dev:$crypt_dev"
 
                 [ -z "$crypt_dev" ] && crypt_dev=$(next_partition $FOUND_DEV)
                 [ -z "$CRYPT_UUID" ] && CRYPT_UUID=$(device_uuid $crypt_dev)
