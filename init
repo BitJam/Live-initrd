@@ -2056,7 +2056,7 @@ find_linuxfs_file() {
                 local crypt_dev  crypt_file=$BIOS_MP/${crypt_full#/}
                 CRYPT_UUID=$(cat $crypt_file 2>/dev/null)
 
-                [ -n "$CRYPT_UUID" ] && crypt_dev=$(blkid | grep "UUID=\"$CRYPT_UUID\"" | cut -d: -f1)
+                [ -n "$CRYPT_UUID" ] && crypt_dev=$(blkid | grep 'UUID="'$CRYPT_UUID'"' | cut -d: -f1)
 
                 msg "crypt_uuid:$CRYPT_UUID   crypt_dev:$crypt_dev"
 
