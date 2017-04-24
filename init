@@ -4201,8 +4201,8 @@ mount_persist_device() {
     # Set persist device to boot device if appropriate
     if [ -z "$from_persist" -a -z "$PERSIST_ID" ]; then
 
-        case $(stat -c %t $SQFILE_DEV) in
-         [38]|22|b3|103) ;;
+        case $(stat -c %t $(readlink -f $SQFILE_DEV)) in
+         [38]|22|b3|fe|103) ;;
             *) warn "Can't use %s as a persistence device" $(pqw $SQFILE_DEV)
                return 20 ;;
         esac
