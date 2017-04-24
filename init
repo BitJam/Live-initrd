@@ -437,7 +437,8 @@ main_core() {
 
     breakpoint 5 "after mounting persistence device"
 
-    fsck_boot_dev "$SQFILE_DEV" "$SQFILE_MP"
+    fsck_any_device "$SQFILE_DEV" "$SQFILE_MP" boot
+    fsck_any_device "$BIOS_DEV"   "$BIOS_MP"   bios
 
     ORIG_SQFILE_MP=$SQFILE_MP
     ORIG_SQFILE_DIR=$SQFILE_PATH
@@ -2548,20 +2549,21 @@ do_fsck() {
     return $err
 }
 
-fsck_boot_dev() {
-    local dev=$1  mp=$2
+fsck_any_device() {
+    local dev=$(readlink -f "$1")  mp=$2  lab=$3
+    [ -n "$mp" -a -n "$dev" ] || return
 
     local type=$(grep "^$dev " /proc/mounts | cut -d" " -f3)
 
     if [ -n "$FORCE_FSCK" -a -n "${type##ext[234]}" ]; then
-        msg 'Cannot check %s device filesystem of type %s' "$(pq boot)" "$(pq $type)"
+        msg 'Cannot check %s device filesystem of type %s' "$(pq $lab)" "$(pq $type)"
         return
     fi
 
-    should_fsck $dev boot || return
+    should_fsck $dev $lab || return
 
     log_cmd mount -o remount,ro $dev
-    do_fsck "boot device" $dev -n
+    do_fsck "$lab device" $dev -n
 }
 
 #==============================================================================
