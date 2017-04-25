@@ -41,11 +41,12 @@ do_start() {
         root_dir=$bdir
         break
     done
-    [ "$root_dir" ] || exit 0
+    [ "$root_dir" ] || DISABLE=true
 
     read_cmdline
 
-    [ -e $root_dir/state/nostore -a -z "$DISABLE" ] && return
+    test -e $root_dir/state/nostore && DISABLE=true
+    [ "$DID_TORAM" ]                && DISABLE=true
 
     echo_script "Configure LiveUSB Storage" $0
 
