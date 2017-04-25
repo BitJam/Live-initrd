@@ -82,7 +82,7 @@
 
         # Note: adding "crc32c-generic" works around a bug in the kernel:
         # https://github.com/manjaro/packages-core/issues/8
-        LOAD_FIRST="usb-common usbcore ehci-hcd fusbh200-hcd fotg210-hcd battery aufs overlay crc32c-generic mmc-block"
+        LOAD_FIRST="usb-common usbcore ehci-hcd fusbh200-hcd fotg210-hcd battery aufs overlay crc32c-generic mmc-block dm-crypt"
 
           VID_NAME=VID
       LINUXFS_NAME=linuxfs
@@ -964,6 +964,10 @@ read_cmdline_params()
     fi
 
     test -e /bin/cryptsetup || NO_CRYPT=true
+
+    if [ -z "$NO_CRYPT" ]; then
+        cryptsetup --help &>/dev/null || NO_CRYPT=true
+    fi
 }
 
 
@@ -2031,6 +2035,12 @@ find_linuxfs_file() {
         DID_ISO=true
 
     else
+
+        # Make sure we have the dm-crypt module
+        if [ -z "$NO_CRYPT" ] && ! test -d /sys/module/dm_crypt; then
+            NO_CRYPT=true
+            warn "Encryption disabled because required kernel module not found"
+        fi
 
         if [ "$NO_CRYPT" ]; then
             # Normal path
