@@ -25,8 +25,8 @@
 # that you don't want users to be able to adjust.
 
                      ME="initrd init"
-                VERSION="8.00.06"
-           VERSION_DATE="Mon Apr 24 21:39:24 MDT 2017"
+                VERSION="8.00.07"
+           VERSION_DATE="Thu Apr 27 18:53:53 MDT 2017"
               DEVELOPER="BitJam"
          BUG_REPORT_URL="liveboot@antixlinux.org"
 
@@ -448,7 +448,10 @@ main_core() {
 
     # Check md5 of files in directory containing linuxfs file
     # 'fromiso' causes us to check md5sums in two places
-    [ "$CHECK_MD5" ] && check_md5 $SQFILE_DIR
+    if [ "$CHECK_MD5" ]; then
+        check_md5 $SQFILE_DIR
+        [ "$ENCRYPTED" ] && check_md5 $BIOS_MP/$(dirname $SQFILE_FILE)
+    fi
 
     [ "$TO_RAM" ] && copy_to_ram "$SQFILE_FULL" $TORAM_MP
 
