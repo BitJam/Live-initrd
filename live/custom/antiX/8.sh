@@ -3,6 +3,9 @@ antix_specific_code() {
     local dir=$1
 
     # -jbb
+    mkdir -p $dir/var/cache/apt/archives/partial
+
+    # -jbb
     mv -f $dir/var/log/bootchart.tgz $dir/var/log/bootchart.tgz.old 2>/dev/null
 
     # -jbb
