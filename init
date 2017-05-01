@@ -114,7 +114,7 @@ MKFS_FREE_MARGIN=10
 
           LAZYTIME=""
       MADE_BY_FILE="made-by-live-usb-maker"
-    PROG_BAR_WIDTH=85
+    PROG_BAR_WIDTH=100
 
     #           HUP INT QUIT SEGV TERM
     SIGNAL_LIST="1   2   3    11   15"
@@ -3579,11 +3579,6 @@ prog_copy() {
     local final_size=$(du_size "$@")
     local base_size=$(du_size "$dest")
 
-    local cur_size=$base_size  last_x=0  cur_x
-
-    # Make progress bar 80% of screen width
-    local max_x=$((SCREEN_WIDTH * PROG_BAR_WIDTH / 100))
-
     local dirty_ratio dirty_bytes
     read dirty_ratio < /proc/sys/vm/dirty_ratio
     read dirty_bytes < /proc/sys/vm/dirty_bytes
@@ -3596,21 +3591,23 @@ prog_copy() {
 
     # Disable cursor
     printf "\e[?25l"
-    # Create end-points and save our location on the screen
-    printf "\e[s$green|$nc_co"
-    printf "\e[u\e[$((max_x + 1))C$green|$nc_co\e[u"
 
+    local cur_size=$base_size cur_pct last_pct=0
     while true; do
-        test -d /proc/$COPY_PID || break
-        sleep 0.2
+        if ! test -d /proc/$COPY_PID; then
+            echo 100
+            break
+        fi
+        sleep 0.1
+
         cur_size=$(du_size $dest)
-        cur_x=$((max_x * cur_size / final_size))
-        [ $cur_x -ge $max_x ] && cur_x=$max_x
-        [ $cur_x -eq $last_x ] && continue
-        prog_bar $cur_x $last_x $max_x
-        [ $cur_x -ge $max_x ] && break
-        last_x=$cur_x
-    done
+        cur_pct=$((cur_size * 100 / final_size))
+        [ $cur_pct -gt $last_pct ] || continue
+        echo $cur_pct
+        last_pct=$cur_pct
+
+    done | text_progress
+
     echo
 
     sync ; sync
@@ -3631,14 +3628,48 @@ prog_copy() {
 
     return 0
 }
+#------------------------------------------------------------------------------
+# This acts like an external program to draw a progress bar on the screen.
+# It expects integer percentages as input on stdin to move the bar.
+#------------------------------------------------------------------------------
+text_progress() {
+    local max_x=$((SCREEN_WIDTH * PROG_BAR_WIDTH / 100))
 
-prog_bar() {
-    local x=$1  prev=$2  max=$3
-    local diff=$((x - prev))
-    local bar=$(printf "$cyan%${diff}s$yellow>$nc_co" "" | tr ' ' '=')
-    printf "\e[u\e[$((prev))C$bar\e[u\e[$((max + 1))C"
+    # length of ">100%" plus one = 6 (??)
+    max_x=$((max_x - 7))
+
+    # Create end-points and save our location on the screen
+    printf "\e[s$from_co|$nc_co\e[u"
+    #printf "\e[u\e[$((max_x + 2))C$from_co|$nc_co\e[u"
+
+    local cur_x last_x=0
+    while read input; do
+        case $input in
+            [0-9]|[0-9][0-9]|[0-9][0-9][0-9]) ;;
+            *) break;;
+        esac
+
+        cur_x=$((max_x * input / 100))
+        # Note we always draw entire bar to avoid problems when switching
+        # virtual terminals while the bar is being drawn
+        progbar_draw $cur_x 0
+
+        last_x=$cur_x
+
+        printf "\e[$((max_x + 2))C%3s%%" "$input"
+        [ $input -ge 100 ] && exit
+    done
 }
 
+#------------------------------------------------------------------------------
+# Draw progress arrow
+#------------------------------------------------------------------------------
+progbar_draw() {
+    local x=$1  prev=$2
+    local diff=$((x - prev))
+    local bar=$(printf "$m_co%${diff}s$bold_co>$nc_co" "" | tr ' ' '=')
+    printf "\e[u\e[$((prev))C$bar\e[u"
+}
 
 #------------------------------------------------------------------------------
 # Function: cp_dir <sorc> <dest>
