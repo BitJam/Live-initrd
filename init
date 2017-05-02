@@ -1895,8 +1895,7 @@ find_frugal_file() {
         warn
     fi
 
-    find_boot_file "$SQFILE_FILE" "$BOOT_MP" "$BOOT_ID" "$BOOT_RETRY" \
-        || linuxfs_error "Could not find %s file %s" "$LINUXFS_NAME" "$(fqe \"$SQFILE_FILE\")"
+    find_crypt_or_linuxfs
 
     SQFILE_MP=$BOOT_MP
     SQFILE_DEV=$FOUND_DEV
@@ -2039,72 +2038,7 @@ find_linuxfs_file() {
 
     else
 
-        # Make sure we have the dm-crypt module
-        if [ -z "$NO_CRYPT" ] && ! test -d /sys/module/dm_crypt; then
-            NO_CRYPT=true
-            warn "Encryption disabled because required kernel module not found"
-        fi
-
-        if [ "$NO_CRYPT" ]; then
-            # Normal path
-            find_boot_file "$SQFILE_FILE" "$BOOT_MP" "$BOOT_ID" "$BOOT_RETRY" \
-                || linuxfs_error "Could not find %s file %s" "$LINUXFS_NAME" "$(fqe \"$SQFILE_FILE\")"
-        else
-            # Look for crypt file as well as sqfile_file
-            local boot_dir=$(dirname $SQFILE_FILE)
-            local crypt_full="$boot_dir/$CRYPT_FNAME"
-            local files="$crypt_full $SQFILE_FILE"
-            msg "Look for files %s" "<$(fq $files)>"
-
-            find_boot_file "$files" "$BOOT_MP" "$BOOT_ID" "$BOOT_RETRY" \
-                || linuxfs_error "Could not find files %s or %s" "$LINUXFS_NAME" "$(fqe \"$SQFILE_FILE\")" "$(fqe \"$crypt_full\")"
-
-            if [ "$FOUND_FNAME" = "$crypt_full" ] ; then
-                BIOS_UUID=$(device_uuid $FOUND_DEV)
-                BIOS_DEV=$FOUND_DEV
-
-                # Move mounted "bios" device out of the way
-                mkdir -p $BIOS_MP
-                log_cmd mount --move $BOOT_MP $BIOS_MP
-
-                local crypt_dev  crypt_file=$BIOS_MP/${crypt_full#/}
-                CRYPT_UUID=$(cat $crypt_file 2>/dev/null)
-
-                [ -n "$CRYPT_UUID" ] && crypt_dev=$(blkid | grep "UUID=.$CRYPT_UUID." | cut -d: -f1)
-
-                vmsg 7 "crypt_uuid:$CRYPT_UUID   crypt_dev:$crypt_dev"
-
-                [ -z "$crypt_dev" ] && crypt_dev=$(next_partition $FOUND_DEV)
-                [ -z "$CRYPT_UUID" ] && CRYPT_UUID=$(device_uuid $crypt_dev)
-                BOOT_UUID=$CRYPT_UUID
-
-                msg "Checking for encrypted partition on device %s ..." "$crypt_dev"
-
-                test -e $crypt_dev || fatal "Encrypted device %s does not exist"        $crypt_dev
-                test -b $crypt_dev || fatal "Encrypted device %s is not a block device" $crypt_dev
-                cryptsetup isLuks $crypt_dev || fatal "Encrypted device %s is not a LUKS device" $crypt_dev
-
-                mount -o remount,rw $BIOS_DEV
-
-                local phrase_full=$BIOS_MP/$boot_dir/$PHRASE_FNAME
-                if test -f $phrase_full; then
-                    reset_passphrase $phrase_full $crypt_dev
-                elif [ "$CHANGE_PASSPHRASE" ]; then
-                    change_passphrase $crypt_dev
-                fi
-
-                warn "Found encrypted device.  You will be asked to enter your passphrase below."
-                cttyhack cryptsetup open --type luks $crypt_dev $LUKS_NAME || fatal "Could not open LUKS device %s" $crypt_dev
-                local mapper_dev=/dev/mapper/$LUKS_NAME
-                msg "Opened encrypted device %s at %s" "$crypt_dev" "$mapper_dev"
-                try_mount "$mapper_dev" "$BOOT_MP" || fatal "Could not mount encrypted device"
-                test -e "$BOOT_MP/$SQFILE_FILE" || fatal "Could not find file %s on encrypted partition" "$SQFILE_FILE"
-                BOOT_FSTYPE=$(mntpnt_fstype $BOOT_MP)
-                ENCRYPTED=true
-                CRYPT_DEV=$mapper_dev
-                FOUND_DEV=$mapper_dev
-            fi
-        fi
+        find_crypt_or_linuxfs
 
         SQFILE_MP=$BOOT_MP
         SQFILE_DEV=$FOUND_DEV
@@ -2119,6 +2053,84 @@ find_linuxfs_file() {
     DEFAULT_DIR=$SQFILE_DIR
 }
 
+
+#------------------------------------------------------------------------------
+# This code is used in 2 places.  Very yuck right now.
+#------------------------------------------------------------------------------
+find_crypt_or_linuxfs() {
+
+        # Make sure we have the dm-crypt module
+    if [ -z "$NO_CRYPT" ] && ! test -d /sys/module/dm_crypt; then
+        NO_CRYPT=true
+        warn "Encryption disabled because required kernel module not found"
+    fi
+
+    if [ "$NO_CRYPT" ]; then
+        # Normal path
+        find_boot_file "$SQFILE_FILE" "$BOOT_MP" "$BOOT_ID" "$BOOT_RETRY" \
+            || linuxfs_error "Could not find %s file %s" "$LINUXFS_NAME" "$(fqe \"$SQFILE_FILE\")"
+        return
+    fi
+
+    # Look for crypt file as well as sqfile_file
+    local boot_dir=$(dirname $SQFILE_FILE)
+    local crypt_full="$boot_dir/$CRYPT_FNAME"
+    local files="$crypt_full $SQFILE_FILE"
+    msg "Look for files %s" "<$(fq $files)>"
+
+    find_boot_file "$files" "$BOOT_MP" "$BOOT_ID" "$BOOT_RETRY" \
+        || linuxfs_error "Could not find files %s or %s" "$LINUXFS_NAME" "$(fqe \"$SQFILE_FILE\")" "$(fqe \"$crypt_full\")"
+
+    [ "$FOUND_FNAME" != "$crypt_full" ] && return
+
+    BIOS_UUID=$(device_uuid $FOUND_DEV)
+    BIOS_DEV=$FOUND_DEV
+
+    # Move mounted "bios" device out of the way
+    mkdir -p $BIOS_MP
+    log_cmd mount --move $BOOT_MP $BIOS_MP
+
+    local crypt_dev  crypt_file=$BIOS_MP/${crypt_full#/}
+    CRYPT_UUID=$(cat $crypt_file 2>/dev/null)
+
+    [ -n "$CRYPT_UUID" ] && crypt_dev=$(blkid | grep "UUID=.$CRYPT_UUID." | cut -d: -f1)
+
+    vmsg 7 "crypt_uuid:$CRYPT_UUID   crypt_dev:$crypt_dev"
+
+    [ -z "$crypt_dev" ] && crypt_dev=$(next_partition $FOUND_DEV)
+    [ -z "$CRYPT_UUID" ] && CRYPT_UUID=$(device_uuid $crypt_dev)
+    BOOT_UUID=$CRYPT_UUID
+
+    msg "Checking for encrypted partition on device %s ..." "$crypt_dev"
+
+    test -e $crypt_dev || fatal "Encrypted device %s does not exist"        $crypt_dev
+    test -b $crypt_dev || fatal "Encrypted device %s is not a block device" $crypt_dev
+    cryptsetup isLuks $crypt_dev || fatal "Encrypted device %s is not a LUKS device" $crypt_dev
+
+    mount -o remount,rw $BIOS_DEV
+
+    local phrase_full=$BIOS_MP/$boot_dir/$PHRASE_FNAME
+    if test -f $phrase_full; then
+        reset_passphrase $phrase_full $crypt_dev
+    elif [ "$CHANGE_PASSPHRASE" ]; then
+        change_passphrase $crypt_dev
+    fi
+
+    warn "Found encrypted device.  You will be asked to enter your passphrase below."
+    cttyhack cryptsetup open --type luks $crypt_dev $LUKS_NAME || fatal "Could not open LUKS device %s" $crypt_dev
+    local mapper_dev=/dev/mapper/$LUKS_NAME
+    msg "Opened encrypted device %s at %s" "$crypt_dev" "$mapper_dev"
+    try_mount "$mapper_dev" "$BOOT_MP" || fatal "Could not mount encrypted device"
+    test -e "$BOOT_MP/$SQFILE_FILE" || fatal "Could not find file %s on encrypted partition" "$SQFILE_FILE"
+    BOOT_FSTYPE=$(mntpnt_fstype $BOOT_MP)
+    ENCRYPTED=true
+    CRYPT_DEV=$mapper_dev
+    FOUND_DEV=$mapper_dev
+}
+
+#------------------------------------------------------------------------------
+#
+#------------------------------------------------------------------------------
 change_passphrase() {
     local dev=$1
 
@@ -2148,6 +2160,9 @@ change_passphrase() {
     rm $file
 }
 
+#------------------------------------------------------------------------------
+#
+#------------------------------------------------------------------------------
 reset_passphrase() {
     local file=$1  dev=$2
     test -f $file || return
