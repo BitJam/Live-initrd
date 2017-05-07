@@ -105,24 +105,23 @@ load_translation
         loadkeys -q "$KEYTABLE"
     fi
 
-
-    CONSOLE_FONT=${CMD_FONT:-$CONSOLE_FONT}
-    if [ "$CONSOLE_FONT" ]; then
-        case $CONSOLE_FONT in
-            [0-9][0-9]x[0-9][0-9])
-                CONSOLE_FONT=Uni2-Terminus$CONSOLE_FONT ;;
-            [bB][0-9][0-9]x[0-9][0-9])
-                CONSOLE_FONT=Uni2-TerminusBold${CONSOLE_FONT#[bB]} ;;
-        esac
-        FFILE=/usr/share/consolefonts/$CONSOLE_FONT
-        if [ -e $FFILE -o -e $FFILE.gz -o -e $FFILE.psf.gz -o -e $FFILE.psfu.gz \
-            -o -e $FFILE.cp.gz -o -e $FFILE.cp ]; then
-            echo_live "Setting console font to %s" $(pquote $CONSOLE_FONT)
-            setfont $CONSOLE_FONT
-        else
-            error "Unknown console font %s" "confont=$(pquote $CONSOLE_FONT)"
-        fi
-    fi
+    #-- CONSOLE_FONT=${CMD_FONT:-$CONSOLE_FONT}
+    #-- if [ "$CONSOLE_FONT" ]; then
+    #--     case $CONSOLE_FONT in
+    #--         [0-9][0-9]x[0-9][0-9])
+    #--             CONSOLE_FONT=Uni2-Terminus$CONSOLE_FONT ;;
+    #--         [bB][0-9][0-9]x[0-9][0-9])
+    #--             CONSOLE_FONT=Uni2-TerminusBold${CONSOLE_FONT#[bB]} ;;
+    #--     esac
+    #--     FFILE=/usr/share/consolefonts/$CONSOLE_FONT
+    #--     if [ -e $FFILE -o -e $FFILE.gz -o -e $FFILE.psf.gz -o -e $FFILE.psfu.gz \
+    #--         -o -e $FFILE.cp.gz -o -e $FFILE.cp ]; then
+    #--         echo_live "Setting console font to %s" $(pquote $CONSOLE_FONT)
+    #--         setfont $CONSOLE_FONT
+    #--     else
+    #--         error "Unknown console font %s" "confont=$(pquote $CONSOLE_FONT)"
+    #--     fi
+    #-- fi
 
 } 2>&1 | tee -a $INIT_LOG_FILE
 
