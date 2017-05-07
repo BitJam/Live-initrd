@@ -1097,23 +1097,11 @@ read_xlat() {
     local prog=$1  lang=${2%%_*}
     local xdir=$LOCALE_DIR/xlat
     local fdir=$LOCALE_DIR/fonts
-    local def_font=$fdir/default
 
     local xlat=$xdir/en/$prog.xlat
     [ -r $xlat ] && . $xlat
 
-    local font=$fdir/${lang:-default}  # don't want an empty $lang
-    [ -e "$font" ] || font=$def_font
-
-    [ "$CON_FONT" -a -e "$fdir/$CON_FONT" ] && font=$fdir/$CON_FONT
-    # Clear screen if we have previously set a font
-    #[ -n "$PREVIOUS_FONT" -a -z "$NO_CLEAR" ] && clear
-    #[ "$font" != "$def_font" ] && PREVIOUS_FONT=$font
-
-    [ "$NO_CLEAR" ] || clear   # Clear and reset screen
-
-    vmsg 7 'Setting font to %s' $(pq $(basename $font))
-    log_cmd setfont $font -C $(tty)
+    set_console_font "$lang" "$CON_FONT" $fdir
 
     local alt=$DISTRO_ASCII_PRETTY_NAME
     [ -n "$lang" -a -e $fdir/$lang -a -n "$alt" ] && DISTRO_PRETTY_NAME=$alt
@@ -1124,6 +1112,57 @@ read_xlat() {
     [ -r "$xlat" ] || return
     . $xlat
     vmsg 7 'Translate to %s' $(pq $lang)
+}
+
+#------------------------------------------------------------------------------
+#
+#------------------------------------------------------------------------------
+set_console_font() {
+    local lang=$1  size=$2  dir=$3  name=Terminus  ext=.psf  bold
+
+    [ -n "$size" -a -z "${size%%*[bB]}" ] && bold=Bold
+    size=${size%[bB]}
+
+    case $size in
+          [123456789]) size=8              ;;
+              1[0123]) size=12x6           ;;
+                1[45]) size=14             ;;
+              1[6789]) size=16             ;;
+                2[01]) size=20x10          ;;
+                2[23]) size=22x11          ;;
+              2[4567]) size=24x12          ;;
+                2[89]) size=28x14          ;;
+           [3-9][0-9]) size=32x16          ;;
+    esac
+
+    local code
+    case ${lang%%_*} in
+                     kk|ky|tj) code='CyrAsia'  ;;
+                        ru|uk) code='CyrKoi'   ;;
+                  bg|mk|ru|sr) code='CyrSlav'  ;;
+      bs|hr|cs|hu|pl|ro|sk|sl) code='Lat2'     ;;
+        af|sq|ast|da|nl|et|fr) code='Lat15'    ;;
+    'fi'|de|is|id|pt|es|sv|tr) code='Lat15'    ;;
+                        lt|lv) code='Lat7'     ;;
+                           el) code='Greek'    ;;
+                            *) code='Uni2'     ;;
+    esac
+
+    echo "code: $code"
+
+    local base
+    for base in VGA$size $name$bold$size $name$size ${name}Bold$size VGA14 Terminus14; do
+        echo "try $base"
+
+        file=$dir/$code-$base$ext
+        test -e $file || continue
+
+        [ "$NO_CLEAR" ] || clear   # Clear and reset screen
+
+        vmsg 7 'Setting font to %s' $(pq $base)
+        log_cmd setfont $file -C $(tty)
+        break
+    done
 }
 
 do_welcome() {
