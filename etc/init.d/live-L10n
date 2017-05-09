@@ -140,8 +140,12 @@ add_or_replace() {
     fi
 
     if grep -iq "$where" "$file"; then
+        # Don't over-write the same string
+        grep -q "^$line" "$file" && return
+        # Edit the existing line
         sed -i -r "/$where/I s|.*|$line|" $file
     else
+        # Add it under the top line of the file
          sed -i "1 a$line" $file
     fi
 }
