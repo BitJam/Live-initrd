@@ -187,6 +187,7 @@ main_wrapper() {
     set_colors "$NO_COLOR" "$LOW_COLOR"
 
     read_xlat init $LANG
+    set_console_font "$LANG" "$CON_FONT"
 
     # disable console screen blanking
     printf "\e[9;0]\e[14;0]"
@@ -314,7 +315,7 @@ main_wrapper() {
 }
 
 main_core() {
-    [ "$NO_CLEAR" ] || printf "\e[1J"       # Clear and reset screen
+    [ "$NO_CLEAR" ] || clear       # Clear and reset screen
     vmsg 6 "=== initrd bootstrap =================================================="
 
     vmsg 6 '%s started at %s seconds' "$ME" $(nq $(get_seconds $time_0))
@@ -645,7 +646,7 @@ read_cmdline_params()
         case $param in
                            aufs) WANT_UNIONFS=aufs                               ;;
                       overlayfs) WANT_UNIONFS=overlay                            ;;
-                          menus) DO_MENUS=${MENUS_LIST:-ltopfs}                  ;;
+                          menus) DO_MENUS=${MENUS_LIST:-cltopfs}                 ;;
                         menus=*) DO_MENUS=$DO_MENUS$value                        ;;
             rootdelay=*|delay=*) small_int COLDPLUG_DELAY $param                 ;;
                          splash) SPLASH_PARAM=v                                  ;;
@@ -1096,12 +1097,9 @@ clean_xlat() {
 read_xlat() {
     local prog=$1  lang=${2%%_*}
     local xdir=$LOCALE_DIR/xlat
-    local fdir=$LOCALE_DIR/fonts
 
     local xlat=$xdir/en/$prog.xlat
     [ -r $xlat ] && . $xlat
-
-    set_console_font "$lang" "$CON_FONT" $fdir
 
     local alt=$DISTRO_ASCII_PRETTY_NAME
     [ -n "$lang" -a -e $fdir/$lang -a -n "$alt" ] && DISTRO_PRETTY_NAME=$alt
@@ -1118,21 +1116,22 @@ read_xlat() {
 #
 #------------------------------------------------------------------------------
 set_console_font() {
-    local lang=$1  size=$2  dir=$3  name=Terminus  ext=.psf  bold
+    local lang=$1  cmd_size=$2  dir=${3:-$LOCALE_DIR/fonts}
+    msg "set_console_font($lang,  $cmd_size,  $dir)"
 
-    [ -n "$size" -a -z "${size%%*[bB]}" ] && bold=Bold
-    size=${size%[bB]}
+    local def_size=16  name=Terminus  ext=.psf
 
-    case $size in
-          [123456789]) size=8              ;;
-              1[0123]) size=12x6           ;;
-                1[45]) size=14             ;;
-              1[6789]) size=16             ;;
-                2[01]) size=20x10          ;;
-                2[23]) size=22x11          ;;
-              2[4567]) size=24x12          ;;
-                2[89]) size=28x14          ;;
-           [3-9][0-9]) size=32x16          ;;
+        local size size2
+        case $cmd_size in
+          [123456789]) size=8     ; size2=12x6  ;;
+              1[0123]) size=12x6                ;;
+                1[45]) size=14                  ;;
+               1[678]) size=16                  ;;
+             19|2[01]) size=20x10               ;;
+                2[23]) size=22x11               ;;
+               2[456]) size=24x12               ;;
+            2[789]|30) size=28x14               ;;
+           [3-9][0-9]) size=32x16               ;;
     esac
 
     local code
@@ -1148,23 +1147,34 @@ set_console_font() {
                             *) code='Uni2'     ;;
     esac
 
-    echo "code: $code"
-
-    local base
-    for base in VGA$size $name$bold$size $name$size ${name}Bold$size VGA14 Terminus14; do
-        echo "try $base"
-
-        file=$dir/$code-$base$ext
-        test -e $file || continue
-
-        [ "$NO_CLEAR" ] || clear   # Clear and reset screen
-
-        vmsg 7 'Setting font to %s' $(pq $base)
-        log_cmd setfont $file -C $(tty)
-        break
+    local try font f_size f_face file
+    for f_size in $size $size2 $def_size; do
+        for f_face in ${name}Bold VGA $name; do
+            try=$code-$f_face$f_size
+            file=$dir/$try$ext
+            test -e $file || continue
+            font=$try
+            break
+        done
+        [ "$font" ] && break
     done
+
+    [ "$font" ] || return 2
+
+    [ "$NO_CLEAR" ] || clear
+    vmsg 7 "Set font to %s" "$(pq $font)"
+
+    log_cmd setfont $file -C $(tty)
+
+    echo $font   > $OUTPUT_DIR/font
+    echo $f_size > $OUTPUT_DIR/font-size
+    echo $f_face > $OUTPUT_DIR/font-face
+    echo $code   > $OUTPUT_DIR/font-code-set
 }
 
+#------------------------------------------------------------------------------
+#
+#------------------------------------------------------------------------------
 do_welcome() {
 
     [ "$NO_CLEAR" ] || clear   # Clear and reset screen
@@ -3239,19 +3249,31 @@ do_early_menus() {
     local MENU_VALUE BOOT_MENU_WARN=true
     local lang time_zone option persist desktop
     local cmdline
-    my_select_menu "Select Language"           "Languages are listed alphabetically"   l lang "Language" 'lang=*'
+    my_select_menu "Select Language"           "Languages are listed alphabetically"   l lang     "Language"           'lang=*'
+    msg "lang: $MENU_VALUE"
 
+    local need_font
     case $MENU_VALUE in
         lang=*) LANG=${MENU_VALUE#lang=}
+                need_font=true
                 read_xlat init $LANG       ;;
-         reset) read_xlat init             ;;
+    esac
+
+    my_select_menu "Select Console Font size"  "The default size is 16"                c confont  "Console font size"  'confont=*'
+    msg "confont: $MENU_VALUE"
+
+    case $MENU_VALUE in
+        confont=*) CON_FONT=${MENU_VALUE#confont=}
+                   set_console_font "$LANG" "$CON_FONT" ;;
+                *) [ "$need_font" ] && \
+                   set_console_font "$LANG" "$CON_FONT" ;;
     esac
 
     my_select_menu "Select Timezone"           "Timezones are listed by longitude"     t tz       "Timezone"      'tz=*'
     my_select_menu "Select Option"             "Only one option can be selected"       o options  "Options"       "$OPTIONS_ENTRIES"
     my_select_menu "Select Mounting Option"    "Automounting is enabled by default"    m mount    "Mount"         "automount|mount=*"
     my_select_menu "Select Persistence Option" ""                                      p persist  "Persistence"   'persist_*|frugal_*'
-    my_select_menu "Select font size"          "Scale fonts in graphics display.  Default is 1.0"  f fontsize "Font size" 'fontsize=*'
+    my_select_menu "Select font size"          "Scale fonts in graphics display.  Default is 1.0"  f fontsize "X font size" 'fontsize=*'
     #vmsg 6 "cmdline:$white $cmdline"
     [ ${#cmdline} -gt 0 ] && echo "$cmdline" >> /live/config/cmdline
 }
