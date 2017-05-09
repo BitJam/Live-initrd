@@ -50,7 +50,7 @@ load_translation
 
 
 # Start block of code that is sent to the log file
-{
+main() {
     echo_script "Localizing console and timezone" $0
 
     #-jbb: for debugging
@@ -105,24 +105,47 @@ load_translation
         loadkeys -q "$KEYTABLE"
     fi
 
-    #-- CONSOLE_FONT=${CMD_FONT:-$CONSOLE_FONT}
-    #-- if [ "$CONSOLE_FONT" ]; then
-    #--     case $CONSOLE_FONT in
-    #--         [0-9][0-9]x[0-9][0-9])
-    #--             CONSOLE_FONT=Uni2-Terminus$CONSOLE_FONT ;;
-    #--         [bB][0-9][0-9]x[0-9][0-9])
-    #--             CONSOLE_FONT=Uni2-TerminusBold${CONSOLE_FONT#[bB]} ;;
-    #--     esac
-    #--     FFILE=/usr/share/consolefonts/$CONSOLE_FONT
-    #--     if [ -e $FFILE -o -e $FFILE.gz -o -e $FFILE.psf.gz -o -e $FFILE.psfu.gz \
-    #--         -o -e $FFILE.cp.gz -o -e $FFILE.cp ]; then
-    #--         echo_live "Setting console font to %s" $(pquote $CONSOLE_FONT)
-    #--         setfont $CONSOLE_FONT
-    #--     else
-    #--         error "Unknown console font %s" "confont=$(pquote $CONSOLE_FONT)"
-    #--     fi
-    #-- fi
+    [ -n "$CMD_LANG$CMD_FONT" ] && set_console_font
+}
 
-} 2>&1 | tee -a $INIT_LOG_FILE
+set_console_font() {
+    local file=/etc/default/console-setup
 
+    test -w $file || return
+
+    local font size face
+    #read font 2>/dev/null </live/config/font
+    read size 2>/dev/null </live/config/font-size
+    read face 2>/dev/null </live/config/font-face
+
+    [ -n "$size" -a -n "$face" ] || return
+    if grep -q "^\*FONTFACE=" $file && grep -q "^\s*FONTNAME="; then
+        # Only edit the file once
+        local expr
+        expr="$expr -e s/^\s*(FONTFACE=.)[A-Za-z0-9-]+(.).*/\1$face\2/"
+        expr="$expr -e s/^\s*(FONTSIZE=.)[A-Za-z0-9-]+(.).*/\1$size\2/"
+        sed -r -i $expr $file
+    else
+        add_or_replace "^\s*FONTFACE=" "FONTFACE=\"$face\"" $file create
+        add_or_replace "^\s*FONTSIZE=" "FONTSIZE=\"$size\"" $file create
+    fi
+}
+
+add_or_replace() {
+    local where=$1  line=$2  file=$3  create=$4
+
+    if ! test -e "$file"; then
+        [ "$create" ] && echo "$line" > $file
+        return
+    fi
+
+    if grep -iq "$where" "$file"; then
+        sed -i -r "/$where/I s|.*|$line|" $file
+    else
+         sed -i "1 a$line" $file
+    fi
+}
+
+
+main "$@" 2>&1 | tee -a $INIT_LOG_FILE
 exit 0
