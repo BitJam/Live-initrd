@@ -119,7 +119,7 @@ set_console_font() {
     read face 2>/dev/null </live/config/font-face
 
     [ -n "$size" -a -n "$face" ] || return
-    if grep -q "^\s*FONTFACE=" $file && grep -q "^\s*FONTNAME="; then
+    if grep -q "^\s*FONTFACE=" $file && grep -q "^\s*FONTNAME=" $file; then
         # Only edit the file once
         local expr
         expr="$expr -e s/^\s*(FONTFACE=.)[A-Za-z0-9-]+(.).*/\1$face\2/"
