@@ -3295,7 +3295,6 @@ do_early_menus() {
     local lang time_zone option persist desktop
     local cmdline
     my_select_menu "Select Language"           "Languages are listed alphabetically"   l lang     "Language"           'lang=*'
-    msg "lang: $MENU_VALUE"
 
     local need_font
     case $MENU_VALUE in
@@ -3304,8 +3303,7 @@ do_early_menus() {
                 read_xlat init $LANG       ;;
     esac
 
-    my_select_menu "Select Console Font size"  "The default size is 16"                c confont  "Console font size"  'confont=*'
-    msg "confont: $MENU_VALUE"
+    my_select_menu "Select Console Font size"  "The default size is 8"                c confont  "Console font size"  'confont=*'
 
     case $MENU_VALUE in
         confont=*) CON_FONT=${MENU_VALUE#confont=}
