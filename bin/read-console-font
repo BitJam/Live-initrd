@@ -1,0 +1,80 @@
+#!/bin/bash
+
+read_console_font() {
+    local lang=$1
+    local file=${2:-/etc/default/console-setup}
+    local fdir=${3:-/usr/share/consolefonts}
+    local  ext=${4:-.psf.gz}
+
+    test -r "$file" || return
+    . "$file"
+
+    local pixel_width=$(get_fbcondecor_width)  min_width=${MIN_SCREEN_WIDTH:-80}
+    local max_size=$((pixel_width / min_width))
+
+    #echo "max size: $max_size"
+
+    local cmd_size
+    case $FONTSIZE in
+        *x[1-9]|*x[0-9][0-9]) cmd_size=${FONTSIZE##*x} ;;
+            [0-9]|[0-9][0-9]) cmd_size=$FONTSIZE
+    esac
+
+    [ $cmd_size -gt $max_size ] && cmd_size=$max_size
+
+    local size
+    case $cmd_size in
+              [1-7]) size=12x6                ;;
+               [89]) size=16                  ;;
+                 10) size=20x10               ;;
+                 11) size=22x11               ;;
+              1[23]) size=24x12               ;;
+              1[45]) size=28x14               ;;
+            1[6789]) size=32x16               ;;
+       [23456][0-9]) size=32x16               ;;
+    esac
+
+    if [ -z "$CODESET" -o "$CODESET" = "guess" ]; then
+        case ${lang%%_*} in
+                             kk|ky|tj) code='CyrAsia'  ;;
+                                ru|uk) code='CyrKoi'   ;;
+                          bg|mk|ru|sr) code='CyrSlav'  ;;
+              bs|hr|cs|hu|pl|ro|sk|sl) code='Lat2'     ;;
+                af|sq|ast|da|nl|et|fr) code='Lat15'    ;;
+            'fi'|de|is|id|pt|es|sv|tr) code='Lat15'    ;;
+                                lt|lv) code='Lat7'     ;;
+                                   el) code='Greek'    ;;
+                                    *) code='Uni2'     ;;
+        esac
+
+    else
+        code=$CODESET
+    fi
+
+    local try font
+    for try in ${FONT_XXXX%$ext} $code-$FONTFACE$size $live_font $code-VGA16; do
+        #echo $try
+        test -e $fdir/$try$ext || continue
+        font=$try
+        break
+    done
+
+    echo $font
+}
+
+get_fbcondecor_width() {
+    local theme=${1:-default}  res
+    local fbsize_file=/sys/class/graphics/fb0/virtual_size
+    read res 2>/dev/null <$fbsize_file
+    [ -z "$res" ] && return
+    if test -e /dev/fbcondecor; then
+        local file=/etc/splash/$theme/${res/,/x}.cfg
+        test -r $file || return
+        sed -rn "s/^\s*tw=([0-9]+).*/\1/p" $file | tail -n1
+    else
+        cut -d, -f1 $fbsize_file
+    fi
+}
+
+read_console_font "$@"
+
