@@ -546,6 +546,7 @@ extra_cmdline_params() {
     local param menu_params=$1
     for param in $CMDLINE; do
         case $param in
+                    confont=*) continue ;;
             gfxsave|gfxsave=*) continue ;;
           bootsave|bootsave=*) continue ;;
                  BOOT_IMAGE=*) continue ;;
