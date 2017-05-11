@@ -1,0 +1,150 @@
+#!/bin/bash
+
+set_console_font() {
+    local width=$1  lang=$2
+
+    # Get parameters from "cmdline"
+    if [ "$1" = "--auto" ]; then
+        width=
+        local param val
+        for param in $(cat /live/config/proc-cmdline /live/config/cmdline 2>/dev/null); do
+            val=${param#*=}
+            case $param in
+                    lang=*) lang=$val  ;;
+                conwidth=*) width=$val ;;
+                 confont=*) width=$val ;;
+            esac
+        done
+    fi
+
+    width=${width##*,}
+
+    [ -z "$width" ]  && return
+    test -e /dev/fb0 || return
+
+    local name=Terminus
+    local fdir=${3:-/usr/share/consolefonts}
+    local ext=${4:-.psf.gz}
+    local conf_file=${5:-/etc/default/console-setup}
+
+    local pixel_width=$(get_fbcondecor_width)
+    echo "pixel width: $pixel_width"
+
+    # Make sure we have at least 80 chars per line
+    local min_width=${MIN_SCREEN_WIDTH:-80}
+    [ $width -lt $min_width ] && width=$min_width
+
+    local cmd_size=$((pixel_width / width))
+
+    echo "  font size: $cmd_size"
+
+    # Convert font parameters to parts of the font name
+
+        local size
+        case $cmd_size in
+              [1-7]) size=12x6                ;;
+               [89]) size=16                  ;;
+                 10) size=20x10               ;;
+                 11) size=22x11               ;;
+              1[23]) size=24x12               ;;
+              1[45]) size=28x14               ;;
+            1[6789]) size=32x16               ;;
+       [23456][0-9]) size=32x16               ;;
+    esac
+
+    local code
+    case ${lang%%_*} in
+                     kk|ky|tj) code='CyrAsia'  ;;
+                        ru|uk) code='CyrKoi'   ;;
+                  bg|mk|ru|sr) code='CyrSlav'  ;;
+      bs|hr|cs|hu|pl|ro|sk|sl) code='Lat2'     ;;
+        af|sq|ast|da|nl|et|fr) code='Lat15'    ;;
+    'fi'|de|is|id|pt|es|sv|tr) code='Lat15'    ;;
+                        lt|lv) code='Lat7'     ;;
+                           el) code='Greek'    ;;
+                            *) code='Uni2'     ;;
+    esac
+
+    # Now try to find an existing font file that matches what we want
+
+    local try font face font_file
+    for face in ${name}Bold VGA $name; do
+        #echo $face$size
+        try=$code-$face$size
+        font_file=$fdir/$try$ext
+        #echo $font_file
+        test -e $font_file || continue
+        font=$try
+        break
+    done
+
+    [ "$font" ] || return
+
+    echo setfont $font
+    setfont $font
+
+    # Now record the font in the conf_file if given
+    test -r $conf_file || return
+
+    if grep -q "^\s*FONTFACE=" $conf_file && grep -q "^\s*FONTNAME=" $conf_file; then
+        # Only edit the conf_file once
+        local expr
+        expr="$expr -e s/^\s*(FONTFACE=.)[A-Za-z0-9-]+(.).*/\1$face\2/"
+        expr="$expr -e s/^\s*(FONTSIZE=.)[A-Za-z0-9-]+(.).*/\1$size\2/"
+        sed -r -i $expr $conf_file
+    else
+        add_or_replace "^\s*FONTFACE=" "FONTFACE=\"$face\"" $conf_file create
+        add_or_replace "^\s*FONTSIZE=" "FONTSIZE=\"$size\"" $conf_file create
+    fi
+}
+
+get_fbcondecor_width() {
+    local theme=${1:-default}  res
+    local fbsize_file=/sys/class/graphics/fb0/virtual_size
+    read res 2>/dev/null <$fbsize_file
+    [ -z "$res" ] && return
+    if test -e /dev/fbcondecor; then
+        local file=/etc/splash/$theme/${res/,/x}.cfg
+        test -r $file || return
+        sed -rn "s/^\s*tw=([0-9]+).*/\1/p" $file | tail -n1
+    else
+        cut -d, -f1 $fbsize_file
+    fi
+}
+
+# NOT USED NOW since setting theme via boot param is not enabled
+get_fbcondecor_theme() {
+
+    local boot_param=${1:-$SPLASH_PARAM}
+    local param theme
+    for param in ${boot_param//,/ }; do
+        case $param in
+          t=*|theme=*) theme=${param#*=} ;;
+        esac
+    done
+    test -d /etc/$theme/ || theme=default
+    test -d /etc/$theme/ || return 1
+    echo $theme
+    return 0
+}
+
+add_or_replace() {
+    local where=$1  line=$2  file=$3  create=$4
+
+    if ! test -e "$file"; then
+        [ "$create" ] && echo "$line" > $file
+        return
+    fi
+
+    if grep -iq "$where" "$file"; then
+        # Don't over-write the same string
+        grep -q "^$line" "$file" && return
+        # Edit the existing line
+        sed -i -r "/$where/I s|.*|$line|" $file
+    else
+        # Add it under the top line of the file
+         sed -i "1 a$line" $file
+    fi
+}
+
+set_console_font "$@"
