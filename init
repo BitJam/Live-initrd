@@ -1184,11 +1184,6 @@ set_console_font() {
 
     SCREEN_WIDTH=$(stty size 2>/dev/null | cut -d" " -f2)
     vmsg 7 "New screen width: $SCREEN_WIDTH"
-
-    echo $font   > $OUTPUT_DIR/font
-    echo $f_size > $OUTPUT_DIR/font-size
-    echo $f_face > $OUTPUT_DIR/font-face
-    echo $code   > $OUTPUT_DIR/font-code-set
 }
 
 #------------------------------------------------------------------------------
