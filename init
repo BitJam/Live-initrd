@@ -764,7 +764,7 @@ read_cmdline_params()
 
                          noprog) NO_PROGRESS=true                                ;;
 
-                      confont=*) small_int CON_FONT $param                       ;;
+                      confont=*) CON_FONT=$value                                 ;;
                       nomodeset) NO_MODESET=true                                 ;;
             noumount|noumnt|noU) NO_UMOUNT=true                                  ;;
 
@@ -1117,6 +1117,9 @@ read_xlat() {
 #------------------------------------------------------------------------------
 set_console_font() {
     local lang=$1  cmd_size=${2:-8}  dir=${3:-$LOCALE_DIR/fonts}
+
+    cmd_size=${cmd_size%%,*}
+
     local def_size=8  name=Terminus  ext=.psf
     #msg "set_console_font($lang,  $cmd_size,  $dir)"
 
