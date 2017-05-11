@@ -188,7 +188,7 @@ main_wrapper() {
     set_colors "$NO_COLOR" "$LOW_COLOR"
 
     read_xlat init $LANG
-    set_console_font "$LANG" "$CON_FONT"
+    set_console_font "$CON_WIDTH" "$LANG"
 
     # disable console screen blanking
     printf "\e[9;0]\e[14;0]"
@@ -765,6 +765,7 @@ read_cmdline_params()
                          noprog) NO_PROGRESS=true                                ;;
 
                       confont=*) CON_FONT=$value                                 ;;
+                     conwidth=*) CON_WIDTH=$value                                ;;
                       nomodeset) NO_MODESET=true                                 ;;
             noumount|noumnt|noU) NO_UMOUNT=true                                  ;;
 
@@ -1116,27 +1117,24 @@ read_xlat() {
 #
 #------------------------------------------------------------------------------
 set_console_font() {
-    local lang=$1  cmd_size=${2:-8}  dir=${3:-$LOCALE_DIR/fonts}
-
-    cmd_size=${cmd_size%%,*}
-
+    local width=${1:-110}  lang=$2  dir=${3:-$LOCALE_DIR/fonts}
     local def_size=8  name=Terminus  ext=.psf
-    #msg "set_console_font($lang,  $cmd_size,  $dir)"
 
-    # This only makes sense on a framebuffer
+    width=${width%%,*}
+    [ -z "$width" ] && return
+
+    # Setting these fonts only makes sense on a framebuffer
     test -e /dev/fb0 || return
 
     # Make sure we have at least 80 chars per line
-    local pixel_width=$(get_fbcondecor_width) min_width=${MIN_SCREEN_WIDTH:-80}
-    #msg "$pixel_width / $min_width"
-    local max_size=$((pixel_width / min_width))
-    vmsg 8 "max font size: $max_size"
+    local min_width=${MIN_SCREEN_WIDTH:-80}
+    [ $width -lt $min_width ] && width=$min_width
 
-    if [ $cmd_size -gt $max_size ]; then
-        warn "The console font size %s is too large" $cmd_size
-        warn "Reducing console font size to %s" $max_size
-        cmd_size=$max_size
-    fi
+    local pixel_width=$(get_fbcondecor_width)
+    local cmd_size=$((pixel_width / width))
+
+    vmsg 5 "Try to set line length to %s" "$(pq $width)"
+    vmsg 5 "Using size %s" "$(pq $cmd_size)"
 
     local size
     case $cmd_size in
@@ -1163,7 +1161,7 @@ set_console_font() {
                             *) code='Uni2'     ;;
     esac
 
-    local try font f_size f_face file
+    local try  font  f_size  f_face file
     for f_size in $size $def_size; do
         for f_face in ${name}Bold VGA $name; do
             try=$code-$f_face$f_size
@@ -3301,14 +3299,23 @@ do_early_menus() {
                 read_xlat init $LANG       ;;
     esac
 
-    my_select_menu "Select Console Font size"  "The default size is 8"                c confont  "Console font size"  'confont=*'
+    my_select_menu "Select number of console columns"  "Wider means a smaller font"    w conwidth "Console columns"  'conwidth=*'
 
     case $MENU_VALUE in
-        confont=*) CON_FONT=${MENU_VALUE#confont=}
-                   set_console_font "$LANG" "$CON_FONT" ;;
-                *) [ "$need_font" ] && \
-                   set_console_font "$LANG" "$CON_FONT" ;;
+        conwidth=*) CON_WIDTH=${MENU_VALUE#conwidth=}
+                    set_console_font "$CON_WIDTH" "$LANG";;
+                 *) [ "$need_font" ] && \
+                    set_console_font "$CON_WIDTH" "$LANG" ;;
     esac
+
+    # my_select_menu "Select Console Font size"  "The default size is 8"                c confont  "Console font size"  'confont=*'
+
+    # case $MENU_VALUE in
+    #     confont=*) CON_FONT=${MENU_VALUE#confont=}
+    #                set_console_font "$LANG" "$CON_FONT" ;;
+    #             *) [ "$need_font" ] && \
+    #                set_console_font "$LANG" "$CON_FONT" ;;
+    # esac
 
     my_select_menu "Select Timezone"           "Timezones are listed by longitude"     t tz       "Timezone"      'tz=*'
     my_select_menu "Select Option"             "Only one option can be selected"       o options  "Options"       "$OPTIONS_ENTRIES"
