@@ -764,7 +764,7 @@ read_cmdline_params()
 
                          noprog) NO_PROGRESS=true                                ;;
 
-                      confont=*) CON_FONT=$value                                 ;;
+                     #confont=*) CON_FONT=$value                                 ;;
                      conwidth=*) CON_WIDTH=$value                                ;;
                       nomodeset) NO_MODESET=true                                 ;;
             noumount|noumnt|noU) NO_UMOUNT=true                                  ;;
