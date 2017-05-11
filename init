@@ -1117,7 +1117,7 @@ read_xlat() {
 #
 #------------------------------------------------------------------------------
 set_console_font() {
-    local width=${1:-110}  lang=$2  dir=${3:-$LOCALE_DIR/fonts}
+    local width=$1  lang=$2  dir=${3:-$LOCALE_DIR/fonts}
     local def_size=8  name=Terminus  ext=.psf
 
     width=${width%%,*}
