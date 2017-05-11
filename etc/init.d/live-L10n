@@ -105,7 +105,7 @@ main() {
         loadkeys -q "$KEYTABLE"
     fi
 
-    [ -n "$CMD_FONT" ] && set_console_font "$CMD_LANG" "$CMD_FONT"
+    #[ -n "$CMD_FONT" ] && set_console_font "$CMD_LANG" "$CMD_FONT"
 }
 
 #------------------------------------------------------------------------------
