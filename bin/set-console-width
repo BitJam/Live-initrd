@@ -1,37 +1,54 @@
 #!/bin/bash
 
 DEF_SCREEN_WIDTH=110
+FONT_DIRS="/usr/share/consolefonts /live/locale/fonts"
 
 set_console_font() {
-    local width=${1:-$DEF_SCREEN_WIDTH}  lang=$2
+    local cmd_width  lang
 
     # Get parameters from "cmdline"
     if [ "$1" = "--auto" ]; then
-        AUTO=true
-        width=
+        [ -z "$DEBUG" ] && AUTO=true
         local param val
         for param in $(cat /live/config/proc-cmdline /live/config/cmdline 2>/dev/null); do
             val=${param#*=}
             case $param in
-                    lang=*) lang=$val  ;;
-                conwidth=*) width=$val ;;
-                 confont=*) width=$val ;;
+                    lang=*)      lang=$val  ;;
+                conwidth=*) cmd_width=$val  ;;
+                 confont=*) cmd_width=$val  ;;
             esac
         done
+    else
+        cmd_width=$1
+        lang=$2
     fi
-
     # allow conwidth=aa,bb and we get bb
-    width=${width##*,}
+    local width=${cmd_width##*,}
     : ${width:=$DEF_SCREEN_WIDTH}
 
     # Silently give up on bad input
-    case $width in [1-9][0-9]|[1-9][0-9][0-9]) ;; *) return ;; esac
+    case $width in
+        [1-9][0-9]|[1-9][0-9][0-9]) ;;
+        off) return ;;
+        *) err "bad conwidth parameter %s" $cmd_width ;;
+    esac
 
-    test -e /dev/fb0 || return
+    test -e /dev/fb0 || err "frame buffer is not enabled"
 
     local name=Terminus
-    local fdir=${3:-/usr/share/consolefonts}
-    local ext=${4:-.psf.gz}
+    local dir fdir
+    for dir in $FONT_DIRS; do
+        test -d $dir || continue
+        fdir=$dir
+        break
+    done
+    [ -n "$fdir" ] || err "could not find a font directory"
+
+    local ext=.psf.gz
+    case $fdir in
+        /live/*) ext=.psf ;;
+    esac
+
     local conf_file=${5:-/etc/default/console-setup}
 
     local pixel_width=$(get_fbcondecor_width)
@@ -42,6 +59,7 @@ set_console_font() {
 
     local cmd_size=$((pixel_width / width))
 
+    say " req. width: $width"
     say "pixel width: $pixel_width"
     say " font width: $cmd_size"
 
@@ -88,7 +106,8 @@ set_console_font() {
     [ "$font" ] || return
 
     say "       font: $font"
-    setfont $font
+
+    setfont $fdir/$font$ext
 
     say "   num cols: $(stty size | cut -d" " -f2)"
 
@@ -167,6 +186,13 @@ say() {
     [ "$AUTO" ] && return
     local fmt=$1  ;  shift
     printf "$fmt\n" "$@"
+}
+
+err() {
+    [ "$AUTO" ] && exit 3
+    local fmt=$1  ;  shift
+    printf "Error: $fmt\n" "$@" >&2
+    exit 0
 }
 
 set_console_font "$@"
