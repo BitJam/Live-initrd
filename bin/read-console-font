@@ -17,7 +17,7 @@ read_console_font() {
     local cmd_size
     case $FONTSIZE in
         *x[1-9]|*x[0-9][0-9]) cmd_size=${FONTSIZE##*x} ;;
-            [0-9]|[0-9][0-9]) cmd_size=$FONTSIZE
+            [0-9]|[0-9][0-9]) cmd_size=$((FONTSIZE / 2)) ;;
     esac
 
     [ $cmd_size -gt $max_size ] && cmd_size=$max_size
