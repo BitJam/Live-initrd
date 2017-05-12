@@ -1,10 +1,13 @@
 #!/bin/bash
 
+DEF_SCREEN_WIDTH=110
+
 set_console_font() {
-    local width=$1  lang=$2
+    local width=${1:-$DEF_SCREEN_WIDTH}  lang=$2
 
     # Get parameters from "cmdline"
     if [ "$1" = "--auto" ]; then
+        AUTO=true
         width=
         local param val
         for param in $(cat /live/config/proc-cmdline /live/config/cmdline 2>/dev/null); do
@@ -17,9 +20,13 @@ set_console_font() {
         done
     fi
 
+    # allow conwidth=aa,bb and we get bb
     width=${width##*,}
+    : ${width:=$DEF_SCREEN_WIDTH}
 
-    [ -z "$width" ]  && return
+    # Silently give up on bad input
+    case $width in [1-9][0-9]|[1-9][0-9][0-9]) ;; *) return ;; esac
+
     test -e /dev/fb0 || return
 
     local name=Terminus
@@ -28,7 +35,6 @@ set_console_font() {
     local conf_file=${5:-/etc/default/console-setup}
 
     local pixel_width=$(get_fbcondecor_width)
-    echo "pixel width: $pixel_width"
 
     # Make sure we have at least 80 chars per line
     local min_width=${MIN_SCREEN_WIDTH:-80}
@@ -36,7 +42,8 @@ set_console_font() {
 
     local cmd_size=$((pixel_width / width))
 
-    echo "  font size: $cmd_size"
+    say "pixel width: $pixel_width"
+    say " font width: $cmd_size"
 
     # Convert font parameters to parts of the font name
 
@@ -69,10 +76,10 @@ set_console_font() {
 
     local try font face font_file
     for face in ${name}Bold VGA $name; do
-        #echo $face$size
+        #say $face$size
         try=$code-$face$size
         font_file=$fdir/$try$ext
-        #echo $font_file
+        #say $font_file
         test -e $font_file || continue
         font=$try
         break
@@ -80,12 +87,21 @@ set_console_font() {
 
     [ "$font" ] || return
 
-    echo setfont $font
+    say "       font: $font"
     setfont $font
 
-    # Now record the font in the conf_file if given
+    say "   num cols: $(stty size | cut -d" " -f2)"
+
+    # only edit conf_file in auto mode
+    [ "$AUTO" ] || return
+
+    # Now record the font in the conf_file
     test -r $conf_file || return
 
+    # I use width, single valued sizes are heights
+    case $size in
+        [1-9]|[1-9[0-9]) size=$((size * 2)) ;;
+    esac
     if grep -q "^\s*FONTFACE=" $conf_file && grep -q "^\s*FONTNAME=" $conf_file; then
         # Only edit the conf_file once
         local expr
@@ -145,6 +161,12 @@ add_or_replace() {
         # Add it under the top line of the file
          sed -i "1 a$line" $file
     fi
+}
+
+say() {
+    [ "$AUTO" ] && return
+    local fmt=$1  ;  shift
+    printf "$fmt\n" "$@"
 }
 
 set_console_font "$@"
