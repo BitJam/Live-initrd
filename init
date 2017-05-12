@@ -115,7 +115,9 @@ MKFS_FREE_MARGIN=10
           LAZYTIME=""
       MADE_BY_FILE="made-by-live-usb-maker"
     PROG_BAR_WIDTH=100
+
    MIN_SCREEN_WIDTH=80
+   DEF_SCREEN_WIDTH=100
 
     #           HUP INT QUIT SEGV TERM
     SIGNAL_LIST="1   2   3    11   15"
@@ -188,7 +190,7 @@ main_wrapper() {
     set_colors "$NO_COLOR" "$LOW_COLOR"
 
     read_xlat init $LANG
-    set_console_font "$CON_WIDTH" "$LANG"
+    set_console_width "$CON_WIDTH" "$LANG"
 
     # disable console screen blanking
     printf "\e[9;0]\e[14;0]"
@@ -1116,12 +1118,19 @@ read_xlat() {
 #------------------------------------------------------------------------------
 #
 #------------------------------------------------------------------------------
-set_console_font() {
-    local width=$1  lang=$2  dir=${3:-$LOCALE_DIR/fonts}
+set_console_width() {
+    local width=${1:-$DEF_SCREEN_WIDTH}  lang=$2  dir=${3:-$LOCALE_DIR/fonts}
     local def_size=8  name=Terminus  ext=.psf
 
+    # allow conwidth=aa,bb
     width=${width%%,*}
-    [ -z "$width" ] && return
+
+    case $width in
+        [1-9][0-9]|[1-9][0-9][0-9]) ;;
+        off) return ;;
+        *) warn "Invalid %s value %s" "$(pqw conwidth)" "$(pqw $width)"
+           return ;;
+      esac
 
     # Setting these fonts only makes sense on a framebuffer
     test -e /dev/fb0 || return
@@ -3303,9 +3312,9 @@ do_early_menus() {
 
     case $MENU_VALUE in
         conwidth=*) CON_WIDTH=${MENU_VALUE#conwidth=}
-                    set_console_font "$CON_WIDTH" "$LANG";;
+                    set_console_width "$CON_WIDTH" "$LANG";;
                  *) [ "$need_font" ] && \
-                    set_console_font "$CON_WIDTH" "$LANG" ;;
+                    set_console_width "$CON_WIDTH" "$LANG" ;;
     esac
 
     # my_select_menu "Select Console Font size"  "The default size is 8"                c confont  "Console font size"  'confont=*'
