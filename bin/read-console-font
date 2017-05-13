@@ -52,9 +52,9 @@ read_console_font() {
     fi
 
     local try font
-    for try in ${FONT_XXXX%$ext} $code-$FONTFACE$size $live_font $code-VGA16; do
+    for try in $FONT $code-$FONTFACE$size$ext $code-VGA16$ext; do
         #echo $try
-        test -e $fdir/$try$ext || continue
+        test -e $fdir/$try || continue
         font=$try
         break
     done
