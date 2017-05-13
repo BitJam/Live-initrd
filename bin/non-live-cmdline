@@ -137,6 +137,7 @@ for param in $(cat /proc/cmdline); do
         udpi=*|sdpi=*) ;;
         fontsize=*) ;;
         norepo|norepo=*) ;;
+        conwidth=*);;
 
         *) printf "$param "
     esac
