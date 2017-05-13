@@ -1,6 +1,6 @@
 #!/bin/bash
 
-DEF_SCREEN_WIDTH=110
+DEF_SCREEN_WIDTH=120
 FONT_DIRS="/usr/share/consolefonts /live/locale/fonts"
 
 set_console_font() {
