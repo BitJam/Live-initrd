@@ -125,7 +125,7 @@ error() {
 
     # This is not optimally fast but it allows "Error" to get transated
     # via the normal mechanism.
-    err=$(pf "$_Error_")
+    err=$(pf "Error")
     printf "  ${ERROR_PARAM_COLOR}$err:$LIVE_COLOR $fmt$NO_COLOR\n" "$@"
 }
 
