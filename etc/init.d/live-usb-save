@@ -316,11 +316,13 @@ restore_state() {
 
     if test -e $state_dir; then
         # Copy saved state files to system
-        for from in $(find $state_dir/files -type f 2>/dev/null); do
+        #for from in $(find $state_dir/files -type f 2>/dev/null); do
+        while read from; do
             local to=${from#$state_dir/files}
 
-            # Don't write to /live
+            # Don't write to /live or /sys
             [ -z "${to##/live/*}" ] && continue
+            [ -z "${to##/sys/*}"  ] && continue
 
             should_copy $from $to || continue
             #. Restore <general|machine specific> state file <file-name>
@@ -334,7 +336,10 @@ restore_state() {
             local perm=$(grep "^$to:" $perm_file 2>/dev/null | cut -d: -f2)
             : ${perm:=644}
             [ "$perm" != "$(stat -c %a $to)" ] && echo_cmd chmod $perm $to
-        done
+        done <<Restore_Files
+$(cd "$state_dir" && eval "ls -d $file_list" 2>/dev/null)
+Restore_Files
+
     else
         [ "$dir2" ] || return
         for file in $MSTATE_FILES; do
@@ -350,6 +355,7 @@ restore_state() {
             #    echo_cmd rm -f $file
             #fi
         done
+
     fi
 }
 
