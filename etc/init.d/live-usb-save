@@ -224,7 +224,7 @@ dummy() {
 
 save_state() {
     #. "general" (same on all machines) versus "machine specific"
-    local state_dir="$1"  files="$2"  dir2="$3"  type="$(wq "general")"
+    local state_dir="$1"  file_list="$2"  dir2="$3"  type="$(wq "general")"
     local to_delete  del_file=$state_dir/to-delete
 
     test -e $state_dir/no-state && return
@@ -260,7 +260,7 @@ save_state() {
     done
 
     # Save system files under state_dir
-    for file in $files; do
+    for file in $file_list; do
 
         # Don't save from /live
         [ -z "${file##/live/*}" ] && continue
@@ -301,7 +301,7 @@ save_state() {
 }
 
 restore_state() {
-    local state_dir="$1"  files="$2"  dir2="$3" type="$(wq "general")"
+    local state_dir="$1"  file_list="$2"  dir2="$3" type="$(wq "general")"
     [ ${#dir2} -gt 0 ] && type=$(wq "machine specific")
 
     test -e $state_dir/no-state && return
