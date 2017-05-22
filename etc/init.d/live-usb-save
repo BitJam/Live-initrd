@@ -348,7 +348,7 @@ restore_state() {
             : ${perm:=644}
             [ "$perm" != "$(stat -c %a $to)" ] && echo_cmd chmod $perm $to
         done <<Restore_Files
-$(cd "$state_dir" && eval "ls -d $file_list" 2>/dev/null)
+$(cd "$state_dir/files" && eval "ls -d $(echo $file_list)" 2>/dev/null)
 Restore_Files
 
     else
