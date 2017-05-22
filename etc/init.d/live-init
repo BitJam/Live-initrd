@@ -151,6 +151,11 @@ do_start() {
     test -e /live/config/virtualbox && : ${VT_BLANK:=0}
     [ ${#VT_BLANK} -gt 0 ] && set_console_blanking $VT_BLANK
 
+    if test -e /live/config/virtualbox; then
+        echo_live "Disabling splash (fbcondecor) inside of Virtual Box"
+        rm -f /sbin/splash-all /sbin/splash-term
+    fi
+
     # Only do X stuff on systems that seem to have X
     if  [ "$HAVE_X" ]; then
 
