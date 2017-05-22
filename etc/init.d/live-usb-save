@@ -66,14 +66,15 @@ load_translation
 
 main() {
     case $1 in
-        start) do_start   ;;
-         stop) do_stop    ;;
-            *) echo "Usage: $0 {start|stop}" ;;
+        start|sys) do_start $1 ;;
+             stop) do_stop     ;;
+                *) echo "Usage: $0 {start|stop|sys}" ;;
     esac
     exit 0
 }
 
 do_start() {
+    local cmd=${1:-start}
 
     test -e /live/config/remasterable || exit 0
     read_cmdline
@@ -93,8 +94,10 @@ do_start() {
     #. Like saving the state of a game.
     echo_script "Restore state information" $0
 
+    local file_list=$(state_files "$MSTATE_FILES")
+
     # Always restore machine specific state files
-    restore_state $root_dir/$MSTATE_DIR "$(state_files "$MSTATE_FILES")" $(mach_id)
+    restore_state $root_dir/$MSTATE_DIR "$(state_files "$file_list")" "$(mach_id)" $cmd
 
     # Only restore general state files and user files if root persistence is not
     # enabled
@@ -102,7 +105,8 @@ do_start() {
     # We'll see.  Maybe just restore it the first time?!
     #test -e /live/config/persist-root && return
 
-    restore_state $root_dir/$GSTATE_DIR "$(state_files "$GSTATE_FILES")"
+    file_list=$(state_files "$GSTATE_FILES" | sed "s|^\s*/||")
+    restore_state $root_dir/$GSTATE_DIR "$file_list" "" $cmd
 
     [ "$PERSISTENCE" ] && return
 
@@ -301,8 +305,15 @@ save_state() {
 }
 
 restore_state() {
-    local state_dir="$1"  file_list="$2"  dir2="$3" type="$(wq "general")"
+    local state_dir="$1"  file_list="$2"  dir2="$3" cmd=${4:-start} type="$(wq "general")"
     [ ${#dir2} -gt 0 ] && type=$(wq "machine specific")
+
+    case $cmd in
+        sys) file_list=$(echo "$file_list" | grep    ^/sys/) ;;
+          *) file_list=$(echo "$file_list" | grep -v ^/sys/) ;;
+    esac
+
+    file_list=$(echo "$file_list" | sed "s|^\s*/||")
 
     test -e $state_dir/no-state && return
 
@@ -314,15 +325,15 @@ restore_state() {
     state_dir=$state_dir${dir2:+/$dir2}
     local perm_file=$state_dir/permissions
 
-    if test -e $state_dir; then
+    if test -e $state_dir/files; then
         # Copy saved state files to system
         #for from in $(find $state_dir/files -type f 2>/dev/null); do
         while read from; do
+            from=$state_dir/files/$from
             local to=${from#$state_dir/files}
 
             # Don't write to /live or /sys
             [ -z "${to##/live/*}" ] && continue
-            [ -z "${to##/sys/*}"  ] && continue
 
             should_copy $from $to || continue
             #. Restore <general|machine specific> state file <file-name>
