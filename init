@@ -770,6 +770,7 @@ read_cmdline_params()
                      conwidth=*) CON_WIDTH=$value                                ;;
                       nomodeset) NO_MODESET=true                                 ;;
             noumount|noumnt|noU) NO_UMOUNT=true                                  ;;
+                          [1-6]) RUN_LEVEL=$val                                  ;;
 
         #----- These get interpreted late but we don't want them to be unknown
                 hwclock=*|hwc=*)  ;;
