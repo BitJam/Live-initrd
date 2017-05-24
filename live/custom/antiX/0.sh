@@ -2,6 +2,7 @@
 # antiX Specific /init code
 
 CLI_INSTALLER=cli-installer
+CLI_CC=cli-antiX-cc
 
 LIST_MODULES=true
 CHECK_BOOTCODES=true

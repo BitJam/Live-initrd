@@ -1219,6 +1219,10 @@ do_welcome() {
             imsg "For command line install, login as %s (password=%s)." "$(gq root)" "$(gq root)"
             imsg "Enter the command %s.  Follow the instructions." "$(gq $CLI_INSTALLER)"
         fi
+        if [ -n "$CLI_CC" ]; then
+            imsg "Use the command %s for easy access to many commands." "$(gq $CLI_CC)"
+        fi
+
     ) > /issue
 
     if lspci -n | grep -iq " 80ee:beef"; then
