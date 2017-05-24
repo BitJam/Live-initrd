@@ -153,7 +153,7 @@ do_start() {
 
     if test -e /live/config/virtualbox; then
         echo_live "Disabling splash (fbcondecor) inside of Virtual Box"
-        rm -f /sbin/splash-all /sbin/splash-term
+        rm -f /sbin/splash-all /sbin/splash-term /etc/udev/rules.d/*-fbcondecor.rules
     fi
 
     # Only do X stuff on systems that seem to have X
