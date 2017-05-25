@@ -502,8 +502,6 @@ main_core() {
         vmsg 8 "$green@${cyan} Extras took$hi_co $delta${cyan} seconds"
     fi
 
-    [ ! -e /$NEW_ROOT/etc/issue -o -n "$FORCE_ISSUE" ] && cp /issue $NEW_ROOT/etc/issue
-
     # FIXME: do this after copy_xtra for easy testing (for now) (????)
     PROC_CMDLINE=$(cat /live/config/proc-cmdline)
     [ "$DO_MENUS" ] && do_late_menus
@@ -1211,19 +1209,10 @@ do_welcome() {
         *[pP][aA][eE]) arch="$arch pae" ;;
     esac
 
-    vmsg 2 "Welcome to %s" "$(pq $pretty_name$arch)!"
+    pretty_name="$pretty_name$arch"
+    vmsg 2 "Welcome to %s" "$(pq $pretty_name)!"
 
-    (   imsg "Welcome to %s! Powered by %s" "$(gq $pretty_name$arch)" "$(gq Debian)."
-        if [ -n "$CLI_INSTALLER" ]; then
-            echo
-            imsg "For command line install, login as %s (password=%s)." "$(gq root)" "$(gq root)"
-            imsg "Enter the command %s.  Follow the instructions." "$(gq $CLI_INSTALLER)"
-        fi
-        if [ -n "$CLI_CC" ]; then
-            imsg "Use the command %s for easy access to many commands." "$(gq $CLI_CC)"
-        fi
-
-    ) > /issue
+    echo "$pretty_name" > /live/config/pretty-name
 
     if lspci -n | grep -iq " 80ee:beef"; then
         vmsg 7 'VirtualBox detected'
@@ -2832,13 +2821,6 @@ pqh()    { echo "$m_co$*$hi_co"           ;}
 hq()     { echo "$hi_co$*$m_co"           ;}
 ncq()    { echo "$hi_co$*$nc_co"          ;}
 gq()     { echo "$hi_co$*$lt_green"       ;}
-
-
-imsg() {
-    local fmt=$1
-    shift
-    printf "$lt_green$fmt$nc_co\n" "$@"
-}
 
 vmsg() {
     local level=$1  fmt=$2

@@ -87,6 +87,8 @@ automount=off|amnt=off)                          AUTOMOUNT_OFF=true ;;
             fontsize=*)     FONT_SIZE=$value                        ;;
              vtblank=*)      VT_BLANK=$value                        ;;
              noskylake)    NO_SKYLAKE=true                          ;;
+                 issue)   FORCE_ISSUE=true                          ;;
+
     esac
 done
 
@@ -127,6 +129,8 @@ do_start() {
         DISTRO="$(sed -n 's/^NAME="//' /etc/initrd-release)"
         DISTRO=${DISTRO%\"}
     fi
+
+    write_issue_file "$DISTRO" "$FORCE_ISSUE"
 
     which X &>/dev/null && HAVE_X=true
 
@@ -803,6 +807,42 @@ set_console_blanking() {
     test -w $conf_file || return
     sed -ri "s/^(BLANK_TIME=).*/\1$blank/" $conf_file
 }
+
+write_issue_file() {
+    local distro=${1:-Linux}  force=$2  file=${3:-/etc/issue}
+    [ "$force" -o ! -e $file ] || return
+
+    local pretty_name  installer=cli-installer  cli_cc=cli-antiX-cc
+    read pretty_name 2>/dev/null </live/config/pretty-name
+    : ${pretty_name:=$distro}
+
+    which $installer &>/dev/null || installer=
+    which $cli_cc    &>/dev/null || cli_cc=
+
+    local issue_co=$CYAN  bold_co=$YELLOW  nc_co=$NO_COLOR
+
+    echo_live "Creating issue file for %s" "$(pquote "$pretty_name")"
+
+    (   imsg "Welcome to %s! Powered by %s" "$(iq $pretty_name)" "$(iq Debian)."
+        if [ -n "$installer" ]; then
+            echo
+            imsg "For command line install, login as %s (password=%s)." "$(iq root)" "$(iq root)"
+            imsg "Enter the command %s.  Follow the instructions." "$(iq $installer)"
+        fi
+        if [ -n "$cli_cc" ]; then
+            imsg "Use the command %s for easy access to many commands." "$(iq $cli_cc)"
+        fi
+
+    ) > $file
+}
+
+imsg() {
+    local fmt=$1
+    shift
+    printf "$issue_co$fmt$nc_co\n" "$@"
+}
+
+iq() { echo "$bold_co$*$issue_co" ; }
 
 #-------------------------------------------------------------------------------
 # DEFAULT USER stuff
