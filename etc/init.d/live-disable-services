@@ -166,6 +166,8 @@ do_start() {
         [ "${disable_param##*[n]*}"  ] ||   DISABLE_NFS=true
         [ "${disable_param##*[n]*}"  ] ||    NFS_REASON=n
         [ "${disable_param##*[N]*}"  ] ||   ENABLE_NTPD=true
+        [ "${disable_param##*[A]*}"  ] ||  ENABLE_ACPID=true
+        [ "${disable_param##*[W]*}"  ] ||   ENABLE_WICD=true
     fi
 
     # Prevent other messages stepping on ours
@@ -191,11 +193,14 @@ do_start() {
 
     if [ "$LEAN" ]; then
 
-        if test -e /live/config/laptop; then
-            echo_live "Detected laptop/mobile device"
-        else
-            LEAN_SERVICES="$LEAN_SERVICES $LAPTOP_SERVICES"
-        fi
+        #-- if test -e /live/config/laptop; then
+        #--     echo_live "Detected laptop/mobile device"
+        #-- else
+        #--     LEAN_SERVICES="$LEAN_SERVICES $LAPTOP_SERVICES"
+        #-- fi
+
+        [ "$ENABLE_WICD" ]  || LEAN_SERVICES="$lean_services wicd"
+        [ "$ENABLE_ACPID" ] || LEAN_SERVICES="$lean_services acpid"
 
         echo_live "Disabling some services %s" "$(paren L, lean)"
         disable_services "lean (l)" "$LEAN_SERVICES"
