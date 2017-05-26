@@ -1141,8 +1141,9 @@ set_console_width() {
     local pixel_width=$(get_fbcondecor_width)
     local cmd_size=$((pixel_width / width))
 
-    vmsg 5 "Try to set line length to %s" "$(pq $width)"
-    vmsg 5 "Using size %s" "$(pq $cmd_size)"
+    vmsg 6 'Width of screen in pixels %s'  "$(pq $pixel_width)"
+    vmsg 6 'Try to set line length to %s'  "$(pq $width)"
+    vmsg 6 'Using size %s'                 "$(pq $cmd_size)"
 
     local size
     case $cmd_size in
@@ -1189,7 +1190,7 @@ set_console_width() {
     log_cmd setfont $file -C $(tty)
 
     SCREEN_WIDTH=$(stty size 2>/dev/null | cut -d" " -f2)
-    vmsg 7 "New screen width: $SCREEN_WIDTH"
+    vmsg 7 "New screen width %s"  "$(pq $SCREEN_WIDTH)"
 }
 
 #------------------------------------------------------------------------------
