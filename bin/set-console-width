@@ -1,7 +1,34 @@
 #!/bin/bash
 
+#==============================================================================
+# Set the console font size based on how many characters fit across the screen.
+# For many cases this makes the look of the display independent of the
+# resolution of the console screen.  Since the resolution can jump dramatically
+# when udev runs and a  modesetting driver kicks in, basing the font size on
+# the number of characters works very well.
+#
+# In addition, we set the our selection in /etc/default/console-setup. This
+# means that the console-setup.sh script will use our selection instead of
+# clobbering it and our selection should also carry over to during an install.
+#
+# This is called from splash-all when it is in --auto mode which happens when
+# it is called from a fbcondecor.rules uedev rule.  Udev will often set a new
+# framebuffer and the muck up the font.  So we immediately add the decoration
+# and then fix the font.  We need to set the decoration first in order to know
+# how many pixels we have to work with.
+#
+# This is called *again* by /etc/init.d/keyboard-setup.sh which runs right
+# after udev runs.  This routine *needs* to run to get the fonts right but
+# the udev rule may not always kick in (for example if "nomodeset" is used).
+# We run from the udev rule to minimize the time we expose the user to the
+# wrong font and then we run from keyboard-setup to be sure we run at all.
+#==============================================================================
+
+ME=${0##*/}
+
 DEF_SCREEN_WIDTH=120
 FONT_DIRS="/usr/share/consolefonts /live/locale/fonts"
+CONF_FILE="/etc/default/console-setup"
 
 set_console_font() {
     local cmd_width  lang
@@ -15,14 +42,14 @@ set_console_font() {
             case $param in
                     lang=*)      lang=$val  ;;
                 conwidth=*) cmd_width=$val  ;;
-                 confont=*) cmd_width=$val  ;;
             esac
         done
     else
         cmd_width=$1
         lang=$2
     fi
-    # allow conwidth=aa,bb and we get bb
+    # allow "conwidth=aa,bb" and we get the "bb".  This allows a different
+    # conwidth for the initrd ("aa") and for the booted system ("bb").
     local width=${cmd_width##*,}
     : ${width:=$DEF_SCREEN_WIDTH}
 
@@ -30,26 +57,29 @@ set_console_font() {
     case $width in
         [1-9][0-9]|[1-9][0-9][0-9]) ;;
         off) return ;;
-        *) err "bad conwidth parameter %s" $cmd_width ;;
+        *) error "bad conwidth parameter %s" $cmd_width ;;
     esac
 
-    test -e /dev/fb0 || err "frame buffer is not enabled"
+    test -e /dev/fb0 || error "frame buffer is not enabled"
 
     local name=Terminus
+
+    # The two font dirs and the extension stuff below allows the same code
+    # to work early in the initrd and late while the real system is booting.
+    # The busybox "setfont" doesn't like gzipped fonts so they are not
+    # gzipped in the initrd.  This actually makes the initrd.gz *smaller*.
     local dir fdir
     for dir in $FONT_DIRS; do
         test -d $dir || continue
         fdir=$dir
         break
     done
-    [ -n "$fdir" ] || err "could not find a font directory"
+    [ -n "$fdir" ] || error "could not find a font directory"
 
     local ext=.psf.gz
     case $fdir in
         /live/*) ext=.psf ;;
     esac
-
-    local conf_file=${5:-/etc/default/console-setup}
 
     local pixel_width=$(get_fbcondecor_width)
 
@@ -114,25 +144,36 @@ set_console_font() {
     # only edit conf_file in auto mode
     [ "$AUTO" ] || return
 
-    # Now record the font in the conf_file
+    local conf_file=$CONF_FILE
+
     test -r $conf_file || return
 
-    # I use width, single valued sizes are heights
-    case $size in
-        [1-9]|[1-9[0-9]) size=$((size * 2)) ;;
-    esac
-    if grep -q "^\s*FONTFACE=" $conf_file && grep -q "^\s*FONTNAME=" $conf_file; then
-        # Only edit the conf_file once
+    #--- Now record the font in the conf_file ---
+
+    # See if both lines already exist in the file (usual case)
+    # We try to minimize the number of times we write to the file
+    if grep -q "^\s*FONTFACE=" $conf_file && grep -q "^\s*FONTSIZE=" $conf_file; then
+        # if so then only edit the conf_file at most once
         local expr
-        expr="$expr -e s/^\s*(FONTFACE=.)[A-Za-z0-9-]+(.).*/\1$face\2/"
-        expr="$expr -e s/^\s*(FONTSIZE=.)[A-Za-z0-9-]+(.).*/\1$size\2/"
-        sed -r -i $expr $conf_file
+        grep -q "^\s*FONTFACE=\"$face\"" $conf_file \
+            || expr="$expr -e s/^\s*(FONTFACE=).*/\1\"$face\"/"
+
+        grep -q "^\s*FONTSIZE=\"$size\""  $conf_file \
+            || expr="$expr -e s/^\s*(FONTSIZE=).*/\1\"$size\"/"
+
+        [ ${#expr} -gt 0 ] && sed -r -i $expr $conf_file
     else
-        add_or_replace "^\s*FONTFACE=" "FONTFACE=\"$face\"" $conf_file create
-        add_or_replace "^\s*FONTSIZE=" "FONTSIZE=\"$size\"" $conf_file create
+        add_or_replace  "^\s*FONTFACE="  "FONTFACE=\"$face\""  $conf_file create
+        add_or_replace  "^\s*FONTSIZE="  "FONTSIZE=\"$size\""  $conf_file create
     fi
 }
 
+#------------------------------------------------------------------------------
+# Get the width of the current text area of the console in pixels.  This
+# version assumes the theme is always the "default" them since we are not
+# set up to change the theme in the initrd (I think).  The unused code below
+# can read the theme from boot parameters.
+#------------------------------------------------------------------------------
 get_fbcondecor_width() {
     local theme=${1:-default}  res
     local fbsize_file=/sys/class/graphics/fb0/virtual_size
@@ -163,36 +204,49 @@ get_fbcondecor_theme() {
     return 0
 }
 
+#------------------------------------------------------------------------------
+# Either replace an existing line or add a new line if an existing line that
+# sets the variable we want to set is missing.  If the "create" flag is given
+# then we will create the file if it doesn't already exist.
+#------------------------------------------------------------------------------
 add_or_replace() {
     local where=$1  line=$2  file=$3  create=$4
 
     if ! test -e "$file"; then
-        [ "$create" ] && echo "$line" > $file
+        [ "$create" ] || return
+        mkdir -p $(basename $file)
+        echo "$line" > $file
         return
     fi
 
-    if grep -iq "$where" "$file"; then
+    if grep -q "$where" "$file"; then
         # Don't over-write the same string
         grep -q "^$line" "$file" && return
         # Edit the existing line
-        sed -i -r "/$where/I s|.*|$line|" $file
+        sed -i -r "/$where/ s|.*|$line|" $file
     else
         # Add it under the top line of the file
          sed -i "1 a$line" $file
     fi
 }
 
+#------------------------------------------------------------------------------
+# Print out some info about what is happening if we are NOT in --auto mode.
+#------------------------------------------------------------------------------
 say() {
     [ "$AUTO" ] && return
     local fmt=$1  ;  shift
     printf "$fmt\n" "$@"
 }
 
-err() {
+#------------------------------------------------------------------------------
+# Print out the reason we are stopping if NOT in --auto mode.
+#------------------------------------------------------------------------------
+error() {
     [ "$AUTO" ] && exit 3
     local fmt=$1  ;  shift
-    printf "Error: $fmt\n" "$@" >&2
-    exit 0
+    printf "$ME error: $fmt\n" "$@" >&2
+    exit 3
 }
 
 set_console_font "$@"
