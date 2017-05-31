@@ -26,16 +26,19 @@
 
 ME=${0##*/}
 
+LOG_FILE=/var/log/$ME.log
+
 DEF_SCREEN_WIDTH=120
 FONT_DIRS="/usr/share/consolefonts /live/locale/fonts"
 CONF_FILE="/etc/default/console-setup"
 
 set_console_font() {
-    local cmd_width  lang
+    local cmd_width  lang AUTO  label
 
     # Get parameters from "cmdline"
     if [ "$1" = "--auto" ]; then
         [ -z "$DEBUG" ] && AUTO=true
+        label=$2
         local param val
         for param in $(cat /live/config/proc-cmdline /live/config/cmdline 2>/dev/null); do
             val=${param#*=}
@@ -82,6 +85,9 @@ set_console_font() {
     esac
 
     local pixel_width=$(get_fbcondecor_width)
+
+    local start_t=$(cut -d" " -f22 /proc/$$/stat)
+    [ "$AUTO" ] && printf "%12d: %5d: %s\n" "$start_t" "$pixel_width" "$label" >> $LOG_FILE
 
     # Make sure we have at least 80 chars per line
     local min_width=${MIN_SCREEN_WIDTH:-80}
