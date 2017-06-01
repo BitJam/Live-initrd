@@ -26,11 +26,12 @@
 
 ME=${0##*/}
 
-LOG_FILE=/var/log/$ME.log
-
 DEF_SCREEN_WIDTH=120
 FONT_DIRS="/usr/share/consolefonts /live/locale/fonts"
 CONF_FILE="/etc/default/console-setup"
+LOG_FILE="/live/config/font"
+
+PATH=/sbin:/bin:/usr/sbin:/usr/bin:/usr/local/bin
 
 set_console_font() {
     local cmd_width  lang AUTO  label
@@ -84,10 +85,7 @@ set_console_font() {
         /live/*) ext=.psf ;;
     esac
 
-    local pixel_width=$(get_fbcondecor_width)
-
-    local start_t=$(cut -d" " -f22 /proc/$$/stat)
-    [ "$AUTO" ] && printf "%12d: %5d: %s\n" "$start_t" "$pixel_width" "$label" >> $LOG_FILE
+    local pixel_width=$(get_fbcondecor_width --tty=1)
 
     # Make sure we have at least 80 chars per line
     local min_width=${MIN_SCREEN_WIDTH:-80}
@@ -144,15 +142,22 @@ set_console_font() {
     say "       font: $font"
 
     setfont $fdir/$font$ext
-
-    say "   num cols: $(stty size | cut -d" " -f2)"
+    local cols=$(stty size | cut -d" " -f2)
+    say "   num cols: $cols"
 
     # only edit conf_file in auto mode
     [ "$AUTO" ] || return
 
+    if [ -n "$LOG_FILE" -a e -d "$(dirname $LOG_FILE)" ]; then
+        local start_t=$(cut -d" " -f22 /proc/$$/stat |  sed -r 's/(..)$/.\1/')
+        printf "%10s: %4s %5s: %18s: %s\n" "$start_t" "$width" "$pixel_width" "$label" "$font" >> $LOG_FILE
+        #printenv >> $LOG_FILE
+        #echo >> $LOG_FILE
+    fi
+
     local conf_file=$CONF_FILE
 
-    test -r $conf_file || return
+    test -w $conf_file || return
 
     #--- Now record the font in the conf_file ---
 
