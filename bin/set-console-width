@@ -180,12 +180,35 @@ set_console_font() {
 }
 
 #------------------------------------------------------------------------------
+# This version uses the program "fbcondecor_ctl" or fbcondecor_ctl.static" to
+# find out the width of the active text area of the current theme in pixels.
+# This is the best way to do it but it requires that program which is not in
+# initrd ATM.  So similar code in the initrd assumes the default theme is
+# being used.
+#------------------------------------------------------------------------------
+get_fbcondecor_width() {
+    local tty_arg=$1  res
+    local fbsize_file=/sys/class/graphics/fb0/virtual_size
+    read res 2>/dev/null <$fbsize_file
+    [ -z "$res" ] && return
+    local width
+    local name=fbcondecor_ctl prog
+    for prog in $name $name.static; do
+        which $prog &>/dev/null || continue
+        width=$($prog $tty_arg -c getcfg 2>/dev/null | sed -nr "s/^twidth:\s+//p")
+        break
+    done
+    [ ${width:-0} -eq 0 ] && width=$(echo "$res" | cut -d, -f1)
+    printf "%s\n" "$width"
+}
+
+#------------------------------------------------------------------------------
 # Get the width of the current text area of the console in pixels.  This
 # version assumes the theme is always the "default" them since we are not
 # set up to change the theme in the initrd (I think).  The unused code below
 # can read the theme from boot parameters.
 #------------------------------------------------------------------------------
-get_fbcondecor_width() {
+old_get_fbcondecor_width() {
     local theme=${1:-default}  res
     local fbsize_file=/sys/class/graphics/fb0/virtual_size
     read res 2>/dev/null <$fbsize_file
