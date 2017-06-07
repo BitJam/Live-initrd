@@ -148,7 +148,7 @@ set_console_font() {
     # only edit conf_file in auto mode
     [ "$AUTO" ] || return
 
-    if [ -n "$LOG_FILE" -a e -d "$(dirname $LOG_FILE)" ]; then
+    if [ -n "$LOG_FILE" -a -d "$(dirname $LOG_FILE)" ]; then
         local start_t=$(cut -d" " -f22 /proc/$$/stat |  sed -r 's/(..)$/.\1/')
         printf "%10s: %4s %5s: %18s: %s\n" "$start_t" "$width" "$pixel_width" "$label" "$font" >> $LOG_FILE
         #printenv >> $LOG_FILE
