@@ -5510,7 +5510,7 @@ prepare_switch_root() {
     mountpoint $fbsys &>/dev/null && umount $fbsys
 
     local dir old new
-    for dir in bin config etc lib locale custom menus; do
+    for dir in bin config etc lib locale custom menus share; do
         old=$root_dir/$dir
         test -e $old || old=$live_dir/$dir
         new=$new_live/$dir
