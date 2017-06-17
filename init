@@ -2221,6 +2221,12 @@ find_crypt_or_linuxfs() {
     ENCRYPTED=true
     CRYPT_DEV=$mapper_dev
     FOUND_DEV=$mapper_dev
+    if [ "$HAVE_SET_PASSPHRASE" ]; then
+        warn "Are you sure you have written down or memorized the new passphrase?"
+        msg "press %s to continue" "<$(bq "Enter")>"
+        local xxxx
+        read xxxx
+    fi
 }
 
 #------------------------------------------------------------------------------
