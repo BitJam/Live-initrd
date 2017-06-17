@@ -2808,6 +2808,7 @@ breakpoint() {
     custom_code "$bp" "$desc"
 
     if [ "$DB_PLUS" -a -n "${bp##b*}" ]; then
+        vmsg 8 "Available entropy %s" "$(pq $(cat /proc/sys/kernel/random/entropy_avail 2>/dev/null))"
         local now=$(get_time)
         local delta=$(get_seconds $((now - LAST_BP_TIME)))
         vmsg 9 "$green@bp$cyan[$num_co$bp$m_co]$hi_co $(get_seconds $now)s ($delta)$m_co: $desc"
@@ -2956,7 +2957,6 @@ set_colors() {
        m_co=$nc_co
      num_co=$white
 }
-
 
 get_time() { cut -d" " -f22 /proc/self/stat ;}
 
