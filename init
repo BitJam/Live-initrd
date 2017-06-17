@@ -3138,7 +3138,7 @@ safe_shutdown() {
     final_umount && vmsg 1 "Unmount successful"
     breakpoint u "final umount"
     if [ "$ask" ]; then
-        vmsgN 1 "Press <Enter> to %s" "$(hq $cmd)"
+        vmsgN 1 "Press %s to %s" "<$(bq "Enter")>" "$(hq $cmd)"
         read x
     fi
     vmsg -1 "Will now %s the system" "$(hq $cmd)"
