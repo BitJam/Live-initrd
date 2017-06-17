@@ -3779,7 +3779,9 @@ prog_copy_md5() {
 }
 
 #------------------------------------------------------------------------------
-#
+# prog_copy <dest> <src1> <src2> ...
+# Copy source files to destination directory and display a bar indicating the
+# progress.
 #------------------------------------------------------------------------------
 prog_copy() {
     local dest=$1 ; shift
@@ -3810,13 +3812,13 @@ prog_copy() {
     local cur_size=$base_size cur_pct last_pct=0
     while true; do
         if ! test -d /proc/$COPY_PID; then
-            echo 100
+            echo 1000
             break
         fi
         sleep 0.1
 
         cur_size=$(du_size $dest)
-        cur_pct=$((cur_size * 100 / final_size))
+        cur_pct=$((cur_size * 1000 / final_size))
         [ $cur_pct -gt $last_pct ] || continue
         echo $cur_pct
         last_pct=$cur_pct
@@ -3846,6 +3848,8 @@ prog_copy() {
 #------------------------------------------------------------------------------
 # This acts like an external program to draw a progress bar on the screen.
 # It expects integer percentages as input on stdin to move the bar.
+# Now using 1/10th percent steps which seems to reduce jitteriness/jaggedness.
+# Yes, because there was aliasing between 100 steps and width of screen.
 #------------------------------------------------------------------------------
 text_progress() {
     local abs_max_x=$((SCREEN_WIDTH * PROG_BAR_WIDTH / 100))
@@ -3861,20 +3865,24 @@ text_progress() {
     while read input; do
         case $input in
             [0-9]|[0-9][0-9]|[0-9][0-9][0-9]) ;;
+                        [0-9][0-9][0-9][0-9]) ;;
             *) break;;
         esac
 
-        cur_x=$((max_x * input / 100))
+        [ $input -gt 1000 ] && input=1000
+        cur_x=$((max_x * input / 1000))
         # Note we always draw entire bar to avoid problems when switching
         # virtual terminals while the bar is being drawn
 
         [ $cur_x -le $last_x ] && continue
-        progbar_draw $cur_x 0
+        # Draw the bar
+        printf "\e[u\e[0C$m_co%${cur_x}s$bold_co>$nc_co\e[u" | tr ' ' '='
+        # Show the percentage
+        printf "\e[$((max_x + 2))C%3s%%" "$((input / 10))"
 
         last_x=$cur_x
 
-        printf "\e[$((max_x + 2))C%3s%%" "$input"
-        [ $input -ge 100 ] && break
+        [ $input -ge 1000 ] && break
     done
 }
 
