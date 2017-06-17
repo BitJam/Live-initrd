@@ -2239,7 +2239,8 @@ change_passphrase() {
 
     local old file=/passphrase
     while true; do
-        echo -en "Please enter current passphrase (in clear text)\n> "
+        echo -e "Please enter current passphrase (in clear text)"
+        echo -n "> "
         read old
         echo -n "$old" > $file
         cryptsetup open --type luks --test-passphrase --key-file $file $dev &>/dev/null && break
@@ -2250,14 +2251,11 @@ change_passphrase() {
         return 3
     done
 
-    warn "You will be asked to enter the new passphrase twice"
-    warn "Please DO NOT forget it! You will need it every time you boot"
-    if ! cryptsetup luksChangeKey --key-file $file $dev 2>&1 ; then
-        warn "Passphrase was not changed!"
-        rm $file
-        return 10
+    if ! set_new_passphrase "$file" "$dev"; then
+        err "Passphrase was not changed"
+        return 3
     fi
-    warn "You will be asked for the new passphrase a third time"
+
     rm $file
 }
 
@@ -2269,10 +2267,10 @@ reset_passphrase() {
     test -f $file || return
     local size=$(wc -c $file | cut -d" " -f1)
 
-    msg "Preparing for passphrase first-boot reset ..."
+    warn "Preparing for passphrase first-boot reset ..."
 
     if [ $size -eq 0 ]; then
-        warn "Reset aborted: phrase-file is empty"
+        warn "Reset aborted: passphrase-file is empty"
         return 1
     fi
 
@@ -2281,16 +2279,87 @@ reset_passphrase() {
         return 2
     fi
 
-    warn "You will be asked to enter a new passphrase twice"
-    warn "Please DO NOT forget it! You will need it every time you boot"
-    if ! cryptsetup luksChangeKey --key-file $file $dev 2>&1 ; then
-        warn "Passphrase was not changed!"
-        return 10
+    if ! set_new_passphrase "$file" "$dev"; then
+        err "Passphrase was not changed"
+        return 3
     fi
-    warn "You will be asked for the new passphrase a third time"
-    warn
-    mv $file $file.old
 
+    mv $file $file.old
+}
+
+#------------------------------------------------------------------------------
+#
+#------------------------------------------------------------------------------
+set_new_passphrase() {
+    local file=$1  dev=$2
+    warn "You will be asked to enter a new passphrase twice"
+    cttyhack cryptsetup luksChangeKey --key-file $file $dev 2>&1 || return $?
+}
+
+#------------------------------------------------------------------------------
+# These version offers the choice of several randomly generated passphrases
+# as well as setting your own.  The problem is there is almost zero entropy
+# this early in the boot process so the "random" phrases are really not very
+# random at all.  Someday we could offer a generated passphrase as an option
+# and then ask the user to generate entropy by typing or something like that.
+# But even that can be tricky because address randomization can eat up more
+# entropy than we generate.
+#------------------------------------------------------------------------------
+fancy_set_new_passphrase() {
+    local file=$1  dev=$2
+
+    local phrase  phrase_2  phrase_3   phrase_4   phrase_5
+    local fmt="$m_co %2s$to_co)$m_co %s$nc_co\n"
+
+    warn "Please select a passphrase or create your own"
+
+    local i=1
+    printf "$fmt" "$i" "Create your own passphrase (default)"
+
+    local len=4  max_len=8 seq=$(seq 2 5)
+    for i in $seq; do
+        phrase=$(mkpassphrase $len)
+        eval phrase_$i=\$phrase
+        printf "$fmt" "$i" "$(bq "$phrase")"
+
+        len=$((len + 2))
+        [ $len -gt $max_len ] && len=$max_len
+
+    done
+    i=$((i + 1))
+    printf "$fmt" "$i" "Reboot"
+    i=$((i + 1))
+    printf "$fmt" "$i" "Poweroff"
+
+    local ans  create_own use_phrase
+    while true; do
+        read ans
+        case $ans in
+         1|"") create_own=true               ;;
+        [2-5]) eval use_phrase=\$phrase_$ans ;;
+            6) safe-reboot                   ;;
+            7) safe-poweroff                 ;;
+            *) warn "Invalid selection, please try again" ; continue ;;
+        esac
+        break
+    done
+
+    if [ "$create_own" ]; then
+        warn "You will be asked to enter a new passphrase twice"
+        cttyhack cryptsetup luksChangeKey --key-file $file $dev 2>&1 || return $?
+
+    elif [ "$use_phrase" ]; then
+        msg "Using passphrase %s" "$(bq "$use_phrase")"
+        [ "$DB_PLUS" ] && echo -n "$use_phrase" > /live/config/passphrase
+        printf "%s" "$use_phrase" | cryptsetup luksChangeKey --key-file $file $dev 2>&1 || return $?
+    else
+        fatal "Internal error setting new passphrase"
+    fi
+
+    warn "Please DO NOT forget your new passphrase! You will need it every time you boot"
+    #warn "You will be asked for the new passphrase to mount the encrypted partition"
+    warn
+    HAVE_SET_PASSPHRASE=true
     return 0
 }
 
