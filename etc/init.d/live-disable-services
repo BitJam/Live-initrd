@@ -96,7 +96,6 @@ MEAN_SERVICES="
     resolvconf
     smbd
     nfs-kernel-server
-    wicd
     avahi-daemon
 "
 
@@ -126,15 +125,11 @@ do_start() {
     for param in $CMDLINE; do
         val=${param#*=}
         case "$param" in
-            antiX=*|aX=*) disable_param=$val   ; must_run=true ;;
-           disable_srv=*) disable_param=$val   ; must_run=true ;;
-                nosysv=*) disable_param=$val   ; must_run=true ;;
-       disable_service=*) disable_param=$val   ; must_run=true ;;
-               disable=*) disable_param=$val   ; must_run=true ;;
-                    lean)        LEAN=true;      must_run=true ;;
-                    mean)        MEAN=true;      must_run=true ;;
-                Xtralean)   XTRA_LEAN=true;      must_run=true ;;
-                  nodbus)     NO_DBUS=true;      must_run=true ;;
+               disable=*) disable_param=$val  ;  must_run=true ;;
+                    lean)        LEAN=true    ;  must_run=true ;;
+                    mean)        MEAN=true    ;  must_run=true ;;
+                Xtralean)   XTRA_LEAN=true    ;  must_run=true ;;
+                  nodbus)     NO_DBUS=true    ;  must_run=true ;;
                     db++)   DEBUGGING=true                     ;;
         esac
     done
@@ -151,23 +146,23 @@ do_start() {
         [ -f /etc/exports ] && grep -q '^[[:space:]]*[^#]*/' $export_files && DISABLE_NFS=
     fi
 
-    if [ "$disable_param" ]; then
+    if [ -n "$disable_param" ]; then
 
         # If the ## expression matches then the resulting string length is zero
-        [ "${disable_param##*[lL]*}" ] ||          LEAN=true
-        [ "${disable_param##*[mM]*}" ] ||          MEAN=true
-        [ "${disable_param##*[xX]*}" ] ||     XTRA_LEAN=true
-        [ "${disable_param##*[dD]*}" ] ||       NO_DBUS=true
-        [ "${disable_param##*[v]*}"  ] ||  DISABLE_VBOX=true
-        [ "${disable_param##*[g]*}"  ] ||   DISABLE_GPM=true
-        [ "${disable_param##*[P]*}"  ] ||    ENABLE_PAM=true
-        [ "${disable_param##*[a]*}"  ] || DISABLE_ACPID=true
-        [ "${disable_param##*[w]*}"  ] ||  DISABLE_WICD=true
-        [ "${disable_param##*[n]*}"  ] ||   DISABLE_NFS=true
-        [ "${disable_param##*[n]*}"  ] ||    NFS_REASON=n
-        [ "${disable_param##*[N]*}"  ] ||   ENABLE_NTPD=true
-        [ "${disable_param##*[A]*}"  ] ||  ENABLE_ACPID=true
-        [ "${disable_param##*[W]*}"  ] ||   ENABLE_WICD=true
+        [ -z "${disable_param##*[a]*}" ] && DISABLE_ACPID=true
+        [ -z "${disable_param##*[A]*}" ] &&  ENABLE_ACPID=true
+        [ -z "${disable_param##*[d]*}" ] &&       NO_DBUS=true
+        [ -z "${disable_param##*[g]*}" ] &&   DISABLE_GPM=true
+        [ -z "${disable_param##*[l]*}" ] &&          LEAN=true
+        [ -z "${disable_param##*[m]*}" ] &&          MEAN=true
+        [ -z "${disable_param##*[n]*}" ] &&   DISABLE_NFS=true
+        [ -z "${disable_param##*[n]*}" ] &&    NFS_REASON=n
+        [ -z "${disable_param##*[N]*}" ] &&   ENABLE_NTPD=true
+        [ -z "${disable_param##*[P]*}" ] &&    ENABLE_PAM=true
+        [ -z "${disable_param##*[v]*}" ] &&  DISABLE_VBOX=true
+        [ -z "${disable_param##*[w]*}" ] &&  DISABLE_WICD=true
+        [ -z "${disable_param##*[W]*}" ] &&   ENABLE_WICD=true
+        [ -z "${disable_param##*[x]*}" ] &&     XTRA_LEAN=true
     fi
 
     # Prevent other messages stepping on ours
@@ -199,8 +194,8 @@ do_start() {
         #--     LEAN_SERVICES="$LEAN_SERVICES $LAPTOP_SERVICES"
         #-- fi
 
-        [ "$ENABLE_WICD" ]  || LEAN_SERVICES="$lean_services wicd"
-        [ "$ENABLE_ACPID" ] || LEAN_SERVICES="$lean_services acpid"
+        [ "$ENABLE_WICD" ]  || LEAN_SERVICES="$LEAN_SERVICES wicd"
+        [ "$ENABLE_ACPID" ] || LEAN_SERVICES="$LEAN_SERVICES acpid"
 
         echo_live "Disabling some services %s" "$(paren L, lean)"
         disable_services "lean (l)" "$LEAN_SERVICES"
@@ -246,10 +241,8 @@ do_start() {
         disable_services "gpm (g)" "$GPM_SERVICES"
     fi
 
-
     [ "$OUT" ] && echo "$OUT" | tr "," "\n" > $OUT_FILE
 }
-
 
 #----------------------------------------------------------------------------
 # function disable_services "$name" "$services" [ "$rc_dirs" ]
@@ -276,7 +269,8 @@ disable_services() {
         mkdir -p $dest
 
         for service in $services; do
-            [ -z "${service###*}" ]  && continue
+            # Use leading "#" as a comment (no space)
+            [ -z "${service###*}" ] && continue
             for slink in /$rc_dir/S*$service; do
                 [ -e "$slink" ] || continue
                 mv -f $slink $dest
