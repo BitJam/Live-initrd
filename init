@@ -3253,9 +3253,9 @@ initialize_cmdline2() {
 }
 
 my_select_menu() {
-    local dir=$BOOT_MENU_DIR menu=$DO_MENUS
+    local dir=$BOOT_MENU_DIR do_menu=$DO_MENUS
     unset MENU_VALUE
-    [ "$menu" ] || return
+    [ "$do_menu" ] || return
 
     local title=$1  blurb=$2  cheat=$3  dfile=$dir/$4.data mfile=$dir/$4.menu  label=$5  fields=$6
 
@@ -3263,19 +3263,14 @@ my_select_menu() {
 
     local def_label
     local data=$(cat $dfile)
-    mfile=$(xlat_mfile "$mfile" $LANG)
 
-    if [ ! -e $dfile -o  ! -e $mfile ]; then
-        [ "$BOOT_MENU_WARN" ] && warn "Missing $dfile or $mfile"
+    if [ ! -e $dfile -o ]; then
+        [ "$BOOT_MENU_WARN" ] && warn "Missing $dfile"
         return
     fi
 
-    local default_str=$(rpad 16 "Default")
-    local menu=$(cat $mfile | sed -r \
-        -e "s/Default( {8}| *$)/$default_str/" \
-        -e "s/( [0-9]+)(\))/$green\1$white\2$cyan/g" \
-        -e "s/\*/$bold_co*$cyan/g" \
-        -e "s/\(([^)]+)\)/$nc_co(\1)$cyan/g")
+    local menu=$(read_menu_file $mfile)
+    [ -z "$menu" ] && return
 
     [ "$blurb"     ] && title="$title\n$blurb"
     [ "$fields"    ] && def_label=$(get_default_label "$fields" $dfile)
@@ -3303,6 +3298,29 @@ my_select_menu() {
                    *) [ -n "$new_label" ] && msg "%s set to %s" "$label" "$(bq $new_label)"
                       cmdline="$cmdline $MENU_VALUE"   ;;
     esac
+}
+
+#------------------------------------------------------------------------------
+#
+#------------------------------------------------------------------------------
+read_menu_file() {
+    local name=$1
+    local mfile=$(xlat_mfile "$mfile" $LANG)
+
+    if [ ! -e $dfile -o  ! -e $mfile ]; then
+        [ "$BOOT_MENU_WARN" ] && warn "Missing $dfile or $mfile"
+        return 1
+    fi
+
+    local default_str=$(rpad 16 "Default")
+
+    cat $mfile | sed -r \
+        -e "s/Default( {8}| *$)/$default_str/" \
+        -e "s/( [0-9]+)(\))/$green\1$white\2$cyan/g" \
+        -e "s/\*/$bold_co*$cyan/g" \
+        -e "s/\(([^)]+)\)/$nc_co(\1)$cyan/g"
+
+    return 0
 }
 
 rpad() {
