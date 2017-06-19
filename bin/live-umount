@@ -97,7 +97,7 @@ main() {
         --sendsigs) do_sendsigs   ;;
         --umountfs) do_umountfs   ;;
     --final-umount) final_umount  ;;
-                 *) err 'Expected --umountfs or --sendsigs'
+                 *) err 'Expected --umountfs --sendsigs --run-scripts or --final-umount'
     esac
 }
 
