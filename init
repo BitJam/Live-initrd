@@ -90,6 +90,7 @@
        CRYPT_FNAME=crypt
          LUKS_NAME=liveb
       PHRASE_FNAME=.passphrase
+        SEED_FNAME=.seed
 
         BLACK_LIST=
    BLACK_LIST_FILE=/etc/modprobe.d/initrd.conf
@@ -248,6 +249,7 @@ main_wrapper() {
 
     test -r /late-umount.sh && . /late-umount.sh
     sync
+    prep_seed_dev_random "$SEED_FILE"
     late_umount $PERSIST_DEVICE
     late_umount $SQFILE_DEV
     late_umount $BIOS_DEV
@@ -410,10 +412,18 @@ main_core() {
     vmsg 7 "SQFILE_DEV: $SQFILE_DEV"
     vmsg 7 "SQFILE_MP   $SQFILE_MP"
 
+    SEED_FULL=$(dirname "$SQFILE_FULL")/$SEED_FNAME
+    seed_dev_random "$SEED_FULL"
+
     breakpoint 4 "after mounting boot device"
     mount -o remount,rw $SQFILE_DEV 2>/dev/null
     dir_has_param "$SQFILE_MP" rw || REMASTERABLE=
-    [ "$REMASTERABLE" ] && do_remaster "$SQFILE_FULL"
+
+    if [ "$REMASTERABLE" ]; then
+        do_remaster "$SQFILE_FULL"
+        prep_seed_dev_random "$SEED_FULL"
+        echo "$SEED_FILE" > /live/config/seed-file
+    fi
 
     mount_linuxfs "$SQFS_MP" "$SQFILE_FULL" "$WRAP_FILE_MP"
 
@@ -541,6 +551,7 @@ ROOTFS_DEV="$ROOTFS_DEV"
 LINUXFS_DEV="$LINUXFS_DEV"
 BIOS_DEV="$BIOS_DEV"
 CRYPT_DEV="$CRYPT_DEV"
+SEED_FILE="$SEED_FILE"
 Late_Umount
 }
 
@@ -2395,6 +2406,29 @@ check_kernel_version() {
     fi
 }
 
+#------------------------------------------------------------------------------
+#
+#------------------------------------------------------------------------------
+seed_dev_random() {
+    local file=$1
+    test -r "$file" || return
+    vmsg 5 "Initializing random number generator ..."
+    (date +%s.%N ; cat $file 2>/dev/null) >/dev/urandom
+}
+
+#------------------------------------------------------------------------------
+#
+#------------------------------------------------------------------------------
+prep_seed_dev_random() {
+    local i  file=$1  cnt=${2:-32}
+    [ -z "$file" ]   && return
+    test -e "$file"  || touch $file 2>/dev/null
+    test -w "$file"  || return
+    msg "Saving random seed"
+    dd if=/dev/urandom bs=1 count=512 2>/dev/null > $file
+    chmod 600 $file 2>/dev/null
+}
+
 #==============================================================================
 # Mount things
 #==============================================================================
@@ -2808,10 +2842,10 @@ breakpoint() {
     custom_code "$bp" "$desc"
 
     if [ "$DB_PLUS" -a -n "${bp##b*}" ]; then
-        vmsg 8 "Available entropy %s" "$(pq $(cat /proc/sys/kernel/random/entropy_avail 2>/dev/null))"
         local now=$(get_time)
         local delta=$(get_seconds $((now - LAST_BP_TIME)))
-        vmsg 9 "$green@bp$cyan[$num_co$bp$m_co]$hi_co $(get_seconds $now)s ($delta)$m_co: $desc"
+        vmsg 8 "$green@bp$cyan[$num_co$bp$m_co]$hi_co $(get_seconds $now)s ($delta)$m_co: $desc"
+        vmsg 8 "Available entropy %s" "$(pq $(cat /proc/sys/kernel/random/entropy_avail 2>/dev/null))"
         LAST_BP_TIME=$now
     fi
 

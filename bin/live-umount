@@ -107,11 +107,15 @@ do_scripts() {
     export PATH
 
     breakpoint s1 "Before running scripts"
+
+    if -e /live/config/remasterable; then
+        seed_file=$(cat /live/config/seed-file 2>/dev/null)
+        prep_seed_dev_random "$seed_file"
+    fi
+
     # Make sure we have a fresh line to print out on
     # echo
-
     #find_mounted_cd $BOOT_DEV_FILE
-
     local scripts=
     [ -e /live/config/remasterable ] && scripts="$scripts live-usb-save"
     [ -e /live/config/save-persist ] && scripts="$scripts persist-autosave"
@@ -798,6 +802,20 @@ breakpoint() {
     export PS1="${green}ubp $red$1$cyan>$nc "
     OPATH=$PATH PATH=$BUSYBOX_BIN setsid cttyhack ash </dev/console >/dev/console 2>&1
     echo
+}
+
+
+#------------------------------------------------------------------------------
+# Fill a seed file with random numbers to have entropy on next boot
+#------------------------------------------------------------------------------
+prep_seed_dev_random() {
+    local i  file=$1  cnt=${2:-32}
+    [ -z "$file" ]   && return
+    test -e "$file"  || touch $file 2>/dev/null
+    test -w "$file"  || return
+    msg "Saving random seed"
+    dd if=/dev/urandom bs=1 count=512 2>/dev/null > $file
+    chmod 600 $file 2>/dev/null
 }
 
 #------------------------------------------------------------------------------
