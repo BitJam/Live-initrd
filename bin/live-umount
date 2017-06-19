@@ -108,7 +108,7 @@ do_scripts() {
 
     breakpoint s1 "Before running scripts"
 
-    if -e /live/config/remasterable; then
+    if test -e /live/config/remasterable; then
         seed_file=$(cat /live/config/seed-file 2>/dev/null)
         prep_seed_dev_random "$seed_file"
     fi
