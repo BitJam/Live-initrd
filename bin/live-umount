@@ -679,6 +679,13 @@ shutdown_or_reboot() {
     esac
     msg "Ready to %s" "$white$cmd_msg"
 
+    # Wait a minute for the user then shutdown/reboot no matter what
+    (   sleep 60;
+        # Disable kernel messages
+        echo 0 0 0 0  > /proc/sys/kernel/printk
+        exec $command -f -n
+    ) &
+
     if [ -n "$TO_EJECT" ]; then
         eject_cd $TO_EJECT
         wait_for_user
