@@ -3295,12 +3295,12 @@ my_select_menu() {
 
     local title=$1  blurb=$2  cheat=$3  dfile=$dir/$4.data mfile=$dir/$4.menu  label=$5  fields=$6
 
-    [ -z "${menu##*$cheat*}" ] || return
+    [ -z "${do_menu##*$cheat*}" ] || return
 
     local def_label
     local data=$(cat $dfile)
 
-    if [ ! -e $dfile -o ]; then
+    if [ ! -e $dfile ]; then
         [ "$BOOT_MENU_WARN" ] && warn "Missing $dfile"
         return
     fi
