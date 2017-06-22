@@ -5549,6 +5549,7 @@ prepare_switch_root() {
     for dir in bin config etc lib locale custom menus share; do
         old=$root_dir/$dir
         test -e $old || old=$live_dir/$dir
+        test -e $old || continue
         new=$new_live/$dir
         mkdir -p $new
         cp -a $old/* $new
