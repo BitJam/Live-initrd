@@ -90,6 +90,12 @@
        CRYPT_FNAME=encrypted
    OLD_CRYPT_FNAME=crypt
          LUKS_NAME=liveb
+
+ ENCRYPT_MODE_FILE=/etc/encrypt
+   ENCRYPT_DISABLE=disable
+      ENCRYPT_BOTH=enable
+      ENCRYPT_ONLY=only
+
       PHRASE_FNAME=passphrase
         SEED_FNAME=random-seed
 
@@ -681,9 +687,11 @@ read_cmdline_params()
             persistdev=*|pdev=*) PERSIST_ID=name=$value   ;  SET_PERSIST=true    ;;
 
                      passphrase) CHANGE_PASSPHRASE=true                          ;;
-                        nocrypt) NO_CRYPT=true                                   ;;
+                        nocrypt) ENCRYPT_MODE=$ENCRYPT_DISABLE                            ;;
+                      encrypt=*) ENCRYPT_MODE=$value                             ;;
+                        encrypt) ENCRYPT_MODE=$ENCRYPT_ONLY                               ;;
 #-?                          crypt)                             SET_CRYPT=true      ;;
-#-?                        crypt=*) CRYPT_FNAME=$value        ;  SET_CRYPT=true      ;;
+#-?                        crypt=*) CRYPT_FNAME=$value       ;  SET_CRYPT=true      ;;
 #-?   cryptlabel=*|clabel=*|clab=*) CRYPT_ID=label=$value    ;  SET_CRYPT=true      ;;
 #-?            cryptuuid=*|cuuid=*) CRYPT_ID=uuid=$value     ;  SET_CRYPT=true      ;;
 #-?              cryptdev=*|cdev=*) CRYPT_ID=dev=$value      ;  SET_CRYPT=true      ;;
@@ -981,12 +989,6 @@ read_cmdline_params()
     if [ "$DISABLE_STORE" ]; then
         USER_UID=0
         USER_GID=0
-    fi
-
-    test -e /bin/cryptsetup || NO_CRYPT=true
-
-    if [ -z "$NO_CRYPT" ]; then
-        cryptsetup --help &>/dev/null || NO_CRYPT=true
     fi
 }
 
@@ -2135,7 +2137,7 @@ find_linuxfs_file() {
         # Find the linuxfs file
         SQFILE_FULL="$ISO_FILE_MP/$SQFILE_FILE"
         [ -f "$SQFILE_FULL" ] \
-            || linuxfs_error "File %s not found on device %s" "$LINUXFS_NAME" "$SQFILE_FULL" "$FOUND_DEV"
+            || linuxfs_error "File %s not found on device %s" "$SQFILE_FULL" "$FOUND_DEV"
 
         SQFILE_MP=$ISO_FILE_MP
         SQFILE_DEV=$FOUND_DEV   # Used for toram-eject
@@ -2160,60 +2162,105 @@ find_linuxfs_file() {
     DEFAULT_DIR=$SQFILE_DIR
 }
 
+#------------------------------------------------------------------------------
+# Make sure the mode is valid and if encryption is enabled then make sure that
+# we have all of the tools needed, otherwise disable it.
+#------------------------------------------------------------------------------
+validate_encryption_mode() {
+    local mode=${ENCRYPT_MODE:-$(head -n1 $ENCRYPT_MODE_FILE 2>/dev/null)}
+
+    case $mode in
+        $ENCRYPT_DISABLE|$ENCRYPT_BOTH|$ENCRYPT_ONLY) ;;
+        uuid=*)                                       ;;
+        *) warn "Invalid encryption mode %s" "$mode"
+           warn "Disabling encryption"
+           mode=$ENCRYPT_DISABLE ;;
+    esac
+
+    ENCRYPT_MODE=$mode
+    [ "$mode" = '$ENCRYPT_DISABLE' ] && return
+
+    if ! test -d /sys/module/dm_crypt; then
+        warn "Required encryption kernel module %s not found" "$(pqw dm-crypt)"
+        warn "Disabling encryption"
+        ENCRYPT_MODE=$ENCRYPT_DISABLE
+        return
+    fi
+
+    if ! test -e /bin/cryptsetup; then
+        warn "The %s program was not found" "$(pqw cryptsetup)"
+        warn "Disabling encryption"
+        ENCRYPT_MODE=$ENCRYPT_DISABLE
+        return
+    fi
+
+    cryptsetup --help &>/dev/null && return
+    warn "The %s program is broken" "$(pw cryptsetup)"
+    warn "Disabling encryption"
+    ENCRYPT_MODE=$ENCRYPT_DISABLE
+}
 
 #------------------------------------------------------------------------------
 # This code is used in 2 places.  Very yuck right now.
 #------------------------------------------------------------------------------
 find_crypt_or_linuxfs() {
 
-        # Make sure we have the dm-crypt module
-    if [ -z "$NO_CRYPT" ] && ! test -d /sys/module/dm_crypt; then
-        NO_CRYPT=true
-        warn "Encryption disabled because required kernel module not found"
+    validate_encryption_mode
+
+    local boot_dir=$(dirname $SQFILE_FILE)  fname=$(basename $SQFILE_FILE)
+    local crypt_full="$boot_dir/$CRYPT_FNAME"
+
+    CRYPT_UUID=
+    local files
+    case $ENCRYPT_MODE in
+        $ENCRYPT_DISABLE) files="$SQFILE_FILE"              ;;
+           $ENCRYPT_BOTH) files="$crypt_full $SQFILE_FILE"  ;;
+           $ENCRYPT_ONLY) files="$crypt_full"               ;;
+                  uuid=*) CRYPT_UUID=${ENCRYPT_MODE#uuid=}  ;;
+                       *) fatal "Unknown encyption mode %s" "$ENCRYPT_MODE" ;;
+    esac
+
+    if [ -z "$CRYPT_UUID" ]; then
+
+        msg "Look for file(s) %s" "<$(fq $files)>"
+
+        if ! find_boot_file "$files" "$BOOT_MP" "$BOOT_ID" "$BOOT_RETRY"; then
+            case $ENCRYPT_MODE in
+                $ENCRYPT_DISABLE) linuxfs_error "Could not find file %s" "$(fqe $fname)"                              ;;
+                   $ENCRYPT_BOTH) linuxfs_error "Could not find files %s or %s" "$(fqe $fname)" "$(fqe $CRYPT_FNAME)" ;;
+                   $ENCRYPT_ONLY) linuxfs_error "Could not find file %s" "$(fqe $CRYPT_FNAME)"                        ;;
+            esac
+        fi
+
+        [ "$FOUND_FNAME" != "$crypt_full" ] && return
+
+        BIOS_UUID=$(device_uuid $FOUND_DEV)
+        BIOS_DEV=$FOUND_DEV
+
+        # Move mounted "bios" device out of the way
+        mkdir -p $BIOS_MP
+        log_cmd mount --move $BOOT_MP $BIOS_MP
+
+        local crypt_dev  crypt_files="$BIOS_MP/${crypt_full#/} $BIOS_MP/${old_crypt_full#/}"
+
+        CRYPT_UUID=$(cat $crypt_files 2>/dev/null | head)
     fi
-
-    if [ "$NO_CRYPT" ]; then
-        # Normal path
-        find_boot_file "$SQFILE_FILE" "$BOOT_MP" "$BOOT_ID" "$BOOT_RETRY" \
-            || linuxfs_error "Could not find %s file %s" "$LINUXFS_NAME" "$(fqe \"$SQFILE_FILE\")"
-        return
-    fi
-
-    # Look for crypt file as well as sqfile_file
-    local boot_dir=$(dirname $SQFILE_FILE)
-    local crypt_full="$boot_dir/$CRYPT_FNAME"  old_crypt_full="$boot_dir/$OLD_CRYPT_FNAME"
-    local files="$crypt_full $old_crypt_full $SQFILE_FILE"
-    msg "Look for files %s" "<$(fq $files)>"
-
-    find_boot_file "$files" "$BOOT_MP" "$BOOT_ID" "$BOOT_RETRY" \
-        || linuxfs_error "Could not find files %s or %s" "$LINUXFS_NAME" "$(fqe \"$SQFILE_FILE\")" "$(fqe \"$crypt_full\")"
-
-    [ "$FOUND_FNAME" != "$crypt_full" -a "$FOUND_FNAME" != "$old_crypt_full" ] && return
-
-    BIOS_UUID=$(device_uuid $FOUND_DEV)
-    BIOS_DEV=$FOUND_DEV
-
-    # Move mounted "bios" device out of the way
-    mkdir -p $BIOS_MP
-    log_cmd mount --move $BOOT_MP $BIOS_MP
-
-    local crypt_dev  crypt_files="$BIOS_MP/${crypt_full#/} $BIOS_MP/${old_crypt_full#/}"
-
-    CRYPT_UUID=$(cat $crypt_files 2>/dev/null | head)
 
     [ -n "$CRYPT_UUID" ] && crypt_dev=$(blkid | grep "UUID=.$CRYPT_UUID." | cut -d: -f1)
 
-    vmsg 7 "crypt_uuid:$CRYPT_UUID   crypt_dev:$crypt_dev"
+    vmsg 7 "crypt_uuid %s   crypt_dev %s" "$(pq "$CRYPT_UUID")" "$(pq $crypt_dev)"
 
-    [ -z "$crypt_dev" ] && crypt_dev=$(next_partition $FOUND_DEV)
-    [ -z "$CRYPT_UUID" ] && CRYPT_UUID=$(device_uuid $crypt_dev)
+    [ -z "$crypt_dev" ] && fatal "No encrypted device with uuid %s was found" "$(pqh "$CRYPT_UUID")"
+
+    : ${CRYPT_UUID:=$(device_uuid $crypt_dev)}
+
     BOOT_UUID=$CRYPT_UUID
 
     msg "Checking for encrypted partition on device %s ..." "$crypt_dev"
 
-    test -e $crypt_dev || fatal "Encrypted device %s does not exist"        $crypt_dev
-    test -b $crypt_dev || fatal "Encrypted device %s is not a block device" $crypt_dev
-    cryptsetup isLuks $crypt_dev || fatal "Encrypted device %s is not a LUKS device" $crypt_dev
+    test -e "$crypt_dev" || fatal "Encrypted device %s does not exist"                 "$(dqe $crypt_dev)"
+    test -b "$crypt_dev" || fatal "Encrypted device %s is not a block device"          "$(dqe $crypt_dev)"
+    cryptsetup isLuks "$crypt_dev" || fatal "Encrypted device %s is not a LUKS device" "$(dqe $crypt_dev)"
 
     mount -o remount,rw $BIOS_DEV
 
@@ -2378,6 +2425,10 @@ fancy_set_new_passphrase() {
 
 # FIXME: mention failsafe option or load=all.
 
+#------------------------------------------------------------------------------
+# Get error message from args and then print extra info about our search in a
+# fatal error message.
+#------------------------------------------------------------------------------
 linuxfs_error() {
     local msg=$(printf "$@")  device_list=$(echo $DEVICE_LIST)
     local all_devices=$(echo $(most_block_devices));
@@ -2390,6 +2441,10 @@ linuxfs_error() {
         "$(printf "Please contact %s at %s" "$DEVELOPER" "$DISTRO_BUG_REPORT_URL")"
 }
 
+#------------------------------------------------------------------------------
+# Make sure the running kernel has a /lib/modules/$KERNEL directory inside the
+# linuxfs file
+#------------------------------------------------------------------------------
 check_kernel_version() {
     local mp=${1%/}  fatal=$2
     local kversion=$(uname -r)
