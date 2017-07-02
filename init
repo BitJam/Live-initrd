@@ -2220,15 +2220,28 @@ find_crypt_or_linuxfs() {
                        *) fatal "Unknown encyption mode %s" "$ENCRYPT_MODE" ;;
     esac
 
-    if [ -z "$CRYPT_UUID" ]; then
+    local crypt_dev
 
-        msg "Look for file(s) %s" "<$(fq $files)>"
+    if [ "$CRYPT_UUID" ]; then
+        local try
+        msg "Looking for encrypted device with uuid %s" "$(pq "$CRYPT_UUID")"
+        for try in $(seq 1 $BOOT_RETRY); do
+            crypt_dev=$(blkid | grep "UUID=.$CRYPT_UUID." | cut -d: -f1)
+            [ -n "$crypt_dev" ] && break
+            echo -n "."
+            sleep 1
+        done
+        echo
+
+    else
+
+        #msg "Look for file(s) %s" "<$(fq $files)>"
 
         if ! find_boot_file "$files" "$BOOT_MP" "$BOOT_ID" "$BOOT_RETRY"; then
             case $ENCRYPT_MODE in
-                $ENCRYPT_DISABLE) linuxfs_error "Could not find file %s" "$(fqe $fname)"                              ;;
-                   $ENCRYPT_BOTH) linuxfs_error "Could not find files %s or %s" "$(fqe $fname)" "$(fqe $CRYPT_FNAME)" ;;
-                   $ENCRYPT_ONLY) linuxfs_error "Could not find file %s" "$(fqe $CRYPT_FNAME)"                        ;;
+                $ENCRYPT_DISABLE) linuxfs_error "Could not find file %s" "$(fqe $SQFILE_FILE)"                             ;;
+                   $ENCRYPT_BOTH) linuxfs_error "Could not find files %s or %s" "$(fqe $SQFILE_FILE)" "$(fqe $crypt_full)" ;;
+                   $ENCRYPT_ONLY) linuxfs_error "Could not find file %s" "$(fqe $crypt_full)"                              ;;
             esac
         fi
 
@@ -2241,12 +2254,11 @@ find_crypt_or_linuxfs() {
         mkdir -p $BIOS_MP
         log_cmd mount --move $BOOT_MP $BIOS_MP
 
-        local crypt_dev  crypt_files="$BIOS_MP/${crypt_full#/} $BIOS_MP/${old_crypt_full#/}"
+        local crypt_file="$BIOS_MP/${crypt_full#/}"
 
-        CRYPT_UUID=$(cat $crypt_files 2>/dev/null | head)
+        CRYPT_UUID=$(head -n1 $crypt_file 2>/dev/null)
+        [ -n "$CRYPT_UUID" ] && crypt_dev=$(blkid | grep "UUID=.$CRYPT_UUID." | cut -d: -f1)
     fi
-
-    [ -n "$CRYPT_UUID" ] && crypt_dev=$(blkid | grep "UUID=.$CRYPT_UUID." | cut -d: -f1)
 
     vmsg 7 "crypt_uuid %s   crypt_dev %s" "$(pq "$CRYPT_UUID")" "$(pq $crypt_dev)"
 
