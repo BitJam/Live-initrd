@@ -93,8 +93,8 @@
 
  ENCRYPT_MODE_FILE=/etc/encrypt
    ENCRYPT_DISABLE=disable
-      ENCRYPT_BOTH=enable
-      ENCRYPT_ONLY=only
+      ENCRYPT_BOTH=both
+      ENCRYPT_ONLY=enable
 
       PHRASE_FNAME=passphrase
         SEED_FNAME=random-seed
