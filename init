@@ -2168,6 +2168,7 @@ find_linuxfs_file() {
 #------------------------------------------------------------------------------
 validate_encryption_mode() {
     local mode=${ENCRYPT_MODE:-$(head -n1 $ENCRYPT_MODE_FILE 2>/dev/null)}
+    : ${mode:=$ENCRYPT_DISABLE}
 
     case $mode in
         $ENCRYPT_DISABLE|$ENCRYPT_BOTH|$ENCRYPT_ONLY) ;;
@@ -2217,8 +2218,6 @@ find_crypt_or_linuxfs() {
         echo
 
     else
-
-        #msg "Look for file(s) %s" "<$(fq $files)>"
 
         if ! find_boot_file "$files" "$BOOT_MP" "$BOOT_ID" "$BOOT_RETRY"; then
             case $ENCRYPT_MODE in
