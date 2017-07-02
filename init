@@ -2172,32 +2172,15 @@ validate_encryption_mode() {
     case $mode in
         $ENCRYPT_DISABLE|$ENCRYPT_BOTH|$ENCRYPT_ONLY) ;;
         uuid=*)                                       ;;
-        *) warn "Invalid encryption mode %s" "$mode"
-           warn "Disabling encryption"
-           mode=$ENCRYPT_DISABLE ;;
+        *) fatal "Invalid encryption mode %s" "$mode" ;;
     esac
 
     ENCRYPT_MODE=$mode
     [ "$mode" = '$ENCRYPT_DISABLE' ] && return
 
-    if ! test -d /sys/module/dm_crypt; then
-        warn "Required encryption kernel module %s not found" "$(pqw dm-crypt)"
-        warn "Disabling encryption"
-        ENCRYPT_MODE=$ENCRYPT_DISABLE
-        return
-    fi
-
-    if ! test -e /bin/cryptsetup; then
-        warn "The %s program was not found" "$(pqw cryptsetup)"
-        warn "Disabling encryption"
-        ENCRYPT_MODE=$ENCRYPT_DISABLE
-        return
-    fi
-
-    cryptsetup --help &>/dev/null && return
-    warn "The %s program is broken" "$(pw cryptsetup)"
-    warn "Disabling encryption"
-    ENCRYPT_MODE=$ENCRYPT_DISABLE
+    test -d /sys/module/dm_crypt  || fatal "Required encryption kernel module %s not found."      "$(pqh dm-crypt)"
+    test -e /bin/cryptsetup       || fatal "The %s program was not found.  Cannot do encryption." "$(pqh cryptsetup)"
+    cryptsetup --help &>/dev/null || fatal "The %s program is broken.  Cannot do encryption."     "$(pqh cryptsetup)"
 }
 
 #------------------------------------------------------------------------------
