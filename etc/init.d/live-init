@@ -88,6 +88,7 @@ automount=off|amnt=off)                          AUTOMOUNT_OFF=true ;;
              vtblank=*)      VT_BLANK=$value                        ;;
              noskylake)    NO_SKYLAKE=true                          ;;
                  issue)   FORCE_ISSUE=true                          ;;
+             vboxdecor)    VBOX_DECOR=true                          ;;
 
     esac
 done
@@ -155,7 +156,7 @@ do_start() {
     test -e /live/config/virtualbox && : ${VT_BLANK:=0}
     [ ${#VT_BLANK} -gt 0 ] && set_console_blanking $VT_BLANK
 
-    if test -e /live/config/virtualbox; then
+    if [ -e /live/config/virtualbox -a -z "$VBOX_DECOR" ]; then
         echo_live "Disabling splash (fbcondecor) inside of Virtual Box"
         rm -f /sbin/splash-all /sbin/splash-term /etc/udev/rules.d/*-fbcondecor.rules
     fi
