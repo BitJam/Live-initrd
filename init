@@ -323,6 +323,8 @@ main_wrapper() {
         : ${INIT_COMMAND:=/sbin/init}
         test -x $NEW_ROOT$INIT_COMMAND || INIT_COMMAND=/sbin/init
         vmsg 6 "Start %s process" $(pq $INIT_COMMAND)
+
+        [ "$NO_CLEAR" ] || [ "$NO_MODESET" ] || clear
         exec $LIVE_BIN/switch_root -c /dev/console $NEW_ROOT $INIT_COMMAND "$@"
     fi
 }
@@ -1076,7 +1078,6 @@ list_modules() {
     vmsg 6 '%s module(s) failed to load' $(nq $ecnt)
 
     vmsg 7 "$white$ERR_MODULES"
-
 }
 
 select_breakpoints() {
