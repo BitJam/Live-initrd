@@ -2202,7 +2202,7 @@ find_crypt_or_linuxfs() {
            $ENCRYPT_BOTH) files="$crypt_full $SQFILE_FILE"  ;;
            $ENCRYPT_ONLY) files="$crypt_full"               ;;
                   uuid=*) CRYPT_UUID=${ENCRYPT_MODE#uuid=}  ;;
-                       *) fatal "Unknown encyption mode %s" "$ENCRYPT_MODE" ;;
+                       *) fatal 'Unknown encyption mode %s' "$ENCRYPT_MODE" ;;
     esac
 
     local crypt_dev
@@ -2325,12 +2325,12 @@ reset_passphrase() {
     warn "Preparing for passphrase first-boot reset ..."
 
     if [ $size -eq 0 ]; then
-        warn "Reset aborted: passphrase-file is empty"
+        warn "Reset aborted: passphrase file is empty"
         return 1
     fi
 
     if ! cryptsetup open --type luks --test-passphrase --key-file $file $dev &>/dev/null; then
-        warn "Reset aborted: wrong passphrase in phrase-file"
+        warn "Reset aborted: wrong passphrase in passphrase file"
         return 2
     fi
 
