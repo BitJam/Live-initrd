@@ -108,51 +108,6 @@ main() {
     #[ -n "$CMD_FONT" ] && set_console_font "$CMD_LANG" "$CMD_FONT"
 }
 
-#------------------------------------------------------------------------------
-# Edit /etc/default/console-setup with the size and face of a font that
-# matches the font size specified.
-#------------------------------------------------------------------------------
-set_console_font() {
-    local lang=$1  size=${2##*,}
-    local file=/etc/default/console-setup
-
-    test -w $file || return
-    test -e /dev/fb0 || return
-
-    local find_font=/live/bin/find-console-font
-    test -x $font_font || return
-
-    local font=$($find_font "$lang" "$size" /usr/share/consolefonts .psf.gz)
-
-    [ -z "$font" ] && return
-
-    echo_live "Configure console font as %s" "$(pquote $font)"
-
-    local code size face
-    [ -z "${font##*-*}" ] && code=${font%%-*}
-    font=${font#*-}
-
-    [ -z "${font##*[0-9]*}" ] && face=${font%%[0-9]*}
-    size=${font#$face}
-
-    # echo "size: $size"
-    # echo "face: $face"
-    # echo "code: $code"
-
-    [ -n "$size" -a -n "$face" ] || return
-
-    if grep -q "^\s*FONTFACE=" $file && grep -q "^\s*FONTNAME=" $file; then
-        # Only edit the file once
-        local expr
-        expr="$expr -e s/^\s*(FONTFACE=.)[A-Za-z0-9-]+(.).*/\1$face\2/"
-        expr="$expr -e s/^\s*(FONTSIZE=.)[A-Za-z0-9-]+(.).*/\1$size\2/"
-        sed -r -i $expr $file
-    else
-        add_or_replace "^\s*FONTFACE=" "FONTFACE=\"$face\"" $file create
-        add_or_replace "^\s*FONTSIZE=" "FONTSIZE=\"$size\"" $file create
-    fi
-}
-
 add_or_replace() {
     local where=$1  line=$2  file=$3  create=$4
 
