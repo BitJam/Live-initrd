@@ -313,7 +313,7 @@ main_wrapper() {
         vmsg 5 "${hi_co}%s" 'Please exit shells normally to allow for a clean unmount'
 
         CHROOT_BIN=$FINAL_DIR/bin
-        chroot $NEW_ROOT $CHROOT_BIN/setsid $CHROOT_BIN/cttyhack $INIT_PROG
+        $SET_ARCH chroot $NEW_ROOT $CHROOT_BIN/setsid $CHROOT_BIN/cttyhack $INIT_PROG
         breakpoint i "after init= chroot"
 
         MY_LOG=/dev/null
@@ -5240,7 +5240,7 @@ ld_path() {
     fi
 
     shift
-    LD_LIBRARY_PATH=$LD_PATH $LD_ROOT_DIR$prog "$@"
+    LD_LIBRARY_PATH=$LD_PATH $SET_ARCH $LD_ROOT_DIR$prog "$@"
 }
 
 prep_ld_path() {
@@ -5248,11 +5248,14 @@ prep_ld_path() {
 
     LD_ROOT_DIR=$dir
 
+    SET_ARCH=
     case $arch in
           x86_64) prep_lib64 $dir
-                  ld_path=$LIVE_X64_LD_PATH ;;
+                  ld_path=$LIVE_X64_LD_PATH
+                  SET_ARCH=linux64           ;;
 
-        i[3-8]86) ld_path=$LIVE_386_LD_PATH ;;
+        i[3-8]86) ld_path=$LIVE_386_LD_PATH
+                  SET_ARCH=linux32           ;;
 
                *) warn 'unknown architecture %s. Assuming %s' $(pqw $arch) $(pqw i686)
                   ld_path=$LIVE_386_LD_PATH;;
@@ -5459,7 +5462,7 @@ run_init_scripts() {
     for script; do
         full=/live/etc/init.d/$script
         test -x $new_root/$full || continue
-        chroot $new_root $full start
+        $SET_ARCH chroot $new_root $full start
         [ "$DB_PLUS" ] || continue
         now=$(get_time)
         vmsg 8 "%25s @ %s seconds" $script $(pq $(get_seconds $((now - last_time))))
@@ -5534,7 +5537,7 @@ late_umount() {
 
     # If this was the encrypted device then close the mapping
     [ "$dev" = "$CRYPT_DEV" ] || return
-    log_cmd chroot /live/aufs /sbin/cryptsetup close "$LUKS_NAME"
+    log_cmd $SET_ARCH chroot /live/aufs /sbin/cryptsetup close "$LUKS_NAME"
 }
 
 write_ntfs_pids() {
