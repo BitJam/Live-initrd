@@ -230,7 +230,7 @@ dummy() {
 save_state() {
     #. "general" (same on all machines) versus "machine specific"
     local state_dir="$1"  file_list="$2"  dir2="$3"  type="$(wq "general")"
-    #local to_delete  del_file=$state_dir/to-delete
+    local to_delete  del_file=$state_dir/to-delete
 
     test -e $state_dir/no-state && return
 
@@ -302,7 +302,7 @@ save_state() {
     done
 
     # Save list of files to delete when we restore state
-    #[ ${#to_delete} -gt 0 ] && echo -e "$to_delete" > $del_file
+    [ ${#to_delete} -gt 0 ] && echo -e "$to_delete" > $del_file
 }
 
 restore_state() {
@@ -318,9 +318,9 @@ restore_state() {
 
     test -e $state_dir/no-state && return
 
-    #local del_file=$state_dir/to-delete
-    #delete_files $del_file $type
-    #rm -f $del_file
+    local del_file=$state_dir/to-delete
+    delete_files $del_file $type
+    rm -f $del_file
 
     # dir2 is typically/only a machine-id
     state_dir=$state_dir${dir2:+/$dir2}
