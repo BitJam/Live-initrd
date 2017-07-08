@@ -2288,17 +2288,16 @@ find_linuxfs_file() {
 # we have all of the tools needed, otherwise disable it.
 #------------------------------------------------------------------------------
 validate_encryption_mode() {
-    local mode=${ENCRYPT_MODE:-$(head -n1 $ENCRYPT_MODE_FILE 2>/dev/null)}
-    : ${mode:=$ENCRYPT_DISABLE}
 
-    case $mode in
-        $ENCRYPT_DISABLE|$ENCRYPT_BOTH|$ENCRYPT_ONLY) ;;
-        uuid=*)                                       ;;
+    ENCRYPT_MODE=$(head -n1 $ENCRYPT_MODE_FILE 2>/dev/null)
+    : ${ENCRYPT_MODE:=$ENCRYPT_DISABLE}
+
+    case $ENCRYPT_MODE in
+                   $ENCRYPT_DISABLE) return ;;
+        $ENCRYPT_BOTH|$ENCRYPT_ONLY)        ;;
+                             uuid=*)        ;;
         *) fatal "Invalid encryption mode %s" "$mode" ;;
     esac
-
-    ENCRYPT_MODE=$mode
-    [ "$mode" = '$ENCRYPT_DISABLE' ] && return
 
     test -d /sys/module/dm_crypt  || fatal "Required encryption kernel module %s not found."      "$(pqh dm-crypt)"
     test -e /bin/cryptsetup       || fatal "The %s program was not found.  Cannot do encryption." "$(pqh cryptsetup)"
