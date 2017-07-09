@@ -710,12 +710,9 @@ read_cmdline_params()
                         nocrypt) ENCRYPT_MODE=$ENCRYPT_DISABLE                   ;;
                       encrypt=*) ENCRYPT_MODE=$value                             ;;
                         encrypt) ENCRYPT_MODE=$ENCRYPT_ONLY                      ;;
-#-?                          crypt)                             SET_CRYPT=true      ;;
-#-?                        crypt=*) CRYPT_FNAME=$value       ;  SET_CRYPT=true      ;;
-#-?   cryptlabel=*|clabel=*|clab=*) CRYPT_ID=label=$value    ;  SET_CRYPT=true      ;;
-#-?            cryptuuid=*|cuuid=*) CRYPT_ID=uuid=$value     ;  SET_CRYPT=true      ;;
-#-?              cryptdev=*|cdev=*) CRYPT_ID=dev=$value      ;  SET_CRYPT=true      ;;
-#-?
+                    encrypt=off) ENCRYPT_MODE=$ENCRYPT_DISABLE                   ;;
+                     encrypt=on) ENCRYPT_MODE=$ENCRYPT_ONLY                      ;;
+
                          btry=*) small_int CMD_BOOT_RETRY $param                 ;;
                          ftry=*) small_int CMD_FRUGAL_RETRY $param               ;;
                          ptry=*) small_int CMD_PERSIST_RETRY $param              ;;
@@ -2289,8 +2286,16 @@ find_linuxfs_file() {
 #------------------------------------------------------------------------------
 validate_encryption_mode() {
 
-    ENCRYPT_MODE=$(head -n1 $ENCRYPT_MODE_FILE 2>/dev/null)
-    : ${ENCRYPT_MODE:=$ENCRYPT_DISABLE}
+    : ${ENCRYPT_MODE=$(head -n1 $ENCRYPT_MODE_FILE 2>/dev/null)}
+
+    # Default to enable or disabled depending on existence of cryptsetup program
+    if [ -z "$ENCRYPT_MODE" ]; then
+        if test -x /bin/cryptsetup; then
+            ENCRYPT_MODE=$ENCRYPT_ONLY
+        else
+            ENCRYPT_MODE=$ENCRYPT_DISABLE
+        fi
+    fi
 
     case $ENCRYPT_MODE in
                    $ENCRYPT_DISABLE) return ;;
