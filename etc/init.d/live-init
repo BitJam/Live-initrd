@@ -702,7 +702,7 @@ scale_conky() {
     local file=/$home/.conkyrc  def_width=180  def_gheight=30
     [ "$dpi" ] || return
     test -w $file || return
-    head $file | grep -iq "^#[[:space:]]*Standard[[:space:]]*antiX[[:space:]].conkyrc" || return
+    head $file | egrep -iq "^\s*(#|--+)\s*Standard\s*antiX\s*.conkyrc" || return
 
     local width=$((dpi * $def_width / 96 ))
     # Don't make conky smaller than the default size
