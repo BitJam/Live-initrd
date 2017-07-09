@@ -652,7 +652,7 @@ eject_cd() {
     [ $V_LEVEL -ge 8 ] && verbose=-v
 
     vmsg 7 "eject$white $dev"
-    eject-orig -p $verbose $dev
+    eject -p $verbose $dev
 }
 
 #------------------------------------------------------------------------------
