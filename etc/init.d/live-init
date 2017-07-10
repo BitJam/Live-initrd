@@ -712,9 +712,10 @@ scale_conky() {
     fi
     echo_live "Setting Conky width to %s" $(pquote $width)
     local gwidth=$((width - 10))
-    local gheight=$((2 * dpi * $def_gheight / 96 - $def_gheight))
+    local gheight=$((dpi * def_gheight / 96))
 
-    su -c "sed -i -r -e 's/^\s*(maximum_width\s+).*/\1$width/' \
+    su -c "sed -i -r -e 's/^\s*(maximum_width\s+)[0-9].*/\1$width/' \
+        -e 's/^(\s*maximum_width\s*=\s*)[0-9]+,.*/\1$width,/'  \
         -e 's/(graph\s+([a-z0-9]+\s+)?)[0-9]+\s*,\s*[0-9]+/\1$gheight,$gwidth/' $file" $user
 }
 
