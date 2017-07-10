@@ -2474,8 +2474,12 @@ reset_passphrase() {
 #------------------------------------------------------------------------------
 set_new_passphrase() {
     local file=$1  dev=$2
-    warn "You will be asked to enter a new passphrase twice"
-    cttyhack cryptsetup luksChangeKey --key-file $file $dev 2>&1 || return $?
+    [ "$DB_PLUS" ] && msg "current phrase %s" "$(pq $(cat $file))"
+    while true; do
+        warn "You will be asked to enter a new passphrase twice"
+        cttyhack cryptsetup luksChangeKey --key-file $file $dev 2>&1 && return 0
+        YES_no "Do you want to try again?" || return 2
+    done
 }
 
 #------------------------------------------------------------------------------
