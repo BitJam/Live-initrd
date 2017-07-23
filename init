@@ -49,7 +49,7 @@
 
           AUFS_DIR="aufs"
 
-       EXTRA_FILES="deb xtra xtra.tgz state"
+       EXTRA_FILES="deb xtra xtra.tgz"
        MIN_SYS_RAM=80
       MIN_AUFS_RAM=80
 
@@ -59,7 +59,7 @@
             MY_LOG=/init.log
            VID_DIR="/etc/live/version"
           VID_FILE="$VID_DIR/linuxfs.ver"
-          MAKE_OLD="rootfs xtra deb xtra.tgz linuxfs.md5"
+          MAKE_OLD="rootfs xtra deb xtra.tgz linuxfs.md5 state"
            MOD_DIR="/lib/modules/$(uname -r)"
 
          FROM_TYPE="usb,cd"
