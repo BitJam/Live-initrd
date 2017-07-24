@@ -50,6 +50,8 @@ MSTATE_DIR=state/machine
 GSTATE_DIR=state/general
 USTATE_DIR=state/user
 
+DONT_DELETE="/etc/network/interfaces"
+
 ID_DIR="/sys/class/dmi/id"
 ID_FILES="board_vendor board_name board_version product_name"
 
@@ -277,6 +279,7 @@ save_state() {
             rm -f $to
             # Don't add unmatched globs to the delete list
             [ -z "${from##*\**}" ] && continue
+            echo "$from" | egrep -q "^($DONT_DELETE)$" && continue
             to_delete="$to_delete\n$from"
             continue
         fi
