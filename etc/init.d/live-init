@@ -180,11 +180,7 @@ If_File
     # Only do X stuff on systems that seem to have X
     if  [ "$HAVE_X" ]; then
 
-        if [ "$EARLY_VID" ]; then
-            load_video_driver
-        else
-            detect_any_video_driver
-        fi
+        detect_any_video_driver
 
         if [ ${#FONT_SIZE} -gt 0 ]; then
             font_size_to_dpi $FONT_SIZE
@@ -539,7 +535,7 @@ make_xorg_conf() {
         rm -f $SKYLAKE_FLICKER_FILE
     fi
 
-    [ "$FOUND_i915" -a -z "$no_xorg" ]    && fix_intel $args
+    [ "$FOUND_i915" -a -z "$no_xorg" ] && fix_intel $args
     args=$ARGS_OUT
 
     [ "$args" ] || return
@@ -641,29 +637,6 @@ set_fbcondecor() {
     # Only set bg if we are in verbose mode
     [ "$verbose" ] || return
     /sbin/splash-term $theme
-}
-
-load_video_driver() {
-    local orig_fb_name
-    read orig_fb_name 2</dev/null < /sys/class/graphics/fb0/name
-    echo_live "Scanning for hardware specific video modules ..."
-    local video_modules="$(find_video_modules)"
-    [ "$video_modules" ] || return
-
-    FOUND_VDRIVER=true
-    detect_sisimedia_driver "$video_modules"
-    FOUND_KMS_DRIVER="$(echo "$video_modules" | egrep "^($KMS_VIDEO_MODULES)$")"
-    FOUND_i915=$(echo $FOUND_KMS_DRIVER | grep "^i915$")
-
-    if [ "$FOUND_KMS_DRIVER" ]; then
-        echo_live "Found %s video module(s) %s" KMS "$(pquote $(echo $FOUND_KMS_DRIVER))"
-        echo_live "Load module(s) %s" "$(pquote $(echo $FOUND_KMS_DRIVER))"
-        modprobe -b -a -q "$FOUND_KMS_DRIVER"
-        set_fbcondecor "$SPLASH_PARAM" "$orig_fb_name"
-    else
-        echo_live "Found video module(s) %s" "$(pquote $(echo $video_modules))"
-        detect_sisimedia_driver "$video_modules"
-    fi
 }
 
 # Note: we will report FOUND_VDRIVER even if "nomodeset" is used because unless
