@@ -15,9 +15,7 @@ MSTATE_FILES="# File: machine-state-files
 # Machine specific files to be saved across reboots
 
 /etc/adjtime
-/etc/modprobe.d/hang-on-shutdown.conf
-/etc/modprobe.d/i915-power-saving.conf
-/etc/modprobe.d/iwlwifi-no-blink.conf
+/etc/modprobe.d/*.conf
 /etc/modules
 /etc/udev/rules.d/*-persistent-net.rules
 # /etc/X11/xorg.conf
