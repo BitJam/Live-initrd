@@ -828,6 +828,22 @@ set_console_blanking() {
     sed -ri "s/^(BLANK_TIME=).*/\1$blank/" $conf_file
 }
 
+disable_ipv6() {
+    local file=/etc/sysctl.conf  msg="Added by $DISTRO live initrd"
+    grep -q "$msg" $file && return
+    cat >> $file << Disable_Ipv6
+
+###################################################################
+# $msg
+# disable ipv6 networking to avoid long network delays
+#
+
+net.ipv6.conf.all.disable_ipv6 = 1
+net.ipv6.conf.default.disable_ipv6 = 1
+net.ipv6.conf.lo.disable_ipv6 = 1
+Disable_Ipv6
+}
+
 write_issue_file() {
     local distro=${1:-Linux}  force=$2  file=${3:-/etc/issue}
     [ "$force" -o ! -e $file ] || return
