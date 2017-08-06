@@ -603,7 +603,7 @@ find_video_modules() {
 skylake_flicker_fix() {
     local file=$1
     echo_live "Creating file %s" $(pquote $file)
-    cat<<Skylake_Fix > $file
+    cat > $file <<Skylake_Fix
 #-----------------------------------------------------------------------------
 # fix flickering on skylake hardware with some kernels -----------------------
 #-----------------------------------------------------------------------------
@@ -654,6 +654,7 @@ detect_any_video_driver() {
         #. Found <KMS> video module(s) <module-name(s)>
         echo_live "Found %s video module(s) %s" KMS "$(pquote $(echo $FOUND_KMS_DRIVER))"
         FOUND_i915=$(echo $FOUND_KMS_DRIVER | grep "^i915$")
+        #blacklist_radeon "$FOUND_KMS_DRIVER" "$XORG_ARGS"
     else
         echo_live "Found %s video module(s) %s" "" "$(pquote $(echo $video_modules))"
         detect_sisimedia_driver "$video_modules"
@@ -684,6 +685,34 @@ detect_sisimedia_driver() {
     # But both come *before* the orignal XORG_ARGS so they get over-ridden
     # by the xorg= cheat.
     XORG_ARGS="${XORG_ARGS:-default,$xorg_driver}"
+}
+
+#------------------------------------------------------------------------------
+# NOT USED!
+# Blacklist radeon driver if amdgpu driver is supported and if the blacklist
+# file does not already exist
+#------------------------------------------------------------------------------
+blacklist_radeon() {
+    local drivers=$1  args=$2  bl_file=/etc/modprobe.d/blacklist-radeon.conf
+
+    case ,$args, in
+        *,radeon,*) return ;;
+    esac
+
+    #echo "$drivers" | grep -q "^amdgpu$" || return
+
+    test -e $bl_file && return
+
+    echo_live "Creating file %s" $(pquote $bl_file)
+
+    cat > $bl_file << Blacklist_Radeon
+# Created by the $DISTRO live initrd system around $(date +"%Y-%m-%d %H:%M")
+#
+# This file blacklists the radeon driver so the amdgpu driver becomes the default.
+# If you would prefer to use the radeon driver, comment out the following line:
+
+blacklist radeon
+Blacklist_Radeon
 }
 
 scale_conky() {
