@@ -152,7 +152,7 @@ do_start() {
 
     local dpi DPI_OUT
 
-    # Always create keyboard file in non-perisistent system even with no X
+    # Always create keyboard file in non-persistent system even with no X
     # Unless NO_LOAD_KEYS
     [ -z "$NO_LOAD_KEYS" ] && set_keyboard
     set_utc_local $CMD_CLOCK
