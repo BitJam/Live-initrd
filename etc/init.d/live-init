@@ -134,6 +134,9 @@ do_start() {
 
     write_issue_file "$DISTRO" "$FORCE_ISSUE"
 
+    # FIXME: this should be conditional
+    #disable_ipv6
+
     which X &>/dev/null && HAVE_X=true
 
     local alt_automount
@@ -861,11 +864,13 @@ set_console_blanking() {
 
 #------------------------------------------------------------------------------
 # Disable ipv6 so ipv4 networking starts *much* faster
+# Does not solve the network delay problem, NOT USED
 #------------------------------------------------------------------------------
 disable_ipv6() {
-    local file=/etc/sysctl.conf  msg="Added by $DISTRO live initrd"
-    grep -q "$msg" $file && return
-    cat >> $file << Disable_Ipv6
+    local file=/etc/sysctl.d/disable-ipv6.conf  msg="Added by $DISTRO live initrd"
+    test -e $file && return
+    mkdir -p $(dirname $file)
+    cat > $file << Disable_Ipv6
 
 ###################################################################
 # $msg
