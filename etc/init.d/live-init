@@ -197,8 +197,6 @@ If_File
 
         make_xorg_conf "$XORG_ARGS" "$FOUND_VDRIVER" "$FOUND_KMS_DRIVER" "$NO_XORG"
 
-        set_etc_desktop_delay $DESKTOP_DELAY
-
     fi
 
     # Find the "default" user.  This is usually "demo" but can vary on snapshots
