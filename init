@@ -2607,6 +2607,7 @@ prep_seed_dev_random() {
     [ -z "$file" ]   && return
     test -e "$file"  || touch $file 2>/dev/null
     test -w "$file"  || return
+    # A random seed is used to start the random number generator differently each boot
     msg "Saving random seed"
     dd if=/dev/urandom bs=1 count=512 2>/dev/null > $file
     chmod 600 $file 2>/dev/null
