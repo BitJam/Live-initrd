@@ -520,6 +520,12 @@ make_xorg_conf() {
     #  [ -z "$safe_mode" -a -e /live/config/virtualbox -a -z "$args" -a -z "$no_default" ] \
     #     && args=vbox${args:+,}$args
 
+    if  [ -z "$no_default" -a -z "$safe_mode" -a -z "$args" ]; then
+        is_chrome_gpu && args=openchrome
+        echo_live "Creating %s file for %s" "$(pquote xorg.conf)" "$(pquote "VIA Chrome GPU")"
+        no_default=true
+    fi
+
     if  [ -z "$no_default" -a -z "$safe_mode" ]; then
         echo_live "Forcing X-Windows to use default mode"
         args=default${args:+,}$args
@@ -581,6 +587,14 @@ fix_intel() {
 is_skylake() {
     # See recent pci.ids from http://pci-ids.ucw.cz/
     lspci -n | cut -d" " -f3 | egrep -q "^8086:($SKYLAKE_PCI_ID)"
+    return $?
+}
+
+#------------------------------------------------------------------------------
+# Is there a VIA Chrome video chip?
+#------------------------------------------------------------------------------
+is_chrome_gpu() {
+    lspci -n | cut -d" " -f3 | egrep -q "^1106:(1122|3344|3a01|5122|7122"
     return $?
 }
 
