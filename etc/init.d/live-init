@@ -39,6 +39,7 @@ UXA_PCI_ID="0042|0046|1132|1240|2562|2572|2582|258a|2592|2772|2776|2782
 BROADWELL_PCI_ID="1616|1612|161e|1626|162b|1622"  # The more powerful broadwell
 
 SKYLAKE_FLICKER_FILE="/etc/modprobe.d/skylake-flicker-fix.conf"
+I915_POWER_SAVE_FILE="/etc/modprobe.d/i915-power-saving.conf"
 
 AUTOMOUNT_CMD="/usr/local/bin/automount-antix"
 
@@ -88,9 +89,10 @@ automount=off|amnt=off)                          AUTOMOUNT_OFF=true ;;
              nomodeset)    NO_MODESET=true                          ;;
             fontsize=*)     FONT_SIZE=$value                        ;;
              vtblank=*)      VT_BLANK=$value                        ;;
-             noskylake)    NO_SKYLAKE=true                          ;;
+        skylakeflicker)   FIX_SKYLAKE=true                          ;;
                  issue)   FORCE_ISSUE=true                          ;;
              vboxdecor)    VBOX_DECOR=true                          ;;
+         i915powersave) ENABLE_I915_POWER_SAVE=true                 ;;
     esac
 done
 
@@ -179,6 +181,9 @@ allow-hotplug eth0
 iface eth0 inet dhcp
 If_File
     fi
+    [ "$ENABLE_I915_POWER_SAVE" ] && enable_i915_power_save $I915_POWER_SAVE_FILE
+
+    fix_cache_apt_archive_partial
 
     # Only do X stuff on systems that seem to have X
     if  [ "$HAVE_X" ]; then
@@ -534,7 +539,7 @@ make_xorg_conf() {
     local IS_SKYLAKE ARGS_OUT=$args
     [ "$FOUND_i915" ] && is_skylake && IS_SKYLAKE=true
 
-    if [ "$IS_SKYLAKE" -a -z "$NO_SKYLAKE" ]; then
+    if [ "$FIX_SKYLAKE" ]; then
         skylake_flicker_fix $SKYLAKE_FLICKER_FILE
     else
         rm -f $SKYLAKE_FLICKER_FILE
@@ -672,6 +677,14 @@ detect_any_video_driver() {
         echo_live "Found %s video module(s) %s" "" "$(pquote $(echo $video_modules))"
         detect_sisimedia_driver "$video_modules"
     fi
+}
+
+#------------------------------------------------------------------------------
+# Uncomment payload of i915 power savings file
+#------------------------------------------------------------------------------
+enable_i915_power_save() {
+    local file=$1
+    sed -r -i "s/^#\s*(options\s+i915\s+)/\1/" $file
 }
 
 #------------------------------------------------------------------------------
