@@ -67,7 +67,8 @@ load_translation
 
 main() {
     case $1 in
-        start|sys) do_start $1 ;;
+            start) SYS_MODE=     ; do_start $1 ;;
+              sys) SYS_MODE=true ; do_start $1 ;;
              stop) do_stop     ;;
                 *) echo "Usage: $0 {start|stop|sys}" ;;
     esac
@@ -261,6 +262,11 @@ save_state() {
     local file
     for to in $(find $state_dir/files -type f 2>/dev/null); do
         from=${to#$state_dir/files}
+
+        # Never delete state files that came from /sys/ so we perserve settings
+        # even if drivers come and go
+        [ -z "${from##/sys/*}" ] && continue
+
         test -e $from || echo_cmd rm -f $to
     done
 
@@ -275,8 +281,13 @@ save_state() {
 
         if [ ! -e "$from" ]; then
             rm -f $to
+
             # Don't add unmatched globs to the delete list
             [ -z "${from##*\**}" ] && continue
+
+            # Don't add files from under /sys/ to the delete list
+            [ -z "${from##/sys/*}" ] && continue
+
             echo "$from" | egrep -q "^($DONT_DELETE)$" && continue
             to_delete="$to_delete\n$from"
             continue
@@ -316,6 +327,7 @@ restore_state() {
     esac
 
     file_list=$(echo "$file_list" | sed "s|^\s*/||")
+    echo "$file_list" | grep -q "^[a-z]" || return
 
     test -e $state_dir/no-state && return
 
@@ -337,7 +349,18 @@ restore_state() {
             # Don't write to /live or /sys
             [ -z "${to##/live/*}" ] && continue
 
-            should_copy $from $to || continue
+            if [ "$SYS_MODE" ]; then
+                test -e $to || continue
+
+                #. Restore <general|machine specific> state file <file-name>
+                echo_live "Restore %s state file %s" "$type" "$(wq $to)"
+                echo_cmd cp $from $to
+
+                continue
+            else
+                should_copy $from $to || continue
+            fi
+
             #. Restore <general|machine specific> state file <file-name>
             echo_live "Restore %s state file %s" "$type" "$(wq $to)"
             echo_cmd mkdir -p $(dirname $to)
