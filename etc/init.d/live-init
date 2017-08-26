@@ -537,11 +537,16 @@ make_xorg_conf() {
     #  [ -z "$safe_mode" -a -e /live/config/virtualbox -a -z "$args" -a -z "$no_default" ] \
     #     && args=vbox${args:+,}$args
 
-    if  [ -z "$no_default" -a -z "$safe_mode" -a -z "$args" ]; then
-        is_chrome_gpu && args=openchrome
-        echo_live "Creating %s file for %s" "$(pquote xorg.conf)" "$(pquote "VIA Chrome GPU")"
+    if have_chrome_gpu_and_driver; then
+        echo_live "Letting X server default to using %s driver" "$(pquote openchrome)"
         no_default=true
     fi
+
+    # if  [ -z "$no_default" -a -z "$safe_mode" -a -z "$args" ]; then
+    #     have_chrome_gpu_and_driver && args=openchrome
+    #     echo_live "Creating %s file for %s" "$(pquote xorg.conf)" "$(pquote "VIA Chrome GPU")"
+    #     no_default=true
+    # fi
 
     if  [ -z "$no_default" -a -z "$safe_mode" ]; then
         echo_live "Forcing X-Windows to use default mode"
@@ -611,10 +616,25 @@ is_skylake() {
 # Is there a VIA Chrome video chip?
 #------------------------------------------------------------------------------
 is_chrome_gpu() {
-    lspci -n | cut -d" " -f3 | egrep -q "^1106:(1122|3344|3a01|5122|7122"
+    lspci -n | cut -d" " -f3 | egrep -q "^1106:(1122|3344|3a01|5122|7122)"
     return $?
 }
 
+#------------------------------------------------------------------------------
+# Does this X driver exist?
+#------------------------------------------------------------------------------
+have_X_driver() {
+    test -e $XORG_DRIVER_DIR/${1}_drv.so
+    return $?
+}
+
+#------------------------------------------------------------------------------
+# Do we have a chrome gpu and the openchrome driver?
+#------------------------------------------------------------------------------
+have_chrome_gpu_and_driver() {
+    is_chrome_gpu && have_X_driver openchrome && return 0
+    return 1
+}
 #------------------------------------------------------------------------------
 # Is this an Intel broadwell cpu?
 #------------------------------------------------------------------------------
@@ -720,7 +740,7 @@ detect_sisimedia_driver() {
     echo "$video_modules" | egrep -q "^($SISIMEDIA_K_DRIVERS)$" || return
     #. Found <type> kernel modules ...
     echo_live "Found %s kernel modules ..." sis
-    test -e $XORG_DRIVER_DIR/${xorg_driver}_drv.so || return
+    have_X_driver $xorg_driver || return
     #. Found <driver-name> video driver
     echo_live "Found %s video driver" $xorg_driver
 
