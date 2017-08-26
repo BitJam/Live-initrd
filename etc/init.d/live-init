@@ -688,6 +688,14 @@ Skylake_Fix
 }
 
 #------------------------------------------------------------------------------
+# Uncomment payload of i915 power savings file
+#------------------------------------------------------------------------------
+enable_i915_power_save() {
+    local file=$1
+    sed -r -i "s/^#\s*(options\s+i915\s+)/\1/" $file
+}
+
+#------------------------------------------------------------------------------
 # Note: we will report FOUND_VDRIVER even if "nomodeset" is used because unless
 # the user wants safe mode then they should be allowed to use the KMS driver and
 # "nomodeset" without us forcing vesa.  That's what safe mode is for.
@@ -709,14 +717,6 @@ detect_any_video_driver() {
         echo_live "Found %s video module(s) %s" "" "$(pquote $(echo $video_modules))"
         detect_sisimedia_driver "$video_modules"
     fi
-}
-
-#------------------------------------------------------------------------------
-# Uncomment payload of i915 power savings file
-#------------------------------------------------------------------------------
-enable_i915_power_save() {
-    local file=$1
-    sed -r -i "s/^#\s*(options\s+i915\s+)/\1/" $file
 }
 
 #------------------------------------------------------------------------------
