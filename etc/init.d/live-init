@@ -480,6 +480,18 @@ set_utc_local() {
     esac
 }
 
+
+#------------------------------------------------------------------------------
+# Fix the ownership and permissions on the /var/cache/apt/archives/partial/
+# directory and everything below
+#------------------------------------------------------------------------------
+fix_cache_apt_archive_partial() {
+    local dir=/var/cache/apt/archives/partial
+    mkdir -p $dir
+    chown -Rv _apt:root $dir
+    chmod -Rv 700 $dir
+}
+
 #===============================================================================
 # XORG and VIDEO stuff
 #===============================================================================
