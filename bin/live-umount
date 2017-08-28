@@ -731,7 +731,7 @@ run_scripts() {
     done
 }
 
-get_time() { cut -d" " -f22 /proc/self/stat ;}
+get_time() { cut -d" " -f22 /proc/self/stat 2>/dev/null ;}
 
 get_seconds() {
     local dt=${1:-$(get_time)}
