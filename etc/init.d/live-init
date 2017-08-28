@@ -92,6 +92,8 @@ automount=off|amnt=off)                          AUTOMOUNT_OFF=true ;;
         skylakeflicker)   FIX_SKYLAKE=true                          ;;
                  issue)   FORCE_ISSUE=true                          ;;
              vboxdecor)    VBOX_DECOR=true                          ;;
+            netiface=*) CMD_NET_IFACE=$value                        ;;
+                noipv6)       NO_IPV6=true                          ;;
          i915powersave) ENABLE_I915_POWER_SAVE=true                 ;;
     esac
 done
@@ -137,7 +139,7 @@ do_start() {
     write_issue_file "$DISTRO" "$FORCE_ISSUE"
 
     # FIXME: this should be conditional
-    #disable_ipv6
+    [ "$NO_IPV6" ] && disable_ipv6
 
     which X &>/dev/null && HAVE_X=true
 
@@ -177,10 +179,14 @@ do_start() {
 auto lo
 iface lo inet loopback
 
+# The primary network interface
 allow-hotplug eth0
 iface eth0 inet dhcp
 If_File
     fi
+
+    munge_network_interfaces "$CMD_NET_IFACE" $NETWORK_IF_FILE
+
     [ "$ENABLE_I915_POWER_SAVE" ] && enable_i915_power_save $I915_POWER_SAVE_FILE
 
     fix_cache_apt_archive_partial
@@ -941,6 +947,37 @@ net.ipv6.conf.all.disable_ipv6 = 1
 net.ipv6.conf.default.disable_ipv6 = 1
 net.ipv6.conf.lo.disable_ipv6 = 1
 Disable_Ipv6
+}
+
+#------------------------------------------------------------------------------
+# Control [auto|allow-hotplug] [eth0|wlan0] in /etc/network/interfaces file
+#------------------------------------------------------------------------------
+munge_network_interfaces() {
+    local param  arg=$1  FILE=$2
+    for param in ${arg//,/ }; do
+        local val=${param#*=}
+        local nam=${param%%=*}
+        case $param in
+              e=*|eth=*) _munge_netiface eth  $val ;;
+             w=*|wlan=*) _munge_netiface wlan $val ;;
+             eth[0-9]=*) _munge_netiface $nam $val ;;
+            wlan[0-9]=*) _munge_netiface $nam $val ;;
+                      *) _munge_netiface $nam $val ;;
+        esac
+    done
+}
+
+_munge_netiface() {
+    local nam=$1  val=$2
+    case $val in
+        a) val="auto"          ;;
+        h) val="allow-hotplug" ;;
+        auto|allow-hotplug)    ;;
+        *) printf "Bad netiface value %s\n" $val ; return ;;
+    esac
+
+    sed -r -n "s/^(auto|allow-[a-z]*)\s+$nam/$val $nam/p" $FILE
+    sed -r -i "s/^(auto|allow-[a-z]*)\s+$nam/$val $nam/"  $FILE
 }
 
 #------------------------------------------------------------------------------
