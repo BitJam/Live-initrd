@@ -44,7 +44,6 @@ LEAN_SERVICES="
     nfs-common
     rpcbind
     rsync
-    rsyslog
     saned
     smartmontools
     ssh
@@ -154,6 +153,7 @@ do_start() {
         [ -z "${disable_param##*[d]*}" ] &&       NO_DBUS=true
         [ -z "${disable_param##*[g]*}" ] &&   DISABLE_GPM=true
         [ -z "${disable_param##*[l]*}" ] &&          LEAN=true
+        [ -z "${disable_param##*[L]*}" ] && ENABLE_SYSLOG=true
         [ -z "${disable_param##*[m]*}" ] &&          MEAN=true
         [ -z "${disable_param##*[n]*}" ] &&   DISABLE_NFS=true
         [ -z "${disable_param##*[n]*}" ] &&    NFS_REASON=n
@@ -194,8 +194,9 @@ do_start() {
         #--     LEAN_SERVICES="$LEAN_SERVICES $LAPTOP_SERVICES"
         #-- fi
 
-        [ "$ENABLE_WICD" ]  || LEAN_SERVICES="$LEAN_SERVICES wicd"
-        [ "$ENABLE_ACPID" ] || LEAN_SERVICES="$LEAN_SERVICES acpid"
+        [ "$ENABLE_WICD" ]   || LEAN_SERVICES="$LEAN_SERVICES wicd"
+        [ "$ENABLE_SYSLOG" ] || LEAN_SERVICES="$LEAN_SERVICES rsyslog"
+        [ "$ENABLE_ACPID" ]  || LEAN_SERVICES="$LEAN_SERVICES acpid"
 
         echo_live "Disabling some services %s" "$(paren L, lean)"
         disable_services "lean (l)" "$LEAN_SERVICES"
