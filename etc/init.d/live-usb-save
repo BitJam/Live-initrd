@@ -55,7 +55,7 @@ ID_FILES="board_vendor board_name board_version product_name"
 
 DS_FILE="/home/%s/.desktop-session/default-desktop"
 DS_DIR="/home/%s/.desktop-session"
-BLACK_LIST_FILE=/etc/modprobe.d/live-initrd.conf
+BLACK_LIST_FILE=/etc/modprobe.d/live-initrd-blacklist.conf
 
 export PATH=/sbin:/usr/sbin:/bin:/usr/bin:/usr/local/bin
 
