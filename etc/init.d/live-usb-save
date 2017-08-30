@@ -55,6 +55,7 @@ ID_FILES="board_vendor board_name board_version product_name"
 
 DS_FILE="/home/%s/.desktop-session/default-desktop"
 DS_DIR="/home/%s/.desktop-session"
+BLACK_LIST_FILE=/etc/modprobe.d/live-initrd.conf
 
 export PATH=/sbin:/usr/sbin:/bin:/usr/bin:/usr/local/bin
 
@@ -262,6 +263,7 @@ save_state() {
     local file
     for to in $(find $state_dir/files -type f 2>/dev/null); do
         from=${to#$state_dir/files}
+        [ "$from" = "$BLACK_LIST_FILE" ] && continue
 
         # Never delete state files that came from /sys/ so we perserve settings
         # even if drivers come and go
