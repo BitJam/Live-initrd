@@ -100,7 +100,7 @@
         SEED_FNAME=random-seed
 
         BLACK_LIST=
-   BLACK_LIST_FILE=/etc/modprobe.d/initrd.conf
+   BLACK_LIST_FILE=/etc/modprobe.d/live-initrd-blacklist.conf
  KMS_VIDEO_MODULES="ast,bochs-drm,cirrus,emgd,gma500_gfx,i915,mgag200,nouveau,qxl,radeon,udl,vmwgfx"
     DEFAULT_SQFILE=/antiX/linuxfs
   DEFAULT_ISO_FILE=/antiX/antiX.iso
@@ -285,6 +285,9 @@ main_wrapper() {
     done
     rm -f $rm_list
 
+    rm -f $NEW_ROOT$BLACK_LIST_FILE
+    [ -e $BLACK_LIST_FILE ] && cp $BLACK_LIST_FILE $NEW_ROOT$BLACK_LIST_FILE
+
     dmesg > $NEW_ROOT/live/config/dmesg.out
 
     breakpoint bash  "Bash shell right before starting init"
@@ -340,7 +343,7 @@ main_core() {
 
     mkdir -p $MOD_DIR
     depmod &>/dev/null
-    blacklist_modules $BLACK_LIST
+    blacklist_modules "$BLACK_LIST" "$BLACK_LIST_FILE"
 
     breakpoint 1 "before welcome"
 
@@ -506,9 +509,6 @@ main_core() {
     fi
 
     breakpoint 6 "after mounting aufs"
-
-    rm -f $NEW_ROOT$BLACK_LIST_FILE
-    [ -e $BLACK_LIST_FILE ] && cp $BLACK_LIST_FILE $NEW_ROOT$BLACK_LIST_FILE
 
     [ "$WANT_HOMEFS" ] \
         && mount_homefs $PERSIST_FULL_PATH/homefs $NEW_ROOT/home "$WANT_HOMEFS" "$NEED_HOMEFS"
@@ -1316,19 +1316,29 @@ set_fbcondecor() {
 }
 
 #------------------------------------------------------------------------------
-#
+# Create a file to blacklist modules when the initrd and when the main
+# system boots.  Specified by blacklist=xxx or bl=xxxx.
 #------------------------------------------------------------------------------
 blacklist_modules() {
-    local black_list=$1
+    local black_list=$1  local file=$2
     [ "$black_list" ] || return
 
     black_list=$(echo $black_list | sed -r "s/(VIDEO|KMS)/$KMS_VIDEO_MODULES/");
     mkdir -p /etc/modprobe.d/
+    cat << Black_List_File
+#------------------------------------------------------------------------------
+# file ${file##*/} created around $(date)
+#
+# Created by the antiX/MX live initrd.  This file will be erased on every
+# live boot.  Please rename it if you want to keep it.
+#------------------------------------------------------------------------------
+
+Black_List_File
     echo $black_list | sed 's/,/\n/g' | sed -r 's/^([a-z])/blacklist \1/' >> $BLACK_LIST_FILE
 }
 
 #------------------------------------------------------------------------------
-#
+# Load kernel modules giving by load=xxx
 #------------------------------------------------------------------------------
 load_kernel_modules() {
     local list=$1 file=$2
