@@ -415,10 +415,16 @@ set_keyboard() {
     [ "$XKBOPTIONS" ] && echo_live "Setting %s to %s" $(pquote xkb-options) $(pquote $XKBOPTIONS)
 
     cat > $kb_file <<Keyboard_Out
+# KEYBOARD CONFIGURATION FILE
+
+# Consult the keyboard(5) manual page.
+
 XKBMODEL="${XKBMODEL:=pc105}"
 XKBLAYOUT="${XKBLAYOUT:=us}"
 XKBVARIANT="${XKBVARIANT}"
 XKBOPTIONS="${XKBOPTIONS:=$default_xkb_opts}"
+
+BACKSPACE="guess"
 Keyboard_Out
 }
 
