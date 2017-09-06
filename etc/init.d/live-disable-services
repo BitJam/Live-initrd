@@ -28,17 +28,15 @@ GPM_SERVICES="
 gpm
 "
 
-
 LEAN_SERVICES="
     acpi-fakekey
     acpi-support
-    bootlogs
     bluetooth
+    bootlogs
     #cherokee
     cpufrequtils
     cron
     cups
-    ifplugd
     irqbalance
     loadcpufreq
     nfs-common
@@ -89,13 +87,15 @@ XTRA_LEAN_SERVICES="
 "
 
 MEAN_SERVICES="
-    networking
+    avahi-daemon
+    ifplugd
     network-manager
+    networking
+    nfs-kernel-server
     ntp
     resolvconf
     smbd
-    nfs-kernel-server
-    avahi-daemon
+    wicd
 "
 
 NO_DBUS_SERVICES="
