@@ -11,10 +11,13 @@
 # Description:       save/restore some information on raw liveusb w/o persistence
 ### END INIT INFO
 
+LINUXFS_DIR="/live/linux"
+
 MSTATE_FILES="# File: machine-state-files
 # Machine specific files to be saved across reboots
 
 /etc/adjtime
+/etc/default/*
 /etc/modprobe.d/*.conf
 /etc/modules
 /etc/udev/rules.d/*-persistent-net.rules
