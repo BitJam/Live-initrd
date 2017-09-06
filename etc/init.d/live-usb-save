@@ -301,6 +301,12 @@ save_state() {
             continue
         fi
 
+        if test -e $from_linuxfs && diff -q $from_linuxfs $from 1>/dev/null 2>&1; then
+            #echo_live "TEST: Skipping linuxfs $from"
+            rm -f $to
+            continue
+        fi
+
         should_copy $from $to || continue
         #. Save <general|machine specific> state file <file-name>
         echo_live "Save %s state file %s" "$type" $(wq $file)
