@@ -152,6 +152,7 @@ do_start() {
         [ -z "${disable_param##*[A]*}" ] &&  ENABLE_ACPID=true
         [ -z "${disable_param##*[d]*}" ] &&       NO_DBUS=true
         [ -z "${disable_param##*[g]*}" ] &&   DISABLE_GPM=true
+        [ -z "${disable_param##*[i]*}" ] && DISABLE_IFPLUGD=true
         [ -z "${disable_param##*[l]*}" ] &&          LEAN=true
         [ -z "${disable_param##*[L]*}" ] && ENABLE_SYSLOG=true
         [ -z "${disable_param##*[m]*}" ] &&          MEAN=true
@@ -200,6 +201,11 @@ do_start() {
 
         echo_live "Disabling some services %s" "$(paren L, lean)"
         disable_services "lean (l)" "$LEAN_SERVICES"
+    fi
+
+    if [ "$DISABLE_IFPLUGD" ]; then
+        echo_live "Disabling %s services %s" "$(pquote ifplugd)" $(paren i)
+        disable_services "ifplugd (i)" "ifplugd"
     fi
 
     if [ "$DISABLE_ACPID" ]; then
