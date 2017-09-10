@@ -5391,10 +5391,10 @@ fancy_prompt() {
         db_msg 'fancy prompts were already enabled'
     else
         db_msg 'Enable fancy prompts and other goodies'
-
         cat << Fancy_Stuff >> $bashrc
 
 #----- Added by live initrd init script
+LESS="-R"
 [ -r $fp_prog ] && source $fp_prog
 [ -n "\$(alias $cmd)" ] && $prompt
 echo \$PATH | grep -q /live/bin || PATH=\$PATH:/etc/live/bin
