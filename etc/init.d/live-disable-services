@@ -50,17 +50,8 @@ LEAN_SERVICES="
     #transmission-daemon
 "
 
-LAPTOP_SERVICES="
-    acpid
-    wicd
-"
-
 ACPID_SERVICES="
     acpid
-"
-
-WICD_SERVICES="
-    wicd
 "
 
 XTRA_LEAN_SERVICES="
@@ -95,7 +86,6 @@ MEAN_SERVICES="
     ntp
     resolvconf
     smbd
-    wicd
 "
 
 NO_DBUS_SERVICES="
@@ -120,16 +110,19 @@ main() {
 
 do_start() {
     local must_run param val
-    : ${CMDLINE:=$(cat /live/config/proc-cmdline)}
+    : ${CMDLINE:=$(cat /live/config/proc-cmdline /live/config/cmdline3 2>/dev/null)}
+
     for param in $CMDLINE; do
         val=${param#*=}
         case "$param" in
-               disable=*) disable_param=$val  ;  must_run=true ;;
-                    lean)        LEAN=true    ;  must_run=true ;;
-                    mean)        MEAN=true    ;  must_run=true ;;
-                Xtralean)   XTRA_LEAN=true    ;  must_run=true ;;
-                  nodbus)     NO_DBUS=true    ;  must_run=true ;;
-                    db++)   DEBUGGING=true                     ;;
+               disable=*)    disable_param=$val    ;  must_run=true ;;
+                    lean)             LEAN=true    ;  must_run=true ;;
+                    mean)             MEAN=true    ;  must_run=true ;;
+                Xtralean)        XTRA_LEAN=true    ;  must_run=true ;;
+                  nodbus)          NO_DBUS=true    ;  must_run=true ;;
+                  nowicd)         CMD_WICD=no      ;  must_run=true ;;
+                    wicd)         CMD_WICD=yes     ;  must_run=true ;;
+                    db++)        DEBUGGING=true                     ;;
         esac
     done
 
@@ -161,14 +154,19 @@ do_start() {
         [ -z "${disable_param##*[N]*}" ] &&   ENABLE_NTPD=true
         [ -z "${disable_param##*[P]*}" ] &&    ENABLE_PAM=true
         [ -z "${disable_param##*[v]*}" ] &&  DISABLE_VBOX=true
-        [ -z "${disable_param##*[w]*}" ] &&  DISABLE_WICD=true
-        [ -z "${disable_param##*[W]*}" ] &&   ENABLE_WICD=true
+        [ -z "${disable_param##*[w]*}" ] &&          WICD=no
+        [ -z "${disable_param##*[W]*}" ] &&          WICD=yes
         [ -z "${disable_param##*[x]*}" ] &&     XTRA_LEAN=true
     fi
+
+    [ -n "$LEAN" -o -n "$MEAN" ] && : ${WICD:=no}
 
     # Prevent other messages stepping on ours
     # sleep 2
     echo_script "Customizing services" $0
+
+    WICD=${CMD_WICD:-$WICD}
+    [ -n "$WICD" ] && config_wicd $WICD
 
     if test -e /etc/init.d/virtualbox-guest-utils; then
         if test -e /live/config/virtualbox; then
@@ -189,13 +187,6 @@ do_start() {
 
     if [ "$LEAN" ]; then
 
-        #-- if test -e /live/config/laptop; then
-        #--     echo_live "Detected laptop/mobile device"
-        #-- else
-        #--     LEAN_SERVICES="$LEAN_SERVICES $LAPTOP_SERVICES"
-        #-- fi
-
-        [ "$ENABLE_WICD" ]   || LEAN_SERVICES="$LEAN_SERVICES wicd"
         [ "$ENABLE_SYSLOG" ] || LEAN_SERVICES="$LEAN_SERVICES rsyslog"
         [ "$ENABLE_ACPID" ]  || LEAN_SERVICES="$LEAN_SERVICES acpid"
 
@@ -211,11 +202,6 @@ do_start() {
     if [ "$DISABLE_ACPID" ]; then
         echo_live "Disabling %s services %s" "$(pquote acpid)" $(paren a)
         disable_services "acpid (a)" "$ACPID_SERVICES"
-    fi
-
-    if [ "$DISABLE_WICD" ]; then
-        echo_live "Disabling %s services %s" "$(pquote wicd)" $(paren w)
-        disable_services "wicd (w)" "$WICD_SERVICES"
     fi
 
     if [ "$MEAN" ]; then
@@ -337,6 +323,21 @@ do_stop() {
         -e 's/^\s*(session\s+[^\s]+\s+pam_lastlog.so).*/\1/'     \
         -e '/session\s+[^\s]+\s+pam_(exec|motd).so/ s/^#-*\s*//' \
         $ROOT$PAM_FILE
+}
+
+config_wicd() {
+    local state=$1  where="START_DAEMON=" file=/etc/default/wicd
+    local line="$where$state"
+
+    if ! test -e $file; then
+        echo "$line" > $file
+    elif grep -q "^$line" $file; then
+        return
+    elif grep -q "^$where" $file; then
+        sed -i "s/$where.*/$line/" $file
+    else
+        echo $line >> $file
+    fi
 }
 
 main "$@" 2>&1 | tee -a $INIT_LOG_FILE
