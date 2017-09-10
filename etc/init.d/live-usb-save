@@ -148,9 +148,12 @@ do_stop() {
 read_create_config_files() {
     local dir="$1"
 
-    local no_state_file=$dir/state/no-state
+    local s_dir=$dir/state
+    mkdir -p $s_dir
+
+    # Make "savestate" and "nosavestate" sticky
+    local no_state_file=$s_dir/no-state
     if [ "$DISABLE" ]; then
-        mkdir -p $(dirname $no_state_file)
         touch $no_state_file
     elif [ "$ENABLE" ]; then
         rm -f $no_state_file
