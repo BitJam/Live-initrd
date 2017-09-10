@@ -18,7 +18,6 @@ export PATH=/sbin:/usr/sbin:/bin:/usr/bin:/usr/local/bin
       MENU_WMs="fluxbox icewm jwm"
       FF_PREFS="/etc/skel/.mozilla/firefox/*/prefs.js"
      AUTOMOUNT=
-     EARLY_VID=
  FOUND_VDRIVER=
  VERSION_FILES="/etc/antix-version /live/boot-dev/version"
 
@@ -51,7 +50,6 @@ for param in $CMDLINE; do
     value=${param#*=}
     case "$param" in
             noloadkeys) NO_LOAD_KEYS=true                           ;;
-                   db+)      DB_PLUS=true                           ;;
              desktop=*)  CMD_DESKTOP=$value                         ;;
                  dpi=*)      CMD_DPI=$value                         ;;
                 sdpi=*)     CMD_SDPI=$value                         ;;
@@ -71,8 +69,6 @@ for param in $CMDLINE; do
              xorg=safe)   XORG_ARGS=safe${XORG_ARGS:+,}$XORG_ARGS   ;;
                 xorg=*)   XORG_ARGS=$XORG_ARGS${XORG_ARGS:+,}$value ;;
                 noxorg)   NO_XORG=true                              ;;
-              earlyvid)   EARLY_VID=true                            ;;
-            noearlyvid)   EARLY_VID=                                ;;
 
 automount=off|amnt=off)                          AUTOMOUNT_OFF=true ;;
         automount|amnt)                              AUTOMOUNT=true ;;
@@ -80,8 +76,6 @@ automount=off|amnt=off)                          AUTOMOUNT_OFF=true ;;
              mount=off)     CMD_MOUNT=$value ;   AUTOMOUNT_OFF=true ;;
                mount=*)     CMD_MOUNT=$value ;       AUTOMOUNT=true ;;
                fstab=*)     CMD_FSTAB=$value                        ;;
-                splash)  SPLASH_PARAM=v                             ;;
-              splash=*)  SPLASH_PARAM=$value                        ;;
            desktheme=*)    DESK_THEME=$value                        ;;
                 norepo)       NO_REPO=true                          ;;
               norepo=*)   IGNORE_REPO=$value                        ;;
@@ -92,8 +86,6 @@ automount=off|amnt=off)                          AUTOMOUNT_OFF=true ;;
         skylakeflicker)   FIX_SKYLAKE=true                          ;;
                  issue)   FORCE_ISSUE=true                          ;;
              vboxdecor)    VBOX_DECOR=true                          ;;
-            netiface=*) CMD_NET_IFACE=$value                        ;;
-                noipv6)       NO_IPV6=true                          ;;
          i915powersave) ENABLE_I915_POWER_SAVE=true                 ;;
     esac
 done
@@ -137,9 +129,6 @@ do_start() {
     fi
 
     write_issue_file "$DISTRO" "$FORCE_ISSUE"
-
-    # FIXME: this should be conditional
-    [ "$NO_IPV6" ] && disable_ipv6
 
     which X &>/dev/null && HAVE_X=true
 
@@ -461,8 +450,6 @@ localize_repo() {
 
     sources_dir=/etc/apt/sources.list.d
     first_write $sources_dir || [ "$mirror" -o "$tz" -o "${IGNORE_REPO}" ] || return
-
-    #[ "$DB_PLUS" ] && args="--verbose${args:+ }$args"
 
     #. Localizing source repos using <timezone|country-code>
     echo_live "Localizing source repos using %s" "$(wq $args)"
