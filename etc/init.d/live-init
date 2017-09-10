@@ -1065,13 +1065,14 @@ move_if() {
 #------------------------------------------------------------------------------
 add_or_edit() {
     local where=$1  line=$2  file=$3  user=$4  create=$5
+
     if ! test -e "$file"; then
         [ "$create" ] && echo "$line" | su -c "tee $file" $user
         return
-    fi
-
-    if grep -iq "$where" "$file"; then
-        sed -i -r "/$where/I s|.*|$line|" $file
+    elif grep -q "^$line" $file; then
+        return
+    elif grep -iq "$where" "$file"; then
+        su -c "sed -i -r '/$where/I s|.*|$line|' $file" $user
         return
     fi
     su -c "sed -i '1 i$line' $file" $user
