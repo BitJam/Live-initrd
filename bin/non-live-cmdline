@@ -139,6 +139,12 @@ for param in $(cat /proc/cmdline); do
         norepo|norepo=*) ;;
         conwidth=*);;
 
+        skylakeflicker)  ;;
+        i915powersave) ;;
+
+        aufs|overlayfs) ;;
+        wicd|nowicd) ;;
+
         *) printf "$param "
     esac
 done

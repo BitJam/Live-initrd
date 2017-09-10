@@ -42,7 +42,7 @@ live_param_filter() {
         fontsize=*) ;;
         skylakeflicker)  ;;
         i915powersave) ;;
-        netiface=*|noipv6) ;;
+        wicd|nowicd) ;;
         
         # Most kernel codes from version 4.10 (plus additions)
         3c574_cs.*=*|3c589_cs.*=*|3c59x.*=*|3w-9xxx.*=*|3w-sas.*=*|8139cp.*=*|8139too.*=*|8250.*=*|8390.*=*);;
@@ -353,10 +353,10 @@ live_param_filter() {
 
     if [ "$disable" ]; then
         # If the ## expression matches then the resulting string length is zero
-        [ "${disable##*[lL]*}" ] ||      touch /live/config/lean
-        [ "${disable##*[mM]*}" ] ||      touch /live/config/mean
-        [ "${disable##*[xX]*}" ] ||      touch /live/config/xtra-lean
-        [ "${disable##*[dD]*}" ] ||      touch /live/config/no-dbus
+        [ "${disable##*[l]*}" ] ||      touch /live/config/lean
+        [ "${disable##*[m]*}" ] ||      touch /live/config/mean
+        [ "${disable##*[x]*}" ] ||      touch /live/config/xtra-lean
+        [ "${disable##*[d]*}" ] ||      touch /live/config/no-dbus
     fi
 
 }
