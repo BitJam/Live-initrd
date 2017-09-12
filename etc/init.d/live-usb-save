@@ -315,7 +315,7 @@ save_state() {
             continue
         fi
 
-        if test -e $from_linuxfs && diff -q $from_linuxfs $from 1>/dev/null 2>&1; then
+        if test -e $from_linuxfs && no_diff $from_linuxfs $from; then
             #echo_live "TEST: Skipping linuxfs $from"
             rm -f $to
             continue
@@ -492,9 +492,11 @@ should_copy() {
     local from="$1"  to="$2"
     [ -f "$from" ] || return 1
     [ -e "$to"   ] || return 0
-    diff -q "$from" "$to" 1>/dev/null 2>&1 && return 1
+    no_diff "$from" "$to" && return 1
     return 0
 }
+
+no_diff() { diff -q "$@" >/dev/null 2>&1 ; return $? ;}
 
 mach_id() {
     local data=$(find $ID_DIR/ -name 'board_*' -exec cat '{}' + 2>/dev/null)
