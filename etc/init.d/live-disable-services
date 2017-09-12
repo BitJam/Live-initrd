@@ -79,13 +79,20 @@ XTRA_LEAN_SERVICES="
 
 MEAN_SERVICES="
     avahi-daemon
+    dnsmasq
     ifplugd
+    mountnfs-bootclean.sh
+    mountnfs.sh
     network-manager
     networking
+    nfs-common
     nfs-kernel-server
     ntp
+    pppd-dns
     resolvconf
+    rpcbind
     smbd
+    ufw
 "
 
 NO_DBUS_SERVICES="
