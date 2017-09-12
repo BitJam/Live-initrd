@@ -807,7 +807,7 @@ breakpoint() {
     echo "$green==>$cyan limited shell @ breakpoint [$red$1$cyan]$white $2"
     echo "$green    Use the$white exit$green command or hit$white Ctrl-d$green to continue"
     export PS1="${green}ubp $red$1$cyan>$nc "
-    OPATH=$PATH PATH=$BUSYBOX_BIN setsid cttyhack ash </dev/console >/dev/console 2>&1
+    OPATH=$PATH PATH=$BUSYBOX_BIN setsid cttyhack bash </dev/console >/dev/console 2>&1
     echo
 }
 
