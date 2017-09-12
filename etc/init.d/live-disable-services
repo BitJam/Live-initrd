@@ -166,7 +166,7 @@ do_start() {
         [ -z "${disable_param##*[x]*}" ] &&     XTRA_LEAN=true
     fi
 
-    [ -n "$LEAN" -o -n "$MEAN" ] && : ${WICD:=no}
+    #[ -n "$LEAN" -o -n "$MEAN" ] && : ${WICD:=no}
 
     # Prevent other messages stepping on ours
     # sleep 2
