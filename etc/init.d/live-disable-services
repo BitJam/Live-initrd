@@ -117,7 +117,7 @@ main() {
 
 do_start() {
     local must_run param val
-    : ${CMDLINE:=$(cat /live/config/proc-cmdline /live/config/cmdline3 2>/dev/null)}
+    : ${CMDLINE:=$(cat /live/config/proc-cmdline /live/config/cmdline /live/config/cmdline3 2>/dev/null)}
 
     for param in $CMDLINE; do
         val=${param#*=}
@@ -172,8 +172,13 @@ do_start() {
     # sleep 2
     echo_script "Customizing services" $0
 
-    WICD=${CMD_WICD:-$WICD}
-    [ -n "$WICD" ] && config_wicd $WICD
+    case ${CMD_WICD:-$WICD} in
+        yes) echo_live "Enabling %s service" "$(pquote wicd)"
+             config_wicd yes ;;
+
+         no) echo_live "Disabling %s service" "$(pquote wicd)"
+             config_wicd no ;;
+    esac
 
     if test -e /etc/init.d/virtualbox-guest-utils; then
         if test -e /live/config/virtualbox; then
