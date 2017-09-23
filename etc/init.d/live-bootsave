@@ -109,9 +109,75 @@ do_boot_save() {
 }
 
 #------------------------------------------------------------------------------
-#
+# Use hwinfo --framebuffer to get a list of vga codes and their resolution and
+# depth.  Find the current resolution and depth in that list to find the current
+# vga code we actually want to save as a boot parameter.
 #------------------------------------------------------------------------------
 get_real_vga_code() {
+    local vga_ask=$1  gfx_save=$2
+    local hwinfo=/usr/sbin/hwinfo
+
+    test -x $hwinfo    || return
+    [ -n "$vga_ask" ]  || return
+    [ -n "$gfx_save" ] || return
+
+    local sdir=/sys/class/graphics/fb0
+    test -d $sdir || return 1
+
+    local cur_res=$(cat $sdir/virtual_size   2>/dev/null)
+    local cur_bpp=$(cat $sdir/bits_per_pixel 2>/dev/null)
+    cur_res=${cur_res/,/x}
+
+    [ -z "$cur_res" -o -z "$cur_bpp" ] && return 1
+
+    echo_live "Probing to find selected vga code.  Please be patient ..."
+    echo_live "current resolution %s" "$(pquote "$cur_res @ $cur_bpp")"
+
+    local depth
+    case $cur_bpp in
+        32) cur_bpp=24 ;;
+    esac
+
+    local all_modes=$($hwinfo --framebuffer | sed -n "s/^\s*Mode //p")
+    if [ -z "$all_modes" ]; then
+        echo_live "No vga modes were found"
+        return 1
+    fi
+
+    local mode_line=$(echo "$all_modes" | grep " $cur_res .* $cur_bpp bits")
+    if [ -z "$mode_line" ]; then
+        echo_live "Could not find mode with depth %s" "$(pquote $cur_bpp)"
+        mode_line=$(echo "$all_modes" | grep " $cur_res " | tail -n1)
+    fi
+
+    if [ -z "$mode_line" ]; then
+        echo_live "Could not find a vga mod with resolution %s" "$(pquote $cur_res)"
+        return 1
+    fi
+    local hex_code=$(echo "$mode_line" | cut -d: -f1)
+    if [ -z "$hex_code" ]; then
+        echo_live "Could not extract the hex vga mode"
+        return 1
+    fi
+
+    echo_live "Found hex code %s" "$(pquote $hex_code)"
+
+    local dec_code=$((hex_code))
+
+    echo_live "Using boot parameter %s" "$(pquote vga=$dec_code)"
+    local p_cmdline=/live/config/proc-cmdline
+    sed -r "s/(^| )(vga=)[^ ]*/\1\2$dec_code/" $p_cmdline > $p_cmdline.2
+    CMDLINE=$(cat $p_cmdline.2 /live/config/cmdline 2>/dev/null)
+
+    return 0
+}
+
+#------------------------------------------------------------------------------
+# This gets the current vga code directly using "hwinfo --vbe" but it can
+# take 20 seconds or longer to run so we replaced it with the less direct
+# method above.
+#------------------------------------------------------------------------------
+old_get_real_vga_code() {
     local vga_ask=$1  gfx_save=$2
     local hwinfo=/usr/sbin/hwinfo
     test -x $hwinfo    || return
