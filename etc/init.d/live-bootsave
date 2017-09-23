@@ -29,15 +29,24 @@ main() {
 do_start() {
 
     : ${CMDLINE:=$(cat /live/config/proc-cmdline /live/config/cmdline)}
-    local gfx_cmd boot_save
+    local gfx_cmd boot_save  vga_cmd  vga_ask
     for param in $CMDLINE; do
+        local value=${param#*=}
         case $param in
-            gfxsave=*) gfx_cmd=${param#*=} ;;
+            gfxsave=*) gfx_cmd=$value      ;;
+                vga=*) vga_cmd=$value      ;;
               gfxsave) gfx_cmd=both        ;;
-             bootsave) boot_save=true     ;;
+             bootsave) boot_save=true      ;;
         esac
     done
+
+    case $vga_cmd in
+        ask+save) gfx_cmd=both ; vga_ask=true ;;
+             ask)                vga_ask=true ;;
+    esac
+
     echo_script "Possibly saving boot parameters" $0
+    get_real_vga_code "$vga_ask" "$gfx_cmd"
 
     [ -n "$gfx_cmd"   ] && do_gfxsave
     [ -n "$boot_save" ] && do_boot_save
@@ -97,6 +106,30 @@ do_boot_save() {
     grub2-save $esp_mp
     sync
     umount $esp_mp
+}
+
+#------------------------------------------------------------------------------
+#
+#------------------------------------------------------------------------------
+get_real_vga_code() {
+    local vga_ask=$1  gfx_save=$2
+    local hwinfo=/usr/sbin/hwinfo
+    test -x $hwinfo    || return
+    [ -n "$vga_ask" ]  || return
+    [ -n "$gfx_save" ] || return
+
+    echo_live "Probing to find selected vga code.  Please be patient ..."
+    local vga_hex=$($hwinfo --vbe | sed -n "s/^\s*Current VESA Mode:\s*//p")
+    if [ -z "$vga_hex" ]; then
+        echo_live "No vga code was found!"
+        return
+    fi
+    echo_live "Found hex code %s" "$(pquote $vga_hex)"
+    local vga_dec=$(($vga_hex % 0x1000 + 0x200))
+    echo_live "Using boot parameters %s" "$(pquote vga=$vga_dec)"
+    local p_cmdline=/live/config/proc-cmdline
+    sed -r "s/(^| )(vga=)[^ ]*/\1\2$vga_dec/" $p_cmdline > $p_cmdline.2
+    CMDLINE=$(cat $p_cmdline.2 /live/config/cmdline 2>/dev/null)
 }
 
 main "$@" 2>&1 | tee -a $INIT_LOG_FILE

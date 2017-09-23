@@ -378,9 +378,10 @@ main_core() {
 
     initialize_cmdline2
 
-    read PROC_CMDLINE 2>/dev/null </proc/cmdline
+    local p
+    PROC_CMDLINE=$(for p in $(cat /proc/cmdline 2>/dev/null); do echo $p; done)
 
-    [ "$DO_MENUS" ]; do_early_menus
+    [ "$DO_MENUS" ] && do_early_menus
 
     read_late_cmdline_params "$PROC_CMDLINE $(cat /live/config/cmdline)"
     echo "$PROC_CMDLINE" > /live/config/proc-cmdline
@@ -434,7 +435,9 @@ main_core() {
     mount -o remount,rw $SQFILE_DEV 2>/dev/null
     dir_has_param "$SQFILE_MP" rw || REMASTERABLE=
 
-    if [ "$REMASTERABLE" ]; then
+    get_vga_menu_code "$CMD_VGA" "$GFX_SAVE"
+
+    if remasterable; then
         do_remaster "$SQFILE_FULL"
         prep_seed_dev_random "$SEED_FULL"
         echo "$SEED_FILE" > /live/config/seed-file
@@ -753,6 +756,7 @@ read_cmdline_params()
                       gfxsave=*) GFX_SAVE=$value ; BOOT_SAVE=true                ;;
                    save|gfxsave) GFX_SAVE=both   ; BOOT_SAVE=true                ;;
                        bootsave) BOOT_SAVE=true                                  ;;
+                          vga=*) CMD_VGA=$value                                  ;;
 
                       nocheckfs) DO_FSCK=                                        ;;
 
@@ -854,6 +858,10 @@ read_cmdline_params()
         USER_UID=0
         USER_GID=0
     fi
+
+    case $CMD_VGA in
+        ask+save) GFX_SAVE=both ; BOOT_SAVE=true ;;
+    esac
 }
 
 #------------------------------------------------------------------------------
@@ -3629,7 +3637,7 @@ do_late_menus() {
     local cmdline
     my_select_menu "Select Desktop" "" d desktop "Desktop" 'desktheme=*'
 
-    if [ "$REMASTERABLE" ]; then
+    if remasterable; then
         BOOT_MENU_DIR=/live/menus
         my_select_menu "Save these changes?" "" s save "Save"
         echo "$cmdline" | grep -q bootsave && BOOT_SAVE=true
@@ -5667,7 +5675,7 @@ Initrd_Out
 #------------------------------------------------------------------------------
 update_store_file() {
     local disable=$1  enable=$2
-    [ "$REMASTERABLE" ] || return
+    remasterable || return
 
     local no_store_file=$ORIG_SQFILE_MP/$ORIG_SQFILE_DIR/state/nostore
     if [ "$disable" ]; then
@@ -5753,6 +5761,50 @@ update_file() {
     test -e $src || return
     diff -q $src $dest &>/dev/null && return
     cp -a $src $dest
+}
+
+#------------------------------------------------------------------------------
+#
+#------------------------------------------------------------------------------
+get_vga_menu_code() {
+    local cmd_code=$1
+    unset NEW_VGA_CODE
+
+    [ -z  "$cmd_code" ] && return
+    
+    # Convert hex to decimal
+    [ -z "${cmd_code##0[xX]*}" ] && cmd_code=$(printf "%d" $cmd_code)
+
+    local cmd_res
+    case $cmd_code in
+        # Standard resolution codes
+            769|785|786) cmd_res=640,480   ;;
+            771|788|789) cmd_res=800,600   ;;
+            773|791|792) cmd_res=1024,768  ;;
+            775|794|795) cmd_res=1280,1024 ;;
+
+        # non-standard resolution codes
+        [0-9][0-9][0-9]) return            ;;
+
+        # Everything else is treated as "ask"
+                      *) cmd_res=ask       ;;
+    esac
+
+    local sdir="/sys/class/graphics"
+    local cur_res=$(cat $sdir/fb0/virtual_size 2>/dev/null)
+    [ -z "$cur_res" ] && return
+    [ "$cmd_res" == "$cur_res" ] && return
+
+    warn "It appears you selected VGA resolution %s" "$(pq $cur_res)"
+
+    remasterable || return
+
+    if [ -z "$GFX_SAVE" ]; then
+        YES_no "Would you like to save this resolution for subsequent boots?" || return
+        sed -i -r "s/(^| )vga=[^ ]*/\1vga=ask+save/" /live/config/proc-cmdline
+        PROC_CMDLINE=$(cat /live/config/proc-cmdline)
+        GFX_SAVE=both
+    fi
 }
 
 #------------------------------------------------------------------------------
@@ -5901,6 +5953,10 @@ prepare_switch_root() {
     (cd $new_root && mkdir -p sys proc dev/pts)
 }
 
+#------------------------------------------------------------------------------
+#
+#------------------------------------------------------------------------------
+remasterable() { [ -n "$REMASTERABLE" ];  return $?; }
 #------------------------------------------------------------------------------
 #
 #------------------------------------------------------------------------------
