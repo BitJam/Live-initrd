@@ -472,10 +472,10 @@ set_utc_local() {
 # directory and everything below
 #------------------------------------------------------------------------------
 fix_cache_apt_archive_partial() {
-    local dir=/var/cache/apt/archives/partial
+    local dir=/var/cache/apt/archives/partial  owner="_apt:root"  perms="700"
     mkdir -p $dir
-    chown -Rv _apt:root $dir
-    chmod -Rv 700 $dir
+    [ "$(stat --format %U:%G $dir)" == "$owner" ] || chown -R $owner $dir
+    [ "$(stat --format %a    $dir)" == "$perms" ] || chmod    $perms $dir
 }
 
 #===============================================================================
