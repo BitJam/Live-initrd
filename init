@@ -435,7 +435,7 @@ main_core() {
     mount -o remount,rw $SQFILE_DEV 2>/dev/null
     dir_has_param "$SQFILE_MP" rw || REMASTERABLE=
 
-    get_vga_menu_code "$CMD_VGA" "$GFX_SAVE"
+    detect_vga_menu "$CMD_VGA" "$GFX_SAVE"
 
     if remasterable; then
         do_remaster "$SQFILE_FULL"
@@ -5766,7 +5766,7 @@ update_file() {
 #------------------------------------------------------------------------------
 #
 #------------------------------------------------------------------------------
-get_vga_menu_code() {
+detect_vga_menu() {
     local cmd_code=$1
     unset NEW_VGA_CODE
 
