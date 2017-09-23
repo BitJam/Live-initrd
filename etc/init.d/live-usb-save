@@ -71,6 +71,7 @@ DS_FILE="/home/%s/.desktop-session/default-desktop"
 DS_DIR="/home/%s/.desktop-session"
 BLACK_LIST_FILE=/etc/modprobe.d/live-initrd-blacklist.conf
 
+TORAM_FILE=/live/config/to-ram
 export PATH=/sbin:/usr/sbin:/bin:/usr/bin:/usr/local/bin
 
 . /live/lib/live-init-utils.sh
@@ -82,9 +83,15 @@ load_translation
 
 main() {
     case $1 in
-            start) SYS_MODE=     ; do_start $1 ;;
-              sys) SYS_MODE=true ; do_start $1 ;;
+            start) SYS_MODE=
+                   do_start $1 ;;
+
+              sys) test -f $TORAM_FILE && return
+                   SYS_MODE=true
+                   do_start $1 ;;
+
              stop) do_stop     ;;
+
                 *) echo "Usage: $0 {start|stop|sys}" ;;
     esac
     exit 0
