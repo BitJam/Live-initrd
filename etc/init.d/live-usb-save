@@ -71,7 +71,7 @@ DS_FILE="/home/%s/.desktop-session/default-desktop"
 DS_DIR="/home/%s/.desktop-session"
 BLACK_LIST_FILE=/etc/modprobe.d/live-initrd-blacklist.conf
 
-TORAM_FILE=/live/config/to-ram
+TORAM_FILE=/live/config/did-toram
 export PATH=/sbin:/usr/sbin:/bin:/usr/bin:/usr/local/bin
 
 . /live/lib/live-init-utils.sh
