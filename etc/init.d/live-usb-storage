@@ -46,7 +46,7 @@ do_start() {
     read_cmdline
 
     test -e $root_dir/state/nostore && DISABLE=true
-    [ "$DID_TORAM" ]                && DISABLE=true
+    [ -n "$DID_TORAM" -a -z "$TORAM_STORE" ] && DISABLE=true
 
     echo_script "Configure Live-usb storage" $0
 

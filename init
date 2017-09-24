@@ -258,7 +258,9 @@ main_wrapper() {
     sync
     prep_seed_dev_random "$SEED_FILE"
     late_umount $PERSIST_DEVICE
-    late_umount $SQFILE_DEV
+
+     [ -z "$TORAM_STORE" ] && late_umount $SQFILE_DEV
+
     late_umount $BIOS_DEV
 
     if [ -z "$DISABLE_STORE" ]; then
@@ -561,6 +563,7 @@ LINUXFS_DEV="$LINUXFS_DEV"
 BIOS_DEV="$BIOS_DEV"
 CRYPT_DEV="$CRYPT_DEV"
 SEED_FILE="$SEED_FILE"
+TORAM_STORE="$TORAM_STORE"
 Late_Umount
 }
 
@@ -640,6 +643,7 @@ read_late_cmdline_params() {
                   nousb2|noehci) NO_EHCI=true                         ;;
               private|private=*) FORCE_PASSWD=true                    ;;
                           toram) TO_RAM=true                          ;;
+                    toram_store) TO_RAM=true ; TORAM_STORE=true       ;;
 
         # Convenience short cuts from our menus
                     persist_all) PERSIST='root!,home'                 ;;
@@ -819,6 +823,7 @@ read_cmdline_params()
                   nousb2|noehci)  ;;
               private|private=*)  ;;
                           toram)  ;;
+                    toram_store)  ;;
 
         # Convenience short cuts from our menus
                     persist_all)  ;;
@@ -5630,6 +5635,7 @@ SQFS_MP="$SQFS_MP"
 SQFS_VID_FILE="$SQFS_VID_FILE"
 STATIC_ROOT="$STATIC_ROOT"
 TORAM_MP="$TORAM_MP"
+TORAM_STORE="$TORAM_STORE"
 USER_GID="$USER_GID"
 USER_UID="$USER_UID"
 VID_ERROR="$VID_ERROR"
@@ -5640,6 +5646,7 @@ Initrd_Out
 
     [ -e /sys/firmare/efi ]                  && touch $dir/uefi
     [ "$DID_TORAM"    ]                      && touch $dir/did-toram
+    [ "$TORAM_STORE"  ]                      && touch $dir/toram-store
     [ "$REMASTERABLE" ]                      && touch $dir/remasterable
     [ "$PERSIST_ROOT" ]                      && touch $dir/persist-root
     [ "$PERSIST_ROOT" -a -z "$STATIC_ROOT" ] && touch $dir/save-persist
