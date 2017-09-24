@@ -5811,6 +5811,7 @@ detect_vga_menu() {
         sed -i -r "s/(^| )vga=[^ ]*/\1vga=ask+save/" /live/config/proc-cmdline
         PROC_CMDLINE=$(cat /live/config/proc-cmdline)
         GFX_SAVE=both
+        BOOT_SAVE=true
     fi
 }
 
