@@ -112,10 +112,15 @@ do_boot_save() {
 # Use hwinfo --framebuffer to get a list of vga codes and their resolution and
 # depth.  Find the current resolution and depth in that list to find the current
 # vga code we actually want to save as a boot parameter.
+
+# NOTE: we only check for the "true" vga code when saving when either "vga=ask"
+# or "vga=ask+save" was used.  Therefore we still miss the case where someone
+# uses a non-standard vga=code and gets the VGA menu.  Perhaps we should always
+# run this code?
 #------------------------------------------------------------------------------
 get_real_vga_code() {
-    local vga_ask=$1  gfx_save=$2
-    local hwinfo=/usr/sbin/hwinfo
+    local vga_ask=$1  gfx_save=$2 local
+    hwinfo=/usr/sbin/hwinfo
 
     test -x $hwinfo    || return
     [ -n "$vga_ask" ]  || return
