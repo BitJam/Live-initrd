@@ -5790,29 +5790,42 @@ detect_vga_menu() {
             773|791|792) cmd_res=1024,768  ;;
             775|794|795) cmd_res=1280,1024 ;;
 
-        # non-standard resolution codes
+        # do nothing with non-standard resolution codes
         [0-9][0-9][0-9]) return            ;;
 
-        # Everything else is treated as "ask"
-                      *) cmd_res=ask       ;;
+        # We will skip asking of they want to save if they used "ask"
+                    ask) cmd_res=ask       ;;
+
+        # Everything else is treated as "other" (which is not used)
+                      *) cmd_res=other     ;;
     esac
 
     local sdir="/sys/class/graphics"
     local cur_res=$(cat $sdir/fb0/virtual_size 2>/dev/null)
-    [ -z "$cur_res" ] && return
+
+    [ -z "$cur_res" ]            && return
     [ "$cmd_res" == "$cur_res" ] && return
 
     warn "It appears you selected VGA resolution %s" "$(pq $cur_res)"
 
-    remasterable || return
+    remasterable                || return
+    [ "$cmd_res" == 'ask' ]     && return
+    [ -n "$GFX_SAVE" ]          && return
 
-    if [ -z "$GFX_SAVE" ]; then
-        YES_no "Would you like to save this resolution for subsequent boots?" || return
-        sed -i -r "s/(^| )vga=[^ ]*/\1vga=ask+save/" /live/config/proc-cmdline
-        PROC_CMDLINE=$(cat /live/config/proc-cmdline)
-        GFX_SAVE=both
-        BOOT_SAVE=true
-    fi
+    # We should only get here if saving makes sense, if they didn't didn't
+    # already tell us to save, if there is a framebuffer and if a standard
+    # resolution was specified but does not match the current resolution.
+    #
+    # NOTE: we only check for the "true" vga code when saving when either
+    # "vga=ask" or "vga=ask+save" was used.  Therefore we still miss the
+    # case where someone uses a non-standard vga=code and gets the VGA menu.
+    YES_no "Would you like to save this resolution for subsequent boots?" || return
+
+    sed -i -r "s/(^| )vga=[^ ]*/\1vga=ask+save/" /live/config/proc-cmdline
+    PROC_CMDLINE=$(cat /live/config/proc-cmdline)
+    GFX_SAVE=both
+    BOOT_SAVE=true
+    msg "Will save the new VGA setting and your other boot parameters"
 }
 
 #------------------------------------------------------------------------------
