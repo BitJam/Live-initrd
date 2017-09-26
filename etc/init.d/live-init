@@ -44,6 +44,8 @@ AUTOMOUNT_CMD="/usr/local/bin/automount-antix"
 
 NETWORK_IF_FILE="/etc/network/interfaces"
 
+LIVE_MNT_DIR="/mnt/live"
+
 #-jbb For debugging
 : ${CMDLINE:=$(cat /live/config/proc-cmdline /live/config/cmdline /live/config/cmdline2)}
 for param in $CMDLINE; do
@@ -71,10 +73,12 @@ for param in $CMDLINE; do
                 noxorg)   NO_XORG=true                              ;;
 
 automount=off|amnt=off)                          AUTOMOUNT_OFF=true ;;
+           noautomount)                          AUTOMOUNT_OFF=true ;;
         automount|amnt)                              AUTOMOUNT=true ;;
-    automount=*|amnt=*)     CMD_MOUNT=$value ;       AUTOMOUNT=true ;;
-             mount=off)     CMD_MOUNT=$value ;   AUTOMOUNT_OFF=true ;;
-               mount=*)     CMD_MOUNT=$value ;       AUTOMOUNT=true ;;
+          automount=on)                              AUTOMOUNT=true ;;
+#    automount=*|amnt=*)     CMD_MOUNT=$value ;       AUTOMOUNT=true ;;
+#             mount=off)     CMD_MOUNT=$value ;   AUTOMOUNT_OFF=true ;;
+#               mount=*)     CMD_MOUNT=$value ;       AUTOMOUNT=true ;;
                fstab=*)     CMD_FSTAB=$value                        ;;
            desktheme=*)    DESK_THEME=$value                        ;;
                 norepo)       NO_REPO=true                          ;;
@@ -132,9 +136,10 @@ do_start() {
 
     which X &>/dev/null && HAVE_X=true
 
-    local alt_automount
-    [ -n "$HAVE_X" -a -e $AUTOMOUNT_CMD ] && alt_automount=true
-    create_fstab "$DISTRO" $alt_automount
+    local user_automount
+    [ -n "$HAVE_X" -a -e $AUTOMOUNT_CMD -a -z "$CMD_FSTAB" ] && user_automount=true
+
+    create_fstab "$DISTRO" "$user_automount"  "$CMD_FSTAB"
 
     #-jbb: for debugging
     unset COUNTRY WM_LANG KEYBOARDS KEYTABLE LANG MIRROR TZ XKBLAYOUT CONSOLE_FONT
@@ -211,8 +216,11 @@ do_start() {
     set_desktop_theme      "$DESK_THEME"       $DEF_USER $USER_HOME
     set_user_dpi           "${CMD_UDPI:-$dpi}" $DEF_USER $USER_HOME
     set_user_desktop_delay "$DESKTOP_DELAY"    $DEF_USER $USER_HOME
-    [ "$alt_automount" ] && set_user_automount $DEF_USER $USER_HOME "$AUTOMOUNT" "$AUTOMOUNT_OFF"
-
+    if [ -n "$user_automount" ]; then
+        set_user_automount "$DEF_USER" "$USER_HOME" "$AUTOMOUNT" "$AUTOMOUNT_OFF" 'create'
+    else
+        set_user_automount "$DEF_USER" "$USER_HOME" "" "true"
+    fi
     #localize_firefox $LANG
 }
 
@@ -224,12 +232,12 @@ do_start() {
 # Create fstab file.  Also enable automount stuff on antiX
 #------------------------------------------------------------------------------
 create_fstab() {
-    local distro=$1 alt_automount=$2
+    local distro=$1 user_automount=$2  cmd_fstab=$3
 
     case $distro in
-        antiX) automount_and_fstab $alt_automount ;;
-      MX|MX-*) add_fstab_swap     ;;
-            *) error 'Unknown distro %s' "$(pquote $distro)"
+        antiX) automount_and_fstab "$user_automount" "$cmd_fstab" ;;
+      MX|MX-*) add_fstab_swap                                     ;;
+            *) error 'Unknown distro %s' "$(pquote $distro)"      ;;
     esac
 }
 
@@ -247,101 +255,74 @@ add_fstab_swap() {
 #------------------------------------------------------------------------------
 automount_and_fstab() {
 
-    local alt_automount=$1
+    #local user_automount=$1  automount=$AUTOMOUNT  automount_off=$AUTOMOUNT_OFF  cmd_mount=$CMD_MOUNT
+    local user_automount=$1  cmd_fstab=$2
 
-    # Tell rc.local to copy 90-fstab-automount.rules to main file system
-    [ -z "$alt_automount" ] && touch /live/config/fstab-hotplug
+
+    local fstab_rule=/etc/udev/rules.d/90-fstab-automount.rules
 
     local        am_file=/etc/fstab.automount
     local     mount_file=/etc/fstab.mount
     local        hp_file=/etc/fstab.hotplug
     local  hp_state_file=$hp_file.state
 
-    # Delay start of auto-stuff until after udev has started
-    local fstab_rule=/etc/udev/rules.d/90-fstab-automount.rules
-    if test -e $fstab_rule; then
-        local live_rule_dir=/live$(dirname $fstab_rule)
-        mkdir -p $live_rule_dir
-        mv $fstab_rule $live_rule_dir
-    fi
+    add_fstab_swap
 
-    # "off" means "off"
-    if [ "$CMD_MOUNT" = 'off' ]; then
-        echo_live "Turning all boot mount options off"
-        echo_live "Turning automount off"
-        rm -f $mount_file
-        rm -f $am_file
-        CMD_MOUNT=
-        AUTOMOUNT=
-
-    elif [ -n "$AUTOMOUNT_OFF" ]; then
-        echo_live "Turning automount off"
-        AUTOMOUNT=
-        rm -f $am_file
-    fi
-
-    # Read in previous value (persistent systems only)
-    if [ -z "$CMD_MOUNT" -a -e $mount_file ]; then
-        read CMD_MOUNT 2>/dev/null <$mount_file
-    else
-        [ "$CMD_MOUNT" ] && echo $CMD_MOUNT > $mount_file
-    fi
-
-    # Mount partitions while building fstab file
-    local fstab_opt=
-    case ",$CMD_MOUNT" in
-        ,all)
-            echo_live "Mounting all devices"
-            fstab_opt="$fstab_opt --mount=$CMD_MOUNT" ;;
-        ,usb)
-
-            echo_live "Mounting usb devices"
-            fstab_opt="$fstab_opt --mount=$CMD_MOUNT" ;;
-
-        ,)  ;;
-            #. Invalid <mount/automount> option <invalid-option>
-        *)  error "Invalid %s option %s" 'mount/automount' $(pquote $CMD_MOUNT) ;;
-    esac
-
-    if [ -e /etc/fstab  ]; then
-        grep -q -e ^/dev -e ^UUID= -e ^LABEL=  /etc/fstab || rm /etc/fstab
-    fi
-
-    make-fstab --quiet $fstab_opt
-
-    if [ "$alt_automount" ]; then
+    if [ -n "$user_automount" ]; then
+        rm -f $fstab_rule
         rm -f $am_file $hp_file $hp_state_file
         return
+
+    elif [ -z "$cmd_fstab" -o "$cmd_fstab" = 'test' ]; then
+        cmd_fstab=
+        [ -n "$AUTOMOUNT" ]     && cmd_fstab=auto
+        [ -n "$AUTOMOUNT_OFF" ] && cmd_fstab=hotplug
     fi
 
-    [ "$AUTOMOUNT" ] && touch $am_file
-
-    if [ -e $am_file ]; then
-        echo_live "Automount enabled"
-    else
-        echo_live "Automount disabled"
-    fi
-
-    # The hp_file is removed by /init
     # The hp_state_file carries over "off" setting on persistent systems
-    [ -z "$CMD_FSTAB" -a -e $hp_state_file ] && CMD_FSTAB=$(cat $hp_state_file)
+    [ -z "$cmd_fstab" -a -e $hp_state_file ] && cmd_fstab=$(cat $hp_state_file 2>/dev/null)
 
-    case ",$CMD_FSTAB" in
-        ,off)
-            echo_live "Disabling fstab hotplugging (this will also disable automount)"
-            echo $CMD_FSTAB > $hp_state_file
-            rm -f $hp_file  ;;
-
-        ,on|,)
-            echo_live "Enabling fstab hotplugging"
-            rm -f $hp_state_file
-            touch $hp_file;;
-
-        *)
-            error "Bad fstab option %s" $(pquote $CMD_FSTAB)
-            echo_live "Enabling fstab hotplugging"
-            touch $hp_file;;
+    case $cmd_fstab in
+        off)
+            echo_live "Automount disabled"
+            #echo_live "Disabling fstab hotplugging (this will also disable automount)"
+            echo $cmd_fstab > $hp_state_file
+            rm -f $am_file $hp_file
+            return ;;
     esac
+
+    #----- fstab hotplugging will be enabled -----
+
+    echo_live "Enabling fstab hotplugging"
+
+    case $cmd_fstab in
+        auto)
+            echo_live "Automount enabled"
+            touch $am_file
+            echo $cmd_fstab > $hp_state_file ;;
+
+        hotplug|"") rm -f $hp_state_file
+                    rm -f $am_file ;;
+
+        *) error "Bad fstab option %s" $(pquote $CMD_FSTAB) ;;
+    esac
+
+    # Move the rules file out of the way for now so make-fstab is not called
+    # repeatedly when udev starts up It should get copied back by rc.local
+    if test -e $fstab_rule; then
+        local live_rule="/live$fstab_rule"
+        mkdir -p $(dirname $live_rule)
+        mv $fstab_rule $live_rule
+    fi
+
+    # Tell rc.local to enable fstab hotplugging
+    touch /live/config/fstab-hotplug
+
+    # Create a small tmpfs for our mountpoints so the disappear automaticall
+    # when the system shuts down
+    local live_mnt_dir=${LIVE_MNT_DIR:=/mnt/live}
+    mkdir -p $live_mnt_dir
+    mount -t tmpfs -o size=1m tmpfs $live_mnt_dir
 }
 
 #-------------------------------------------------------------------------------
@@ -883,15 +864,17 @@ set_user_desktop_delay() {
 # Set automounting mode via users .desktop-session/automount.conf file (sigh)
 #------------------------------------------------------------------------------
 set_user_automount() {
-    local  user=$1  home=$2  on=$3  off=$4
+    local  user=$1  home=$2  on=$3  off=$4  create=$5
+
     local file=$home/.desktop-session/automount.conf
     if [ "$on" ]; then
         echo_live "Automount enabled"
-        add_or_edit "^automount=" "automount=TRUE" $file $user create
+        add_or_edit "^automount=" "automount=TRUE" "$file"  "$user"  "$create"
 
     elif [ "$off" ]; then
-        echo_live "Automount disabled"
-        add_or_edit "^automount=" "automount=FALSE" $file $user create
+        # ugh
+        [ -n "$create" ] && echo_live "Automount disabled"
+        add_or_edit "^automount=" "automount=FALSE" "$file" "$user" "$create"
     fi
 }
 
@@ -1068,14 +1051,16 @@ add_or_edit() {
 
     if ! test -e "$file"; then
         [ "$create" ] && echo "$line" | su -c "tee $file" $user
-        return
+
     elif grep -q "^$line" $file; then
-        return
+        :
+
     elif grep -iq "$where" "$file"; then
-        su -c "sed -i -r '/$where/I s|.*|$line|' $file" $user
-        return
+        su -c "sed -i -r '/$where/I s|.*|$line|' $file" $usere
+
+    else
+        su -c "sed -i '1 i$line' $file" $user
     fi
-    su -c "sed -i '1 i$line' $file" $user
 }
 
 #==============================================================================
