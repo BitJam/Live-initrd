@@ -309,6 +309,8 @@ final_umount() {
 
     read_cmdline
 
+    [ -n "$DB_PLUS" ] && battery-status
+
     breakpoint 6 "Start final umount"
 
     [ -z "$NO_PROMPT" ] && find_mounted_cd $BOOT_DEV_FILE
