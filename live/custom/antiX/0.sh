@@ -32,7 +32,7 @@ live_param_filter() {
         amnt|amnt=*|automount|automount=*|confont=*|conkeys=*);;
         noautomount) ;;
         desktop=*|dpi=*|fstab=*|hostname=*|kbd=*|kbopt=*|kbvar=*);;
-        lang=*|mirror=*|mount=*|noloadkeys|noprompt);;
+        lang=*|mirror=*|noloadkeys|noprompt);;
         nosplash|password|password=*|prompt|pw|pw=*|tz=*|ubp=*|ushow=*);;
         uverb=*|xres=*|noxorg);;
         desktheme=*) ;;
