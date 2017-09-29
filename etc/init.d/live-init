@@ -278,7 +278,7 @@ automount_and_fstab() {
     fi
 
     if [ -n "$user_automount" ]; then
-        add_fstab_swap
+        make-fstab
         return
 
     # If no fstab is given (or "test") then have the "automount"
@@ -303,7 +303,7 @@ automount_and_fstab() {
         off)
             echo_live "Automount disabled"
             #echo_live "Disabling fstab hotplugging (this will also disable automount)"
-            add_fstab_swap
+            make-fstab
             return ;;
     esac
 
