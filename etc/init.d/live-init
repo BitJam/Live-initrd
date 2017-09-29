@@ -258,36 +258,52 @@ automount_and_fstab() {
     #local user_automount=$1  automount=$AUTOMOUNT  automount_off=$AUTOMOUNT_OFF  cmd_mount=$CMD_MOUNT
     local user_automount=$1  cmd_fstab=$2
 
-
     local fstab_rule=/etc/udev/rules.d/90-fstab-automount.rules
 
     local        am_file=/etc/fstab.automount
-    local     mount_file=/etc/fstab.mount
+    local     mount_file=/etc/fstab.mount         # not used ATM
     local        hp_file=/etc/fstab.hotplug
     local  hp_state_file=$hp_file.state
 
-    add_fstab_swap
+    #----- First, clean up for everyone -----
+    rm -f $am_file $hp_file
+
+    # Move the rules file out of the way for now so make-fstab is not called
+    # repeatedly when udev starts up.  It should get copied back by rc.local
+    # if it is needed.
+    if test -e $fstab_rule; then
+        local live_rule="/live$fstab_rule"
+        mkdir -p $(dirname $live_rule)
+        mv $fstab_rule $live_rule
+    fi
 
     if [ -n "$user_automount" ]; then
-        rm -f $fstab_rule
-        rm -f $am_file $hp_file $hp_state_file
+        add_fstab_swap
         return
 
+    # If no fstab is given (or "test") then have the "automount"
+    # and "noautomount" cheats control the behavior
     elif [ -z "$cmd_fstab" -o "$cmd_fstab" = 'test' ]; then
         cmd_fstab=
         [ -n "$AUTOMOUNT" ]     && cmd_fstab=auto
         [ -n "$AUTOMOUNT_OFF" ] && cmd_fstab=hotplug
     fi
 
-    # The hp_state_file carries over "off" setting on persistent systems
+    # The hp_state_file carries over "off" and "auto" settings
     [ -z "$cmd_fstab" -a -e $hp_state_file ] && cmd_fstab=$(cat $hp_state_file 2>/dev/null)
 
+    # Remember "off" or "auto" for next time
+    case $cmd_fstab in
+        off|auto) echo $cmd_fstab > $hp_state_file ;;
+               *) rm -f $hp_state_file             ;;
+    esac
+
+    # If fstab is turned off then make a simple swap fstab and do nothing else
     case $cmd_fstab in
         off)
             echo_live "Automount disabled"
             #echo_live "Disabling fstab hotplugging (this will also disable automount)"
-            echo $cmd_fstab > $hp_state_file
-            rm -f $am_file $hp_file
+            add_fstab_swap
             return ;;
     esac
 
@@ -295,34 +311,27 @@ automount_and_fstab() {
 
     echo_live "Enabling fstab hotplugging"
 
-    case $cmd_fstab in
-        auto)
-            echo_live "Automount enabled"
-            touch $am_file
-            echo $cmd_fstab > $hp_state_file ;;
-
-        hotplug|"") rm -f $hp_state_file
-                    rm -f $am_file ;;
-
-        *) error "Bad fstab option %s" $(pquote $CMD_FSTAB) ;;
-    esac
-
-    # Move the rules file out of the way for now so make-fstab is not called
-    # repeatedly when udev starts up It should get copied back by rc.local
-    if test -e $fstab_rule; then
-        local live_rule="/live$fstab_rule"
-        mkdir -p $(dirname $live_rule)
-        mv $fstab_rule $live_rule
-    fi
-
-    # Tell rc.local to enable fstab hotplugging
-    touch /live/config/fstab-hotplug
-
-    # Create a small tmpfs for our mountpoints so the disappear automaticall
+    # Create a small tmpfs for our mountpoints so they disappear automatically
     # when the system shuts down
+
     local live_mnt_dir=${LIVE_MNT_DIR:=/mnt/live}
     mkdir -p $live_mnt_dir
     mount -t tmpfs -o size=1m tmpfs $live_mnt_dir
+
+    # Create an fstab file with most existing partitions included
+    make-fstab
+
+    # Enable automount if requested to do so
+    case $cmd_fstab in
+              auto) echo_live "Automount enabled" ; touch $am_file   ;;
+        hotplug|"")                                                  ;;
+                 *) error "Bad fstab option %s" $(pquote $cmd_fstab) ;;
+    esac
+
+    # NOTE: we are disabling with both the rules file and the .hotplug file
+    # Tell rc.local to enable fstab hotplugging by copying back the rules
+    # file and touching the .hotplug file
+    touch /live/config/fstab-hotplug
 }
 
 #-------------------------------------------------------------------------------
