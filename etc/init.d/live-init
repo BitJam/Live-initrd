@@ -44,7 +44,7 @@ AUTOMOUNT_CMD="/usr/local/bin/automount-antix"
 
 NETWORK_IF_FILE="/etc/network/interfaces"
 
-LIVE_MNT_DIR="/mnt/live"
+LIVE_MNT_DIR="/media"
 
 #-jbb For debugging
 : ${CMDLINE:=$(cat /live/config/proc-cmdline /live/config/cmdline /live/config/cmdline2)}
@@ -314,9 +314,11 @@ automount_and_fstab() {
     # Create a small tmpfs for our mountpoints so they disappear automatically
     # when the system shuts down
 
-    local live_mnt_dir=${LIVE_MNT_DIR:=/mnt/live}
-    mkdir -p $live_mnt_dir
-    mount -t tmpfs -o size=1m tmpfs $live_mnt_dir
+    local live_mnt_dir=${LIVE_MNT_DIR:=/media}
+    if ! mountpoint $live_mnt_dir &>/dev/null; then
+        mkdir -p $live_mnt_dir
+        mount -t tmpfs -o size=1m tmpfs $live_mnt_dir
+    fi
 
     # Create an fstab file with most existing partitions included
     make-fstab
