@@ -5936,7 +5936,10 @@ prepare_switch_root() {
 
     local f
     for f in README LICENSE; do
-        test -e /live/$f && cp /live/$f $new_live/
+        local from=/live/$f  to=$new_root/etc/live/$f
+        test -e $from || continue
+        test -e $to   && continue
+        cp $from $to
     done
 
     # cp -a /bin/shutdown $new_live/
