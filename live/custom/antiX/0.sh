@@ -30,7 +30,7 @@ live_param_filter() {
         # Our Live params
         hwclock=utc|hwclock=local|xorg|xorg=*|noearlyvid|earlyvid) ;;
         amnt|amnt=*|automount|automount=*|confont=*|conkeys=*);;
-        noautomount) ;;
+        mount=*|noautomount) ;;
         desktop=*|dpi=*|fstab=*|hostname=*|kbd=*|kbopt=*|kbvar=*);;
         lang=*|mirror=*|noloadkeys|noprompt);;
         nosplash|password|password=*|prompt|pw|pw=*|tz=*|ubp=*|ushow=*);;
