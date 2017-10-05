@@ -2964,7 +2964,7 @@ breakpoint() {
         local now=$(get_time)
         local delta=$(get_seconds $((now - LAST_BP_TIME)))
         vmsg 8 "$green@bp$cyan[$num_co$bp$m_co]$hi_co %5ss (%5s)$m_co: %s" "$(get_seconds $now)" "$delta" "$desc"
-        vmsg 8 'Available entropy %s' "$(pq $(cat /proc/sys/kernel/random/entropy_avail 2>/dev/null))"
+        #vmsg 8 'Available entropy %s' "$(pq $(cat /proc/sys/kernel/random/entropy_avail 2>/dev/null))"
         LAST_BP_TIME=$now
     fi
 
@@ -4825,7 +4825,6 @@ mount_persist_device() {
 
         unset WANT_ROOTFS WANT_HOMEFS NEED_ROOTFS NEED_HOMEFS
     fi
-
 }
 
 #------------------------------------------------------------------------------
