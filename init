@@ -419,6 +419,7 @@ main_core() {
     dir_has_param "$BOOT_MP" rw && REMASTERABLE=true
     [ "$DID_ISO" ] && REMASTERABLE=
 
+    BOOT_FSTYPE=$(mntpnt_fstype $BOOT_MP)
     case $BOOT_FSTYPE in
         iso9660|udf) REMASTERABLE= ;;
     esac
@@ -1936,7 +1937,6 @@ frugal_error() {
     done
 
     non_fatal "Frugal install failed (or was teminated)"
-
 }
 
 #------------------------------------------------------------------------------
