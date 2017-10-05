@@ -193,21 +193,26 @@ file "/etc/live/config/disabled".  You can enable and disable services
 after you boot with the "services" command.
 
   a             disable acpid
+  A             ENABLE acpid
   d nodbus      disable dbus
-  g             disable gpm service
+  g             disable gpm
+  i             disable ifplugd
   k             do not set the console or X keyboard layout
   l lean        disable "lean" services (see "lean" below)
   m mean        disable networking (see "mean" below)
   n             disable NFS service
   N             ENABLE ntp service
   P             ENABLE standard PAM message-of-the-day
+
   r norepo      don't localize repos based on timezone
   s nosavestate don't save state on live-usb systems
   S savestate   DO save state on live-usb systems
-  v             disable virtual box services (see note)
-  w             disable wicd
-  x Xtralean    disable "Xtralean" services (see "Xtralean" below)
 
+  v             disable virtual box services (see note)
+  V vboxdecor   ENABLE fbcondecor in Virtual Box
+  w             disable wicd
+  W             ENABLE wicd
+  x Xtralean    disable "Xtralean" services (see "Xtralean" below)
 
 Note 1: Virtual Box services are enabled automatically when run
 on Virtual Box and disabled automatically when not.
@@ -221,22 +226,28 @@ decimal point.
 
 Lean Services (l):
 
-  acpi-support    ifplugd         rsyslog
-  bluetooth       irqbalance      saned
-  bootlogs        nfs-common      smartmontools
-  cron            rpcbind         ssh
-  cups            rsync
+    acpi-support   cpufrequtils   loadcpufreq    rsyslog
+    acpid          cron           nfs-common     saned
+    bluetooth      cups           rpcbind        smartmontools
+    bootlogs       irqbalance     rsync          ssh
 
 Xtralean Services (x):
 
-  cryptdisks            hwclock.sh              pppd-dns
-  cryptdisks-early      lm-sensors              ufw
-  hdparm                mountnfs-bootclean.sh   urandom
+    cryptdisks           mountnfs-bootclean.sh
+    cryptdisks-early     pppd-dns
+    hwclock.sh           ufw
+    lm-sensors           urandom
 
 Mean Services (m):
 
-  avahi-daemon   resolvconf
-  networking     wicd
+    avahi-daemon               nfs-kernel-server
+    dnsmasq                    ntp
+    ifplugd                    pppd-dns
+    mountnfs-bootclean.sh      resolvconf
+    mountnfs.sh                rpcbind
+    network-manager            smbd
+    networking                 ufw
+    nfs-common
 
 
 Personalization
