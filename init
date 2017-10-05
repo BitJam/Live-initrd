@@ -1991,6 +1991,7 @@ find_frugal_file() {
 
     find_crypt_or_linuxfs
 
+    BIOS_DEV=$FOUND_DEV
     SQFILE_MP=$BOOT_MP
     SQFILE_DEV=$FOUND_DEV
 
@@ -5598,6 +5599,7 @@ write_output_files() {
 AUFS_MP="$AUFS_MP"
 AUFS_RAM_MP="$AUFS_RAM_MP"
 AUFS_VID_FILE="$AUFS_MP$VID_FILE"
+BIOS_DEV="$BIOS_DEV"
 BIOS_MP="$BIOS_MP"
 BIOS_UUID="$BIOS_UUID"
 BOOT_DEV="$SQFILE_DEV"
@@ -5778,7 +5780,7 @@ detect_vga_menu() {
     unset NEW_VGA_CODE
 
     [ -z  "$cmd_code" ] && return
-    
+
     # Convert hex to decimal
     [ -z "${cmd_code##0[xX]*}" ] && cmd_code=$(printf "%d" $cmd_code)
 
