@@ -3741,7 +3741,8 @@ select_device() {
 
         local dev=/dev/$name
 
-        local label=$(echo "$line" | sed -n -r -e 's/" (UUID=|TYPE=)".*//' -e 's/[^:]*: LABEL="//p')
+        local label=$(echo "$line" | sed -n -r -e 's/" (UUID=|TYPE=)".*//' -e 's/^LABEL="//p')
+
         size_rev=
         name_rev=
         free_rev=
