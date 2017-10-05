@@ -554,6 +554,7 @@ extra_cmdline_params() {
         savestate|nosavestate) continue ;;
               nostore|dostore) continue ;;
              checkmd5|checkfs) continue ;;
+                  noautomount) continue ;;
             automount|mount=*) continue ;;
                     hwclock=*) continue ;;
                     desktop=*) continue ;;
