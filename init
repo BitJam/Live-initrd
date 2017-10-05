@@ -65,7 +65,7 @@
          FROM_TYPE="usb,cd"
      FROM_TYPE_ALL="usb,cd,hd"
 
-      FRUGAL_FILES="linuxfs vmlinuz vmlinuz1 initrd.gz xtra xtra.tgz"
+      FRUGAL_FILES="linuxfs vmlinuz vmlinuz1 initrd.gz xtra xtra.tgz esp-uuid"
       FRUGAL_FILES="$FRUGAL_FILES ../boot ../efi ../EFI ../cdrom.ico ../version"
 
      MAX_MOUNT_CNT=30
