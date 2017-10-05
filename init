@@ -2071,13 +2071,18 @@ find_frugal_file() {
             log_cmd rm -f $sqfile_full
             return 40
         fi
+
+        case $(device_fstype $BIOS_DEV) in
+            vfat|ext[234]) device_uuid $BIOS_DEV > $sqfile_dir/bios-dev-uuid
+        esac
+
         #. The <frugal> install succeeded
         warn "The %s install succeeded" frugal
         DID_FRUGAL=true
     fi
 
-    log_cmd umount $SQFS_MP
-    log_cmd umount $BOOT_MP
+    lazy_umount $SQFS_MP
+    lazy_umount $BOOT_MP
 
     mount --move $FRUGAL_MP $BOOT_MP
     rmdir $FRUGAL_MP
@@ -2738,6 +2743,16 @@ mount_tmpfs() {
     vmsg 8 "Create %s at %s %s" "${hi_co}$full_name${m_co}" "$(fq "$full_mp")" "(${num_co}$size ${m_co}MB)"
     log_cmd $LIVE_BIN/mount -t tmpfs -o size=${size}m$opts,noatime tmpfs $mp
     return $?
+}
+
+#------------------------------------------------------------------------------
+# Try a lazy umount and throw an error if the mp is still mounted.  Use with
+# caution.
+#------------------------------------------------------------------------------
+lazy_umount() {
+    local mp=$1
+    log_cmd umount -l $mp
+    mountpoint -q $mp && non_fatal "Was not able to unmount $mp"
 }
 
 #==============================================================================
