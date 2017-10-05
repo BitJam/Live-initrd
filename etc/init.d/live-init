@@ -76,9 +76,8 @@ automount=off|amnt=off)                          AUTOMOUNT_OFF=true ;;
            noautomount)                          AUTOMOUNT_OFF=true ;;
         automount|amnt)                              AUTOMOUNT=true ;;
           automount=on)                              AUTOMOUNT=true ;;
-#    automount=*|amnt=*)     CMD_MOUNT=$value ;       AUTOMOUNT=true ;;
-#             mount=off)     CMD_MOUNT=$value ;   AUTOMOUNT_OFF=true ;;
-#               mount=*)     CMD_MOUNT=$value ;       AUTOMOUNT=true ;;
+    automount=*|amnt=*)     CMD_MOUNT=$value ;       AUTOMOUNT=true ;;
+               mount=*)     CMD_MOUNT=$value                        ;;
                fstab=*)     CMD_FSTAB=$value                        ;;
            desktheme=*)    DESK_THEME=$value                        ;;
                 norepo)       NO_REPO=true                          ;;
@@ -139,7 +138,7 @@ do_start() {
     local user_automount
     [ -n "$HAVE_X" -a -e $AUTOMOUNT_CMD -a -z "$CMD_FSTAB" ] && user_automount=true
 
-    create_fstab "$DISTRO" "$user_automount"  "$CMD_FSTAB"
+    create_fstab "$DISTRO" "$user_automount"  "$CMD_FSTAB" "$CMD_MOUNT"
 
     #-jbb: for debugging
     unset COUNTRY WM_LANG KEYBOARDS KEYTABLE LANG MIRROR TZ XKBLAYOUT CONSOLE_FONT
@@ -232,12 +231,13 @@ do_start() {
 # Create fstab file.  Also enable automount stuff on antiX
 #------------------------------------------------------------------------------
 create_fstab() {
-    local distro=$1 user_automount=$2  cmd_fstab=$3
+    local distro=$1 user_automount=$2  cmd_fstab=$3  cmd_mount=$4
+    shift 1
 
     case $distro in
-        antiX) automount_and_fstab "$user_automount" "$cmd_fstab" ;;
-      MX|MX-*) add_fstab_swap                                     ;;
-            *) error 'Unknown distro %s' "$(pquote $distro)"      ;;
+        antiX) automount_and_fstab "$@"                       ;;
+      MX|MX-*) add_fstab_swap                                 ;;
+            *) error 'Unknown distro %s' "$(pquote $distro)"  ;;
     esac
 }
 
@@ -256,7 +256,7 @@ add_fstab_swap() {
 automount_and_fstab() {
 
     #local user_automount=$1  automount=$AUTOMOUNT  automount_off=$AUTOMOUNT_OFF  cmd_mount=$CMD_MOUNT
-    local user_automount=$1  cmd_fstab=$2
+    local user_automount=$1  cmd_fstab=$2  cmd_mount=$3
 
     local fstab_rule=/etc/udev/rules.d/90-fstab-automount.rules
 
@@ -277,13 +277,43 @@ automount_and_fstab() {
         mv $fstab_rule $live_rule
     fi
 
+    if [ -z "$cmd_mount" -a -e $mount_file ]; then
+        # Default to saved value
+        read cmd_mount 2>/dev/null <$mount_file
+    else
+        # save mount value if new or file does not exist
+        case $cmd_mount in
+            off|all|usb) echo $cmd_mount > $mount_file ;;
+        esac
+    fi
+
+    # Mount partitions while building fstab file
+    local mount_opt=
+    case $cmd_mount in
+        all)  echo_live "Mounting all devices"
+              mount_opt="--mount=$cmd_mount" ;;
+
+        usb)  echo_Live "Mounting usb devices"
+              mount_opt="--mount=$cmd_mount" ;;
+
+        off|"") ;;
+
+        #. Invalid <mount/automount> option <invalid-option>
+        *) error "Invalid %s option %s" "mount=" "$(pquote $cmd_mount)" ;;
+    esac
+
+    # Remove fstab file that has no entries
+    if [ -e /etc/fstab  ]; then
+        grep -q -e ^/dev -e ^UUID= -e ^LABEL= /etc/fstab || rm /etc/fstab
+    fi
+
     if [ -n "$user_automount" ]; then
-        make-fstab
+        make-fstab $mount_opt
         return
 
-    # If no fstab is given (or "test") then have the "automount"
-    # and "noautomount" cheats control the behavior
     elif [ -z "$cmd_fstab" -o "$cmd_fstab" = 'test' ]; then
+        # If no fstab is given (or "test") then have the "automount"
+        # and "noautomount" cheats control the behavior
         cmd_fstab=
         [ -n "$AUTOMOUNT" ]     && cmd_fstab=auto
         [ -n "$AUTOMOUNT_OFF" ] && cmd_fstab=hotplug
@@ -303,7 +333,7 @@ automount_and_fstab() {
         off)
             echo_live "Automount disabled"
             #echo_live "Disabling fstab hotplugging (this will also disable automount)"
-            make-fstab
+            make-fstab $mount_opt
             return ;;
     esac
 
@@ -321,7 +351,7 @@ automount_and_fstab() {
     fi
 
     # Create an fstab file with most existing partitions included
-    make-fstab
+    make-fstab $mount_opt
 
     # Enable automount if requested to do so
     case $cmd_fstab in
