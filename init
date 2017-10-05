@@ -5051,8 +5051,6 @@ select_persist_device() {
     warn
     msg "Please wait while existing partitions are found ..."
 
-    breakpoint x "before select device"
-
     select_device "persistence" device 100 || return 1
     local ret=$?
 
