@@ -5462,7 +5462,7 @@ copy_xtra() {
      # Create a symlink to the /antiX/xtra directory if it exists
     local r_dir="$NEW_ROOT/root"
     local x_dir="$DEFAULT_DIR/xtra"
-    test -d $r_dir && test -d $x_dir && ln -s $x_dir $r_dir/xtra
+    test -d $r_dir && test -d $x_dir && log_cmd ln -s $x_dir $r_dir/xtra
 }
 
 #------------------------------------------------------------------------------
