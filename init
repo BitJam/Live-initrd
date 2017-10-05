@@ -1979,7 +1979,7 @@ find_frugal_file() {
         msg 'Force frugal install'
         if [ $ret -eq 0  ]; then
             device=$FOUND_DEV
-            umount $FOUND_DEV
+            log_cmd umount $FOUND_DEV
         fi
 
     else
