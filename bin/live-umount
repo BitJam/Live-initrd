@@ -62,10 +62,12 @@ me=${0##*/}
    LOCALE_DIR=/locale
  CMDLINE_FILE=/live/config/cmdline
 HIJACKED_INIT=/hijacked-init
- PROTECT_LIST="^(/sbin/mount.ntfs|mount.ntfs|mount.fuse|mount.cifs|ntfs-3g|/sbin/mount.ntfs-3g|rpcbind)$"
+ PROTECT_LIST="^(/sbin/mount.ntfs|mount.ntfs|mount.fuse|mount.cifs|ntfs-3g|/sbin/mount.ntfs-3g|rpcbind|/sbin/wpa_supplicant)"
    TARDY_LIST="^(acpid)$"
 BOOT_DEV_FILE=/config/boot-device
+    OMIT_FILE="/run/sendsigs.omit.d/$me.pid"
 
+   KILL_PROGS="wpa_supplicant"
       V_LEVEL=6
  BREAK_POINTS=0
  SHOW_COMMAND=0
@@ -127,6 +129,13 @@ do_scripts() {
     msg "${white}run-scripts"
 
     run_scripts $scripts
+
+    #local protect_pids=$(pgrep -f "$PROTECT_LIST")
+    if false && [ -n "$protect_pids" ]; then
+        mkdir -p $(dirname $OMIT_FILE)
+        echo "$protect_pids" > $OMIT_FILE
+        msg 'Protecting:\n%s' "$white$(pgrep -l "$PROTECT_LIST")"
+    fi
 
     breakpoint s2 "After running scripts"
 }
@@ -320,6 +329,7 @@ final_umount() {
     breakpoint 7 "After killing processes"
 
     msg "Unmount most filesystems"
+    kill_specific_progs $KILL_PROGS
     umount_most
 
     breakpoint 8 "After unmounting most filesystems"
