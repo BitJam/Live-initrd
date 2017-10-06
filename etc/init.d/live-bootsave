@@ -3,7 +3,7 @@
 export PATH=/sbin:/usr/sbin:/bin:/usr/bin:/usr/local/bin:/live/bin
 
 BIOS_UUID_FNAME="bios-dev-uuid"
-UEFI_UUID_FNAME="efi-uuid"
+UEFI_UUID_FNAME="esp-uuid"
 
 . /live/lib/live-init-utils.sh
 
