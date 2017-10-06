@@ -552,6 +552,25 @@ kill_procs_fast() {
 }
 
 #------------------------------------------------------------------------------
+#
+#------------------------------------------------------------------------------
+kill_specific_progs() {
+    local prog
+    for prog; do
+        local pids=$(pgrep -l $prog)
+        [ -z "$pids" ] && continue
+
+        #msg 'pkill %s'  "$white$pids"
+        pkill $prog
+
+        sleep .01
+
+        msg 'pkill -9 %s'  "$white$pids"
+        pkill -9 $prog
+    done
+}
+
+#------------------------------------------------------------------------------
 # Function: mountpoint_list
 #
 # List mountpoints in reverse chronological order and exclude system mps that
