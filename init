@@ -67,6 +67,7 @@
 
       FRUGAL_FILES="linuxfs vmlinuz vmlinuz1 initrd.gz xtra xtra.tgz esp-uuid"
       FRUGAL_FILES="$FRUGAL_FILES ../boot ../efi ../EFI ../cdrom.ico ../version"
+       FRUGAL_NAME="antiX"
 
      MAX_MOUNT_CNT=30
        RETRY_DELAY=50               # in hundredths of a second
@@ -668,7 +669,7 @@ read_late_cmdline_params() {
 #
 #------------------------------------------------------------------------------
 set_frugal() {
-    : ${FRUGAL_ID:=label=$DISTRO_NAME-Frugal}
+    : ${FRUGAL_ID:=label=$FRUGAL_NAME-Frugal}
     [ "$NO_LABEL_FRUGAL" ] || LABEL_FRUGAL=true
     PERSIST=$1
 }
@@ -1943,7 +1944,7 @@ frugal_error() {
 #
 #------------------------------------------------------------------------------
 find_frugal_file() {
-    local frugal_id=$1  bdir=$DISTRO_NAME-Frugal-$(uname -r)
+    local frugal_id=$1  bdir=$FRUGAL_NAME-Frugal-$(uname -r)
     local sqfile=$bdir/$SQFILE_NAME need_to_ask
     local device name=${frugal_id%%=*}  value=${frugal_id#*=}
 
@@ -2021,7 +2022,7 @@ find_frugal_file() {
 
         [ -z "$device" -o "$device" = "quit" ] && return 1
 
-        [ "$LABEL_FRUGAL" ] && label_device $device "$DISTRO_NAME-Frugal"
+        [ "$LABEL_FRUGAL" ] && label_device $device "$FRUGAL_NAME-Frugal"
     fi
 
     if ! mkdir -p $FRUGAL_MP; then
