@@ -3,6 +3,7 @@
 export PATH=/sbin:/usr/sbin:/bin:/usr/bin:/usr/local/bin:/live/bin
 
 BIOS_UUID_FNAME="bios-dev-uuid"
+UEFI_UUID_FNAME="efi-uuid"
 
 . /live/lib/live-init-utils.sh
 
@@ -88,10 +89,10 @@ do_boot_save() {
         grub2-save $BOOT_MP
     fi
 
-    local uuid dir uuid_file file=esp-uuid
+    local uuid dir uuid_file name=$UEFI_UUID_FNAME
     for dir in $SQFILE_DIR $BOOT_MP; do
-        test -r $dir/$file || continue
-        uuid_file=$dir/$file
+        test -r $dir/$name || continue
+        uuid_file=$dir/$name
     done
     test -r $uuid_file || return
     read uuid 2>/dev/null <$uuid_file
