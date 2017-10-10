@@ -2706,15 +2706,15 @@ try_mount() {
     local fatopts=$winopts,shortname=winnt,uid=$USER_UID,gid=$USER_GID
 
     case $type in
-            ext4) log_cmd mount -t $type   -o $opts$LAZYTIME  $dev "$mp" ;;
-        ext[234]) log_cmd mount -t $type   -o $opts           $dev "$mp" ;;
+            ext4) log_cmd mount -t $type   -o $opts$LAZYTIME  $dev "$mp" 2>/dev/null ;;
+        ext[234]) log_cmd mount -t $type   -o $opts           $dev "$mp" 2>/dev/null ;;
             vfat) modprobe -q nls-cp437
-                  log_cmd mount -t vfat    -o $fatopts        $dev "$mp" ;;
-         iso9660) log_cmd mount -t iso9660 -o ro              $dev "$mp" ;;
-             udf) log_cmd mount -t udf     -o ro              $dev "$mp" ;;
-            ntfs) log_cmd ntfs-3g          -o $ntfsopts       $dev "$mp" 17>/dev/null || \
-                  log_cmd mount -t ntfs    -o umask=000,ro    $dev "$mp" ;;
-               *) log_cmd mount -t $type   -o $opts           $dev "$mp" ;;
+                  log_cmd mount -t vfat    -o $fatopts        $dev "$mp" 2>/dev/null ;;
+         iso9660) log_cmd mount -t iso9660 -o ro              $dev "$mp" 2>/dev/null ;;
+             udf) log_cmd mount -t udf     -o ro              $dev "$mp" 2>/dev/null ;;
+            ntfs) log_cmd ntfs-3g          -o $ntfsopts       $dev "$mp" 2>/dev/null 17>/dev/null || \
+                  log_cmd mount -t ntfs    -o umask=000,ro    $dev "$mp" 2>/dev/null ;;
+               *) log_cmd mount -t $type   -o $opts           $dev "$mp" 2>/dev/null ;;
     esac
     return $?
 }
