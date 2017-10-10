@@ -788,7 +788,7 @@ read_cmdline_params()
                       vtblank=*) small_int VT_BLANK $param                       ;;
 
                livedir=*|ldir=*) FINAL_DIR=$value                                ;;
-        pw|passwd|pw=*|passwd=*) FORCE_PASSWD=true                               ;;
+    pw|password|pw=*|password=*) FORCE_PASSWD=true                               ;;
                       bootchart) INIT_COMMAND=/sbin/bootchartd ; BOOT_CHART=true ;;
                         noplink) NO_PLINK=,noplink                               ;;
                           plink) NO_PLINK=                                       ;;
