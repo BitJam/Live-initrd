@@ -378,6 +378,7 @@ restore_state() {
         # Copy saved state files to system
         #for from in $(find $state_dir/files -type f 2>/dev/null); do
         while read from; do
+            [ ${#from} -gt 0 ] || continue
             from=$state_dir/files/$from
             local to=${from#$state_dir/files}
 
@@ -385,8 +386,8 @@ restore_state() {
             [ -z "${to##/live/*}" ] && continue
 
             if [ "$SYS_MODE" ]; then
-                test -e $to || continue
-
+                test -e $to   || continue
+                test -f $from || continue
                 #. Restore <general|machine specific> state file <file-name>
                 echo_live "Restore %s state file %s" "$type" "$(wq $to)"
                 echo_cmd cp $from $to
