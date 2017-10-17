@@ -184,6 +184,8 @@ gather_params() {
                 nostore|dostore)          ;;
            md5|checkmd5|checkfs)          ;;
               automount|mount=*)          ;;
+                    noautomount)          ;;
+                        fstab=*)          ;;
                       hwclock=*)          ;;
                       desktop=*)          ;;
                               *) out=$out${out:+ }$p ;;
