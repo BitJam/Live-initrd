@@ -696,6 +696,7 @@ read_cmdline_params()
                        splash=*) SPLASH_PARAM=$value                             ;;
                        poweroff) poweroff -f -n                                  ;;
                          reboot) reboot -f -n                                    ;;
+                         fdir=*) FRUGAL_DIR=$value                               ;;
                bootdir=*|bdir=*) BOOT_DIR=$value                                 ;;
     bootlabel=*|blabel=*|blab=*) BOOT_ID=label=$value                            ;;
              bootuuid=*|buuid=*) BOOT_ID=uuid=$value                             ;;
@@ -1891,6 +1892,20 @@ find_device() {
     return $err_ret
 }
 
+
+#------------------------------------------------------------------------------
+#
+#------------------------------------------------------------------------------
+create_grub_entry() {
+    local bdir=$1  uuid=$2
+    cat <<Grub_Entry
+menuentry "$DISTRO_PRETTY_NAME Frugal Install" {
+    linux /$bdir/vmlinuz quiet splash=v bdir=$bdir buuid=$uuid disable=lx
+    initrd /$bdir/initrd.gz
+}
+Grub_Entry
+}
+
 #------------------------------------------------------------------------------
 #
 #------------------------------------------------------------------------------
@@ -1944,7 +1959,9 @@ frugal_error() {
 #
 #------------------------------------------------------------------------------
 find_frugal_file() {
-    local frugal_id=$1  bdir=$FRUGAL_NAME-Frugal-$(uname -r)
+    local frugal_id=$1  bdir=$FRUGAL_DIR
+    : ${bdir:=$FRUGAL_NAME-Frugal-$(uname -r)}
+
     local sqfile=$bdir/$SQFILE_NAME need_to_ask
     local device name=${frugal_id%%=*}  value=${frugal_id#*=}
 
@@ -2072,6 +2089,8 @@ find_frugal_file() {
             log_cmd rm -f $sqfile_full
             return 40
         fi
+
+        create_grub_entry "$bdir" "$(device_uuid $device)"  >  $sqfile_dir/grub.entry
 
         case $(device_fstype $BIOS_DEV) in
             vfat|ext[234]) device_uuid $BIOS_DEV > $sqfile_dir/bios-dev-uuid
