@@ -72,8 +72,12 @@ main() {
             if [ -e $dest ]; then
                 echo_live "Setting timezone and localtime to %s" "$(pquote $TZ)"
                 echo $TZ > /etc/timezone
+
+                # If it is a file, use a file ...
                 if test -f /etc/localtime; then
                     cp -f $(readlink -f $dest) /etc/localtime
+
+                # ... otherwise use a symlink
                 else
                     ln -sf $dest /etc/localtime
                 fi
