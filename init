@@ -3620,11 +3620,11 @@ gather_frugal_cmdline() {
     for p in $(cat /live/config/proc-cmdline /live/config/cmdline 2>/dev/null) $*; do
         value=${p#*=}
         case $p in
-                frugal=*) $p=persist=$value     ;;
-          frugal_persist) $p=persist_all        ;;
-             frugal_root) $p=persist_root       ;;
-           frugal_static) $p=persist_static     ;;
-             frugal_home) $p=persist_home       ;;
+                frugal=*) p=persist=$value      ;;
+          frugal_persist) p=persist_all         ;;
+             frugal_root) p=persist_root        ;;
+           frugal_static) p=persist_static      ;;
+             frugal_home) p=persist_home        ;;
         esac
 
         case $p in
