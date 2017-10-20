@@ -1900,6 +1900,7 @@ create_grub_entry() {
     local bdir=$1  uuid=$2
     cat <<Grub_Entry
 menuentry "$DISTRO_PRETTY_NAME Frugal Install" {
+    search --no-floppy --set=root --fs-uuid $uuid
     linux /$bdir/vmlinuz bdir=$bdir buuid=$uuid $(gather_frugal_cmdline)
     initrd /$bdir/initrd.gz
 }
