@@ -42,8 +42,6 @@ GSTATE_FILES="# File: general-state-files
 /etc/fstab.automount
 /etc/fstab.hotplug.state
 /etc/fstab.mount
-/etc/localtime
-/etc/timezone
 /etc/wicd/*.conf
 /etc/network/interfaces
 /etc/network/interfaces.d/*
