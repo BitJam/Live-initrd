@@ -454,6 +454,9 @@ main_core() {
         debug_cmd lsmod
     fi
 
+    # Save the existing /lib64 so it  can be restored and used for eject at shutdown
+    test -d /lib64 && cp -a /lib64 /live/
+
     prep_ld_path
 
     RW_MODE=rw
@@ -6028,10 +6031,7 @@ prepare_switch_root() {
     breakpoint 0 after move
 
     # Remove libs, modules, and programs we won't need to save a little RAM
-    rm -rf $root_dir/lib/modules
-    find $root_dir/lib -type f -o -type l | egrep -v "/(live-init|ld|libc|libm)[.-][^/]*$"
-
-    #-jbb rm -f $(find $root_dir/lib -type f -o -type l | egrep -v "/(live-init|ld|libc|libm)[.-][^/]*$")
+    rm -f $(find $root_dir/lib -type f -o -type l | egrep -v "/(x86_64-linux-gnu|live-init|ld|libc|libm)[.-][^/]*$")
 
     (cd $root_dir/bin && rm -rf fbcondecor_helper ntfs-3g)
     rm -rf /$root_dir/etc/splash
@@ -6040,8 +6040,15 @@ prepare_switch_root() {
     local fbsys=$root_dir/lib/splash/sys
     mountpoint $fbsys &>/dev/null && umount $fbsys
 
+    # We had mucked with lib64 to be able to use programs in /aufs and /linux.
+    # Now restore it so we can call eject at the end of shutdown
+    if test -d /lib64; then
+        rm -r /lib64
+        mv /live/lib64 /
+    fi
+
     local dir old new
-    for dir in bin config etc lib lib64 locale custom menus share; do
+    for dir in bin config etc lib64 lib locale custom menus share; do
         old=$root_dir/$dir
         test -e $old || old=$live_dir/$dir
         test -e $old || continue
