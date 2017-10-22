@@ -552,6 +552,8 @@ main_core() {
 
     prepare_switch_root $NEW_ROOT $LIVE_DIR $FINAL_DIR
 
+    breakpoint 7 "after prepare switch_root"
+
     write_ntfs_pids $FINAL_DIR/aufs/run/sendsigs.omit.d/initrd-ntfs-3g
 
     echo $LAST_BP_TIME > /LAST_BP_TIME
@@ -6004,6 +6006,8 @@ prepare_switch_root() {
         cp $from $to
     done
 
+    breakpoint 0 before move
+
     # cp -a /bin/shutdown $new_live/
 
     mkdir -p $new_live/oldroot
@@ -6021,8 +6025,13 @@ prepare_switch_root() {
         chmod 755 $new 2>/dev/null
     done
 
+    breakpoint 0 after move
+
     # Remove libs, modules, and programs we won't need to save a little RAM
-    rm -f $(find $root_dir/lib -type f -o -type l | egrep -v "/(live-init|ld|libc|libm)[.-][^/]*$")
+    rm -rf $root_dir/lib/modules
+    find $root_dir/lib -type f -o -type l | egrep -v "/(live-init|ld|libc|libm)[.-][^/]*$"
+
+    #-jbb rm -f $(find $root_dir/lib -type f -o -type l | egrep -v "/(live-init|ld|libc|libm)[.-][^/]*$")
 
     (cd $root_dir/bin && rm -rf fbcondecor_helper ntfs-3g)
     rm -rf /$root_dir/etc/splash
@@ -6032,7 +6041,7 @@ prepare_switch_root() {
     mountpoint $fbsys &>/dev/null && umount $fbsys
 
     local dir old new
-    for dir in bin config etc lib locale custom menus share; do
+    for dir in bin config etc lib lib64 locale custom menus share; do
         old=$root_dir/$dir
         test -e $old || old=$live_dir/$dir
         test -e $old || continue
