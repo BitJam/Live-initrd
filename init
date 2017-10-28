@@ -5514,7 +5514,7 @@ fancy_prompt() {
         cat << Fancy_Stuff >> $bashrc
 
 #----- Added by live initrd init script
-LESS="-R"
+LESS="-R -i"
 [ -r $fp_prog ] && source $fp_prog
 [ -n "\$(alias $cmd)" ] && $prompt
 echo \$PATH | grep -q /live/bin || PATH=\$PATH:/etc/live/bin
