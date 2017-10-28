@@ -5085,7 +5085,7 @@ _persist_makefs() {
 
     breakpoint m "before makefs"
 
-    [ "$vfat" ] &&  warn "Warning: this can take several minutes per Gig on a %s file system" $(pqw $part_fstype)
+    [ "$is_vfat" ] &&  warn "Warning: this can take several minutes per Gig on a %s file system" $(pqw $part_fstype)
     if ! time_cmd makefs $full_file $fs_type $fs_size $part_fstype; then
         err "Failed to create filesystem.  Deleting %s file" $(pqe $file)
         rm -f $full_file
