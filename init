@@ -4923,7 +4923,7 @@ create_persist_files() {
         local default_size rootfs_file=rootfs
         if [ "$WILL_REMASTER" ]; then
             default_size=$(stat -c %s $dir/rootfs 2>/dev/null)
-            msg 'default size: %s Meg' "$(nq $default_size)"
+            msg 'default size: %s MiB' "$(nq $default_size)"
             [ "$default_size" ] && default_size=$((default_size/1024/1024))
             rootfs_file=rootfs.new
         fi
@@ -4963,26 +4963,26 @@ _persist_makefs() {
     local free=$(free_space $mp)
     local avail=$((free - MKFS_FREE_MARGIN))
 
-    vmsg 6 '      Free space: %s Meg' $(nq $free)
-    vmsg 6 ' Available space: %s Meg' $(nq $avail)
+    vmsg 6 '      Free space: %s MiB' $(nq $free)
+    vmsg 6 ' Available space: %s MiB' $(nq $avail)
 
     [ "$orig_def_size" ] && [ $orig_def_size -gt $avail ] \
-        && warn "Not enough room on Live device to create %s file of size %s Meg" \
+        && warn "Not enough room on Live device to create %s file of size %s MiB" \
             $(fq $file) $(nq $orig_def_size)
 
     local base_file=${file%%.*}
     local default_size=$(default_makefs_size $avail ${base_file}_SIZE_PARAM $orig_def_size)
 
-    vmsg 6 '    Default size: %s Meg' $(nq $default_size)
+    vmsg 6 '    Default size: %s MiB' $(nq $default_size)
 
     : ${default_size:=-1}
 
 
     # Make sure we don't exceed max size of 4G - 1 on vfat file systems
     mkdir -p $dir
-    local part_fstype=$(mntpnt_fstype $dir) mkfs_sizes=$MKFS_SIZES vfat
+    local part_fstype=$(mntpnt_fstype $dir) mkfs_sizes=$MKFS_SIZES is_vfat
     case $part_fstype in
-        vfat) vfat=true ;;
+        vfat) is_vfat=true ;;
            *) mkfs_sizes="$mkfs_sizes $BIGGER_SIZES" ;;
     esac
 
@@ -5026,9 +5026,9 @@ _persist_makefs() {
     #[ "$needed" ] && quit=
 
     heading "create %s persistence file" "$(fq $file)"
-    vmsg 1 "Default size: %s Meg.  Filesystem type: %s" $(nq $default_size) $(pq ext4)
-    vmsg 1 "This default size will leave %s Meg free" $(nq $((avail - default_size)))
-    [ "$vfat" ] &&  warn "Warning: this can take several minutes per Gig on a %s file system" $(pqw $part_fstype)
+    vmsg 1 "Default size: %s MiB.  Filesystem type: %s" $(nq $default_size) $(pq ext4)
+    vmsg 1 "This default size will leave %s MiB free" $(nq $((avail - default_size)))
+    [ "$is_vfat" ] &&  warn "Warning: this can take several minutes per Gig on a %s file system" $(pqw $part_fstype)
 
     if [ "$AUTO_MAKE_FS" ]; then
         auto_mode=true
@@ -5077,7 +5077,7 @@ _persist_makefs() {
         #[ "$fs_type" = "quit" ] && return 1
         fs_type=ext4
     fi
-    vmsg 1 "Create %s file of type %s and size %s Meg" "$(fq $file)" "$(pq $fs_type)" "$(nq $fs_size)"
+    vmsg 1 "Create %s file of type %s and size %s MiB" "$(fq $file)" "$(pq $fs_type)" "$(nq $fs_size)"
 
     # Now do the actual work
 
@@ -5236,7 +5236,7 @@ copy_persist_to_ram() {
         vmsg_nc 3 $tbar
         return 1
     fi
-    vmsg 5 "Copy %s Megabytes to RAM ..." "${num_co}$persist_used${m_co}"
+    vmsg 5 "Copy %s MiB to RAM ..." "${num_co}$persist_used${m_co}"
     if ! cp_dir $ROOTFS_MP $AUFS_RAM_MP 2>&1; then
          err "Copy persistent root to RAM failed!  Will erase partial copy ..."
          rm -rf $AUFS_RAM_MP/*
@@ -5369,8 +5369,8 @@ offer_copy_home_dir() {
     local needed=$(du_size $real)
     local avail=$(avail_space $temp)
     local margin=$((avail - needed))
-    msg "There are %4s Meg of files that will get hidden by home persistence"  $(nq $needed)
-    msg "There are %4s Meg free on the home persistence device"                $(nq $avail)
+    msg "There are %4s MiB of files that will get hidden by home persistence"  $(nq $needed)
+    msg "There are %4s MiB free on the home persistence device"                $(nq $avail)
 
     if [ $margin -lt 50 ]; then
         msg "There's not enough space to copy all the files"
@@ -5428,7 +5428,7 @@ copy_homefs() {
     local need_meg=$(used_space $cur_home_mp)
     local have_meg=$(all_space $new_home_mp)
     need_meg=$((need_meg + 10))
-    vmsg 6 "Have %s Megabytes free.  Need %s" "$(nq $have_meg)" "$(nq $need_meg)"
+    vmsg 6 "Have %s MiB free.  Need %s" "$(nq $have_meg)" "$(nq $need_meg)"
     if [ "$need_meg" -gt "$have_meg" ]; then
         err "Not enough room to copy home filesystem"
         return 1
