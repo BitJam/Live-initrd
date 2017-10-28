@@ -3884,9 +3884,10 @@ Blkid
     echo
 
     if [ $cnt -le 1 ]; then
-        display="$header\n$display"
-        msg_nc "$display"
+        #display="$header\n$display"
+        #msg_nc "$display"
         warn "No suitable devices were found."
+        press_enter
         return 1
     fi
 
@@ -5885,6 +5886,15 @@ update_file() {
     test -e $src || return
     diff -q $src $dest &>/dev/null && return
     cp -a $src $dest
+}
+
+#------------------------------------------------------------------------------
+#
+#------------------------------------------------------------------------------
+press_enter() {
+    local ans enter="Enter"
+    msg "Press <%s> to continue" "$(pq "$enter")"
+    read ans
 }
 
 #------------------------------------------------------------------------------
