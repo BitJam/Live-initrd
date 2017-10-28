@@ -255,6 +255,8 @@ main_wrapper() {
     run_init_scripts $NEW_ROOT $LIVE_SCRIPTS
     PATH=$LIVE_BIN
 
+    decolor_file $NEW_ROOT/var/log/live/live-init.log.color
+
     test -r /late-umount.sh && . /late-umount.sh
     sync
     prep_seed_dev_random "$SEED_FILE"
@@ -5803,10 +5805,21 @@ update_store_file() {
 #
 #------------------------------------------------------------------------------
 write_log_files() {
-    local my_log=$1 final_log=$2 e=$(printf "\e")
-    mkdir -p $(dirname $final_log)
-    sed -r "s/$e\[[0-9;]+[mK]//g" $my_log > $final_log
-    cp $my_log $final_log.color
+    local my_log=$1 color_log=$2.color
+    mkdir -p $(dirname $color_log)
+    cp $my_log $color_log
+    decolor_file $color_log
+}
+
+#------------------------------------------------------------------------------
+#
+#------------------------------------------------------------------------------
+decolor_file() {
+    local file=$1  new=${1%.color}  e=$(printf "\e")
+
+    test -r $file || return
+    [ "$file" = "$new" ] && return
+    sed -r "s/$e\[[0-9;]+[mK]//g" $file > $new
 }
 
 #------------------------------------------------------------------------------
