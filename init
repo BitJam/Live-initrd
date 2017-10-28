@@ -460,9 +460,6 @@ main_core() {
         debug_cmd lsmod
     fi
 
-    # Save the existing /lib64 so it  can be restored and used for eject at shutdown
-    test -d /lib64 && cp -a /lib64 /live/
-
     prep_ld_path
 
     RW_MODE=rw
@@ -5612,8 +5609,7 @@ prep_ld_path() {
 
     SET_ARCH=
     case $arch in
-          x86_64) prep_lib64 $dir
-                  ld_path=$LIVE_X64_LD_PATH
+          x86_64) ld_path=$LIVE_X64_LD_PATH
                   SET_ARCH=linux64           ;;
 
         i[3-8]86) ld_path=$LIVE_386_LD_PATH
@@ -6078,13 +6074,6 @@ prepare_switch_root() {
     # Work around a bug in fbcondecor_helper
     local fbsys=$root_dir/lib/splash/sys
     mountpoint $fbsys &>/dev/null && umount $fbsys
-
-    # We had mucked with lib64 to be able to use programs in /aufs and /linux.
-    # Now restore it so we can call eject at the end of shutdown
-    if test -d /lib64; then
-        rm -r /lib64
-        mv /live/lib64 /
-    fi
 
     local dir old new
     for dir in bin config etc lib64 lib locale custom menus share; do
