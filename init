@@ -279,7 +279,11 @@ main_wrapper() {
                 mount --bind /live/aufs/live/$dir $new_dir
             done
 
-            chmod 700 $NEW_ROOT/live
+            # Leave ext2/3/4 as read-write
+            case $(mntpnt_fstype $NEW_ROOT$BOOT_MP) in
+                ext[234]|iso9660) ;;
+                               *) chmod 700 $NEW_ROOT/live ;;
+            esac
         fi
     fi
 
