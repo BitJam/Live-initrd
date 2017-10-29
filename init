@@ -6111,6 +6111,23 @@ prepare_switch_root() {
 #------------------------------------------------------------------------------
 #
 #------------------------------------------------------------------------------
+dummy_translate() {
+    msg 'default size: %s Meg' "$(nq $default_size)"
+    vmsg 6 "Have %s Megabytes free.  Need %s" "$(nq $have_meg)" "$(nq $need_meg)"
+    vmsg 1 "Default size: %s Meg.  Filesystem type: %s" $(nq $default_size) $(pq ext4)
+    vmsg 1 "This default size will leave %s Meg free" $(nq $((avail - default_size)))
+    warn "Warning: this can take several minutes per Gig on a %s file system" $(pqw $part_fstype)
+    vmsg 1 "There is %s Meg available on the device" $(nq $avail)
+    vmsg 1 "Filesystem size %s Meg" $(nq $fs_size)
+    vmsg 1 "Create %s file of type %s and size %s Meg" "$(fq $file)" "$(pq $fs_type)" "$(nq $fs_size)"
+    vmsg 5 "Copy %s Megabytes to RAM ..." "${num_co}$persist_used${m_co}"
+    msg "There are %4s Meg of files that will get hidden by home persistence"  $(nq $needed)
+    msg "There are %4s Meg free on the home persistence device"                $(nq $avail)
+}
+
+#------------------------------------------------------------------------------
+#
+#------------------------------------------------------------------------------
 remasterable() { [ -n "$REMASTERABLE" ];  return $?; }
 #------------------------------------------------------------------------------
 #
