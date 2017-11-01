@@ -72,6 +72,7 @@ main() {
 
             # If it is a symlink, make a symklink ...
             if test -L /etc/localtime; then
+                rm /etc/localtime
                 ln -sf $dest /etc/localtime
 
             # ... otherwise copy over a real file
