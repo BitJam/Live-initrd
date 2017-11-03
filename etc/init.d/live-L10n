@@ -64,7 +64,9 @@ main() {
     # CMD_TZ overrides value from LANG file above
     # Only set timezone via explicit boot parameter after the first time.
     TZ=${CMD_TZ:-$TZ}
-    [ "$TZ" ] && if first_write /etc/localtime || [ "$CMD_TZ" ]; then
+
+    local lt_file=/etc/localtime
+    [ "$TZ" ] && if first_write $lt_file || [ "$CMD_TZ" ]; then
 
         # Check for valid tz string
         local dest=/usr/share/zoneinfo/$TZ
@@ -72,14 +74,17 @@ main() {
             echo_live "Setting timezone and localtime to %s" "$(pquote $TZ)"
             echo $TZ > /etc/timezone
 
-            # If it is a symlink, make a symklink ...
-            if test -L /etc/localtime; then
-                rm /etc/localtime
-                ln -sf $dest /etc/localtime
+            # If it is a symlink or doesn't exist make a symklink ...
+            if  ! test -e "$lt_file"; then
+                ln -sf $dest $lt_file
+
+            elif test -L "$lt_file"; then
+                rm -f $lt_file
+                ln -sf $dest $lt_file
 
             # ... otherwise copy over a real file
-            elif test -f /etc/localtime; then
-                cp -f $(readlink -f $dest) /etc/localtime
+            elif test -f $lt_file; then
+                cp -f $(readlink -f $dest) $lt_file
             fi
         else
             error "Unknown time zone %s" "$(pquote $TZ)"
@@ -88,7 +93,6 @@ main() {
 
     # If /etc/localtime doesn't exist then make it a symlink using the
     # name in /etc/timezone
-    local lt_file=/etc/localtime
     if ! test -e $lt_file; then
         local tz=$(cat /etc/timezone 2>/dev/null | head -n1)
         local dest=/usr/share/zoneinfo/$tz
