@@ -35,6 +35,8 @@ for param in $CMDLINE; do
     esac
 done
 
+test -e /etc/localtime || MUST_RUN=true
+
 [ "$MUST_RUN" ] || exit 0
 
 # FIXME: check to see if any of these are needed
