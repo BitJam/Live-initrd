@@ -110,8 +110,8 @@
   LIVE_386_LD_PATH="/lib:/lib/i386-linux-gnu:/usr/lib"
 
 MKFS_FREE_MARGIN=10
-  rootfs_SIZE_PARAM="min_size=250 mid_size=100 max_size=2000 factor=50"
-  homefs_SIZE_PARAM="min_size=10 mid_size=100 max_size=4000 factor=25"
+  rootfs_SIZE_PARAM="min_size=250 mid_size=100 max_size=4096 factor=50"
+  homefs_SIZE_PARAM="min_size=10 mid_size=100 max_size=8192 factor=25"
          MKFS_SIZES="250 375 500 750 1024 1500 2048 2500 3072 4096"
        BIGGER_SIZES="5120 6144 8192 10240 12288 15360 20480"
       SMALLER_SIZES="10 100 175"
