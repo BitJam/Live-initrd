@@ -352,7 +352,7 @@ live_param_filter() {
         esac
     done
 
-    if [ "$disable" ]; then
+    if [ -n "$disable" ]; then
         # If the ## expression matches then the resulting string length is zero
         [ "${disable##*[l]*}" ] ||      touch /live/config/lean
         [ "${disable##*[m]*}" ] ||      touch /live/config/mean
