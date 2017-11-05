@@ -3772,6 +3772,19 @@ _size_label() {
 #------------------------------------------------------------------------------
 #
 #------------------------------------------------------------------------------
+meg_to_gig() {
+    local meg=$1
+    local gig=$((meg / 1024))
+    if [ $((meg - gig * 1024)) -eq 0 ]; then
+        echo "${gig}GiB"
+    else
+        echo "${meg}MiB"
+    fi
+}
+
+#------------------------------------------------------------------------------
+#
+#------------------------------------------------------------------------------
 select_device() {
     local title_type=$1  var=$2  min_size=${3:-0} not_mounted=$4
     local title=$(printf "Please select %s device:" "$title_type")
@@ -5053,15 +5066,10 @@ _persist_makefs() {
         vmsg 1 "There is %s MiB available on the device" $(nq $avail)
 
         # Add "G" and "M" suffixes
-        local size_menu
+        local size_menu=$(
         for size in $sizes; do
-            local gig=$((size / 1024))
-            if [ $((size - gig * 1024)) -eq 0 ]; then
-                size_menu="$size_menu ${gig}GiB"
-            else
-                size_menu="$size_menu ${size}MiB"
-            fi
-        done
+            meg_to_gig $size
+        done)
 
         my_select "$title" fs_size 9 "$default_cnt" $size_menu "$quit"
         [ "$fs_size" = "quit" ] && return 1
@@ -5078,6 +5086,7 @@ _persist_makefs() {
         #[ "$fs_type" = "quit" ] && return 1
         fs_type=ext4
     fi
+
     vmsg 1 "Create %s file of type %s and size %s MiB" "$(fq $file)" "$(pq $fs_type)" "$(nq $fs_size)"
 
     # Now do the actual work
