@@ -282,6 +282,7 @@ main_wrapper() {
             # Leave ext2/3/4 as read-write
             case $(mntpnt_fstype $NEW_ROOT$BOOT_MP) in
                 ext[234]|iso9660) ;;
+                   btrfs|xfs|jfs) ;;
                                *) chmod 700 $NEW_ROOT/live ;;
             esac
         fi
