@@ -239,6 +239,8 @@ main_wrapper() {
     breakpoint 8      "before running live init.d scripts"
     breakpoint b8     "Bash shell before running live init.d scripts"
 
+    remove_from_runlevel lightdm 3
+
     # Try running live-usb-save first so it can restore an xorg.conf machine-state file
     confile remasterable && LIVE_SCRIPTS="live-usb-save $LIVE_SCRIPTS"
     confile hwclock      && LIVE_SCRIPTS="$LIVE_SCRIPTS live-hwclock"
@@ -6116,6 +6118,19 @@ prepare_switch_root() {
     PATH=$new_live/bin:$PATH
 
     (cd $new_root && mkdir -p sys proc dev/pts)
+}
+
+remove_from_runlevel() {
+    local prog=$1  level=${2:-3}  root=${3:-/live/aufs}
+    test -d $root || root=
+    local file=$root/etc/init.d/$prog
+    msg "file: $file"
+    test -e $file || return
+    local links=$(ls $root/etc/rc$level.d/S*$prog)
+    msg "links: $links"
+    test -z "$links" && return
+    sed -r -i "/^#\s+Default-Start:/ s/\<$level\>//" $file
+    rm -f $links
 }
 
 #------------------------------------------------------------------------------
