@@ -149,22 +149,23 @@ do_start() {
     if [ -n "$disable_param" ]; then
 
         # If the ## expression matches then the resulting string length is zero
-        [ -z "${disable_param##*[a]*}" ] && DISABLE_ACPID=true
-        [ -z "${disable_param##*[A]*}" ] &&  ENABLE_ACPID=true
-        [ -z "${disable_param##*[d]*}" ] &&       NO_DBUS=true
-        [ -z "${disable_param##*[g]*}" ] &&   DISABLE_GPM=true
+        [ -z "${disable_param##*[a]*}" ] &&   DISABLE_ACPID=true
+        [ -z "${disable_param##*[A]*}" ] &&    ENABLE_ACPID=true
+        [ -z "${disable_param##*[d]*}" ] &&         NO_DBUS=true
+        [ -z "${disable_param##*[g]*}" ] &&     DISABLE_GPM=true
         [ -z "${disable_param##*[i]*}" ] && DISABLE_IFPLUGD=true
-        [ -z "${disable_param##*[l]*}" ] &&          LEAN=true
-        [ -z "${disable_param##*[L]*}" ] && ENABLE_SYSLOG=true
-        [ -z "${disable_param##*[m]*}" ] &&          MEAN=true
-        [ -z "${disable_param##*[n]*}" ] &&   DISABLE_NFS=true
-        [ -z "${disable_param##*[n]*}" ] &&    NFS_REASON=n
-        [ -z "${disable_param##*[N]*}" ] &&   ENABLE_NTPD=true
-        [ -z "${disable_param##*[P]*}" ] &&    ENABLE_PAM=true
-        [ -z "${disable_param##*[v]*}" ] &&  DISABLE_VBOX=true
-        [ -z "${disable_param##*[w]*}" ] &&          WICD=no
-        [ -z "${disable_param##*[W]*}" ] &&          WICD=yes
-        [ -z "${disable_param##*[x]*}" ] &&     XTRA_LEAN=true
+        [ -z "${disable_param##*[l]*}" ] &&            LEAN=true
+        [ -z "${disable_param##*[L]*}" ] &&   ENABLE_SYSLOG=true
+        [ -z "${disable_param##*[m]*}" ] &&            MEAN=true
+        [ -z "${disable_param##*[n]*}" ] &&     DISABLE_NFS=true
+        [ -z "${disable_param##*[n]*}" ] &&      NFS_REASON=n
+        [ -z "${disable_param##*[N]*}" ] &&     ENABLE_NTPD=true
+        [ -z "${disable_param##*[P]*}" ] &&      ENABLE_PAM=true
+        [ -z "${disable_param##*[S]*}" ] && ENABLE_PLYMOUTH=true
+        [ -z "${disable_param##*[v]*}" ] &&    DISABLE_VBOX=true
+        [ -z "${disable_param##*[w]*}" ] &&            WICD=no
+        [ -z "${disable_param##*[W]*}" ] &&            WICD=yes
+        [ -z "${disable_param##*[x]*}" ] &&       XTRA_LEAN=true
     fi
 
     #[ -n "$LEAN" -o -n "$MEAN" ] && : ${WICD:=no}
@@ -193,8 +194,9 @@ do_start() {
         fi
     fi
 
-    [ "$ENABLE_NTPD" ] || disable_services "ntpd disable by default" ntp
-    [ "$ENABLE_PAM" ]  || disable_pam_login
+    [ "$ENABLE_NTPD"     ] || disable_services "ntpd disable by default" ntp
+    [ "$ENABLE_PAM"      ] || disable_pam_login
+    [ "$ENABLE_PLYMOUTH" ] || disable_services "plymouth" plymouth
 
     # only exit early if "disable=OFF" is given (see above)
     # [ -n "$must_run" -o -n "$DISABLE_NFS" ] || exit 0
