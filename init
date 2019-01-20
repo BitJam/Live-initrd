@@ -112,9 +112,10 @@
 MKFS_FREE_MARGIN=10
   rootfs_SIZE_PARAM="min_size=250 mid_size=100 max_size=4096 factor=50"
   homefs_SIZE_PARAM="min_size=10 mid_size=100 max_size=8192 factor=25"
-         MKFS_SIZES="250 375 500 750 1024 1500 2048 2500 3072 4096"
+         MKFS_SIZES="500 750 1024 1500 2048 2500 3072 4096"
        BIGGER_SIZES="5120 6144 8192 10240 12288 15360 20480"
-      SMALLER_SIZES="10 100 175"
+      BIGGEST_SIZES="51200 102400 204800 512000"
+      SMALLER_SIZES="10 100 175 250 375"
 
       LIVE_SCRIPTS="live-L10n live-init"
       LAST_BP_TIME=0
@@ -5010,10 +5011,11 @@ _persist_makefs() {
     local part_fstype=$(mntpnt_fstype $dir) mkfs_sizes=$MKFS_SIZES is_vfat
     case $part_fstype in
         vfat) is_vfat=true ;;
-           *) mkfs_sizes="$mkfs_sizes $BIGGER_SIZES" ;;
+           *) mkfs_sizes="$mkfs_sizes $BIGGER_SIZES"
+              [ "$base_file" = homefs ] && mkfs_sizes="$mkfs_sizes $BIGGEST_SIZES";;
     esac
 
-    [ "$base_file" = homefs ] && mkfs_sizes="$SMALLER_SIZES $mkfs_sizes"
+    [ "$base_file" = homefs -a "$avail" -lt 1024 ] && mkfs_sizes="$SMALLER_SIZES $mkfs_sizes"
 
     local max_mkfs_size=${mkfs_sizes##* }
 
