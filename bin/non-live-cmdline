@@ -147,6 +147,11 @@ for param in $(cat /proc/cmdline); do
         aufs|overlayfs) ;;
         wicd|nowicd) ;;
 
+        # Added by Grub
+        BOOT_IMAGE=*) ;;
+
+        # Sometimes added with grub loop mounts
+            *root=*) ;;
         *) printf "$param "
     esac
 done
