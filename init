@@ -159,6 +159,9 @@ set_live_dirs() {
 
 hbar="======================================================================"
 tbar="----------------------------------------------------------------------"
+rbar=">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
+lbar="<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<"
+
 
 main_wrapper() {
 
@@ -2170,7 +2173,7 @@ find_linuxfs_file() {
         mkdir -p $ISO_FILE_MP
         mount -t iso9660 -o loop,ro $iso_full $ISO_FILE_MP \
             || mount -t udf -o loop,ro $iso_full $ISO_FILE_MP \
-            || fatal "Could not mount %s as a %s file" "$(pqh $iso_full)" 'iso'
+            || fatal_dmesg "Could not mount %s as a %s file" "$(pqh $iso_full)" 'iso'
 
         # Find the linuxfs file
         SQFILE_FULL="$ISO_FILE_MP/$SQFILE_FILE"
@@ -2246,7 +2249,7 @@ find_crypt_or_linuxfs() {
            $ENCRYPT_BOTH) files="$crypt_full $SQFILE_FILE"  ;;
            $ENCRYPT_ONLY) files="$crypt_full"               ;;
                   uuid=*) CRYPT_UUID=${ENCRYPT_MODE#uuid=}  ;;
-                       *) fatal 'Unknown encyption mode %s' "$ENCRYPT_MODE" ;;
+                       *) fatal 'Unknown encryption mode %s' "$ENCRYPT_MODE" ;;
     esac
 
     local crypt_dev
@@ -2317,7 +2320,7 @@ find_crypt_or_linuxfs() {
     cttyhack cryptsetup open --type luks $crypt_dev $LUKS_NAME || fatal "Could not open LUKS device %s" $crypt_dev
     local mapper_dev=/dev/mapper/$LUKS_NAME
     msg "Opened encrypted device %s at %s" "$crypt_dev" "$mapper_dev"
-    try_mount "$mapper_dev" "$BOOT_MP" || fatal "Could not mount encrypted device"
+    try_mount "$mapper_dev" "$BOOT_MP" || fatal_dmesg "Could not mount encrypted device"
     test -e "$BOOT_MP/$SQFILE_FILE" || fatal "Could not find file %s on encrypted partition" "$SQFILE_FILE"
     BOOT_FSTYPE=$(mntpnt_fstype $BOOT_MP)
     ENCRYPTED=true
@@ -2546,7 +2549,7 @@ mount_linuxfs() {
     vmsg 6 "Mount file %s at %s" "$(fq $sqfile_full)" "$(fq $sqfs_mp)"
     #. Could not mount <file name> as a <type> filesystem
     log_cmd mount -t squashfs -o loop,ro $sqfile_full $sqfs_mp \
-        || fatal "Could not mount %s as a %s filesystem" $sqfile_full squashfs
+        || fatal_dmesg "Could not mount %s as a %s filesystem" $sqfile_full squashfs
 
     if [ -n "$wrap_mp" -a -e "$sqfs_mp/$SQFILE_NAME" -a ! -d "$sqfs_mp/usr" ]; then
         msg 'Found wrapped filesystem. Move wrapper ...'
@@ -2554,7 +2557,7 @@ mount_linuxfs() {
         mount --move $sqfs_mp $wrap_mp
 
         try_file_mount  $wrap_mp/$SQFILE_NAME $sqfs_mp ro \
-            || fatal "Could not mount %s as a %s file" $sqfile_full 'filesystem'
+            || fatal_dmesg "Could not mount %s as a %s file" $sqfile_full 'filesystem'
     fi
 
     LINUXFS_DEV=$(df -P $sqfile_full | tail -n1 | cut -d" " -f1)
@@ -2702,7 +2705,7 @@ mount_overlayfs() {
     vmsg 6 'Mount %s at %s' 'overlayfs' "$(fq $aufs_mp)"
 
     log_cmd mount -t overlay overlay -o "lowerdir=$sqfs_mp,upperdir=$upper,workdir=$work" $aufs_mp \
-        || fatal "Could not mount %s" overlayfs
+        || fatal_dmesg "Could not mount %s" overlayfs
 }
 
 
@@ -2716,7 +2719,7 @@ mount_aufs() {
     vmsg 5 "Mount %s at %s" 'aufs' "$(fq $aufs_mp)"
 
     log_cmd mount -t aufs -o "$aufs_arg",noatime $aufs_mp $aufs_mp \
-        || fatal "Could not mount %s" aufs
+        || fatal_dmesg "Could not mount %s" aufs
 }
 
 #------------------------------------------------------------------------------
@@ -3398,6 +3401,17 @@ _fatal()     { _error "Fatal Error"     ""  ""          "$@" ;}
 _non_fatal() { _error "Non-Fatal Error" "c" "continue"  "$@" ;}
 fatal()      { _fatal     "$(printf "$@")"                   ;}
 non_fatal()  { _non_fatal "$(printf "$@")"                   ;}
+
+
+fatal_dmesg() {
+    local lines=10
+    printf "Last %s lines of the dmesg output:\n" "$lines"
+    printf "%s\n" "$rbar"
+    dmesg | tail -n$lines
+    printf "%s\n" "$lbar"
+
+    fatal "$@"
+}
 
 YES_no() {  _yes_no 0 "yes" "$@" ;}
 yes_NO() {  _yes_no 1 "no"  "$@" ;}
