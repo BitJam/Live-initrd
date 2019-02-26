@@ -50,14 +50,7 @@ do_start() {
 
     echo_script "Configure Live-usb storage" $0
 
-    DEF_USER=$(find_def_user)
-
-    eval "USER_HOME=~$DEF_USER"
-
-    if [ -z "$DEF_USER" -o -z "${USER_HOME##~*}" ]; then
-        echo_live "No default user %s found on the system." "$(pquote $DEF_USER)"
-        USER_HOME=
-    fi
+    mountpoint -q "$BOOT_MP" || DISABLE=true
 
     if [ "$DISABLE" ]; then
         echo_live "Disabling live-usb storage"
@@ -65,9 +58,11 @@ do_start() {
         return
     fi
 
-    local store_dir=$BOOT_MP/$STORAGE_DIR
-    create_storage "$DEF_USER" "$USER_HOME"  $store_dir
-    create_storage root        /root         $store_dir
+    local STORE_DIR=$BOOT_MP/$STORAGE_DIR
+    local user
+    for user in root $(get_home_users); do
+        create_user_storage "$user"
+    done
 }
 
 do_stop() {
@@ -78,17 +73,8 @@ do_stop() {
 
     read_cmdline
 
-    DEF_USER=$(find_def_user)
-
-    eval "USER_HOME=~$DEF_USER"
-
-    if [ -z "$DEF_USER" -o -z "${USER_HOME##~*}" ]; then
-        echo_live "No default user %s found on the system." "$(pquote $DEF_USER)"
-        USER_HOME=
-    fi
-
     local dir bind_dir
-    for dir in /root $USER_HOME; do
+    for dir in /root $(get_home_users 6); do
         bind_dir=$dir/$STORAGE_BIND
         test -d "$bind_dir" || continue
         mountpoint -q $bind_dir && umount $bind_dir
@@ -96,16 +82,21 @@ do_stop() {
     done
 }
 
-create_storage() {
-    local user=$1  home=$2  store_dir=$3/$1  from_dir=$2/$STORAGE_BIND
+create_user_storage() {
+    local user=$1
+
+    ent=$(getent passwd $user)
+    local home=$(echo $ent | cut -d: -f6)
+    local  uid=$(echo $ent | cut -d: -f3)
+    local  gid=$(echo $ent | cut -d: -f4)
+
+    local from_dir="$home/$STORAGE_BIND"
+    local store_dir="$STORE_DIR/$user"
 
     if ! test -d "$home"; then
         echo_live "Home directory for user %s not found" "$(pquote $user)"
         return
     fi
-
-    local uid=$(getent passwd $user | cut -d: -f3)
-    local gid=$(getent passwd $user | cut -d: -f4)
 
     if [ ${#uid} -le 0 -o ${#gid} -le 0 ]; then
         echo_live "Could not find UID or GUID for user %s" "$(pquote $user)"
@@ -121,8 +112,6 @@ create_storage() {
         echo_live "Can only use %s storage with UID of %s" "$(pquote vfat live-usb)" "$(pquote $USER_UID)"
         return
     fi
-
-    mountpoint -q "$BOOT_MP" || DISABLE=true
 
     test -e $from_dir || mkdir -p $from_dir
 
@@ -144,12 +133,22 @@ create_storage() {
     mount --bind $store_dir $from_dir
 }
 
-find_def_user() {
-    local user=$(sed -r -n 's/^\s*default_user\s+//p' /etc/slim.conf 2>/dev/null | tail -n1)
-    : ${user:=$(sed -r -n 's/^\s*autologin-user=//p' /etc/lightdm/lightdm.conf 2>/dev/null | tail -n1)}
-    : ${user:=$(getent passwd 1000 | cut -d: -f1)}
-    : ${user:=demo}
-    echo ${user%% *}
+#------------------------------------------------------------------------------
+# Return a list of user names with a shell like /bin/*sh with a home directory
+# under /home/ and with a UID of 1000 or over.
+#------------------------------------------------------------------------------
+get_home_users() {
+    local field=${1:-1}
+    local ent uid
+    while read ent; do
+        [ -z "$ent" ]    && continue
+        uid=$(echo $ent | cut -d: -f3)
+        [ -z "$uid" ]     && continue
+        [ $uid -lt 1000 ] && continue
+        echo $ent | cut -d: -f$field
+    done<<Home_Ents
+$(grep  ":/home/.*:/bin/.*sh$" /etc/passwd)
+Home_Ents
 }
 
 read_cmdline() {
