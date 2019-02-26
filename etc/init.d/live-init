@@ -195,11 +195,9 @@ do_start() {
     # and such.  First check the default user for SLiM and lightdm.  Then get
     # more desparate.
 
-    DEF_USER=$(find_def_user)
+    unset DEF_USER USER_HOME
 
-    eval "USER_HOME=~$DEF_USER"
-
-    if [ -z "$DEF_USER" -o -z "${USER_HOME##~*}" ]; then
+    if ! find_def_user $DISTRO; then
         #. No default user <USER-NAME> found on the system.
         echo_live "No default user %s found on the system." "$(pquote $DEF_USER)"
         return
@@ -1032,12 +1030,58 @@ iq() { echo "$bold_co$*$issue_co" ; }
 #-------------------------------------------------------------------------------
 # DEFAULT USER stuff
 #-------------------------------------------------------------------------------
+
 find_def_user() {
-    local user=$(sed -r -n 's/^\s*default_user\s+//p' /etc/slim.conf 2>/dev/null | tail -n1)
-    : ${user:=$(sed -r -n 's/^\s*autologin-user=//p' /etc/lightdm/lightdm.conf 2>/dev/null | tail -n1)}
-    : ${user:=$(getent passwd 1000 | cut -d: -f1)}
-    : ${user:=demo}
-    echo ${user%% *}
+    local distro=$1
+    USER_HOME=  DEF_USER=
+
+    case $distro in
+        MX|MX-*) valid_user $(mx_user) && return 0
+                 valid_user $(ax_user) && return 0 ;;
+
+              *) valid_user $(ax_user) && return 0
+                 valid_user $(mx_user) && return 0 ;;
+    esac
+
+    local uid
+    for uid in $(cut -d: -f3 /etc/passwd | sort -n); do
+        [ -z "$uid" ]     && continue
+        [ $uid -lt 1000 ] && continue
+        valid_user $(getent passwd $uid | cut -d: -f1) && return 0
+    done
+
+    return 1
+}
+
+#------------------------------------------------------------------------------
+# Get default user from slim.conf and lightdm.conf
+#------------------------------------------------------------------------------
+ax_user() { sed -r -n 's/^\s*default_user\s+([^\s]+)/\1/p' /etc/slim.conf 2>/dev/null | tail -n1 ; }
+mx_user() { sed -r -n 's/^\s*autologin-user=([^\s]+)/\1/p' /etc/lightdm/lightdm.conf 2>/dev/null | tail -n1 ; }
+
+#------------------------------------------------------------------------------
+# A valid user must:
+#    be a user
+#    have a uid >= 1000
+#    have a /bin/*sh login shell
+#    have a home directory under /home/
+#
+# Return results in DEF_USER and USER_HOME
+#------------------------------------------------------------------------------
+valid_user() {
+    local user=$1
+    [ -z "$user" ] && return 1
+
+    #echo "try: $user"
+    local ent=$(grep "^$user:.*:/home/.*:/bin/.*sh$" /etc/passwd)
+    local uid=$(echo $ent | cut -d: -f3)
+    [ -z "$uid" ] && return 1
+    [ $uid -lt 1000 ] && return 1
+
+    USER_HOME=$(echo $ent | cut -d: -f6)
+    DEF_USER=user
+    #echo "found: $user"
+    return 0
 }
 
 #------------------------------------------------------------------------------
