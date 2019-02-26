@@ -5562,6 +5562,8 @@ Fancy_Stuff
 
     fi
 
+    sync
+
     local file full_file
     for file in .bashrc .profile; do
         full_file=$dir/etc/skel/$file
