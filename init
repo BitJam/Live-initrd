@@ -5046,6 +5046,7 @@ _persist_makefs() {
         sizes="$sizes $size"
     done
 
+    # FIXME: this needs to be rounded or something
     # Include default size at end of menu if needed
     if [ -z "$default_cnt" -a $default_size -gt 0 ]; then
         sizes="$sizes $default_size"
