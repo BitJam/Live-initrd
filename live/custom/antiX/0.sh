@@ -44,6 +44,7 @@ live_param_filter() {
         skylakeflicker)  ;;
         i915powersave) ;;
         wicd|nowicd) ;;
+        nomicrocode);;
 
         # Most kernel codes from version 4.10 (plus additions)
         3c574_cs.*=*|3c589_cs.*=*|3c59x.*=*|3w-9xxx.*=*|3w-sas.*=*|8139cp.*=*|8139too.*=*|8250.*=*|8390.*=*);;
