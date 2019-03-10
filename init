@@ -2209,7 +2209,7 @@ find_linuxfs_file() {
 #------------------------------------------------------------------------------
 validate_encryption_mode() {
 
-    : ${ENCRYPT_MODE=$(head -n1 $ENCRYPT_MODE_FILE 2>/dev/null)}
+    : ${ENCRYPT_MODE:=$(head -n1 $ENCRYPT_MODE_FILE 2>/dev/null)}
 
     # Default to enable or disabled depending on existence of cryptsetup program
     if [ -z "$ENCRYPT_MODE" ]; then
