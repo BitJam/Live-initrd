@@ -206,10 +206,11 @@ do_start() {
     unset DEF_USER USER_HOME
 
     if ! find_def_user $DISTRO; then
-        #. No default user <USER-NAME> found on the system.
-        echo_live "No default user %s found on the system." "$(pquote $DEF_USER)"
+        echo_live "No default user found on the system."
         return
     fi
+
+    echo_live "Found default user %s"  "$(pquote $DEF_USER)"
 
     create_home "$DEF_USER" "$USER_HOME"
 
@@ -1087,7 +1088,7 @@ valid_user() {
     [ $uid -lt 1000 ] && return 1
 
     USER_HOME=$(echo $ent | cut -d: -f6)
-    DEF_USER=user
+    DEF_USER=$user
     #echo "found: $user"
     return 0
 }
