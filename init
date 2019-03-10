@@ -243,7 +243,8 @@ main_wrapper() {
     breakpoint 8      "before running live init.d scripts"
     breakpoint b8     "Bash shell before running live init.d scripts"
 
-    remove_from_runlevel lightdm 3
+    # I hope this is no longer needed
+    # remove_from_runlevel lightdm 3
 
     # Try running live-usb-save first so it can restore an xorg.conf machine-state file
     confile remasterable && LIVE_SCRIPTS="live-usb-save $LIVE_SCRIPTS"
@@ -6152,6 +6153,10 @@ prepare_switch_root() {
     (cd $new_root && mkdir -p sys proc dev/pts)
 }
 
+#------------------------------------------------------------------------------
+# Removes service symlinks from a given runlevel.  Used to get lightdm out of
+# runlevel 3.
+#------------------------------------------------------------------------------
 remove_from_runlevel() {
     local prog=$1  level=${2:-3}  root=${3:-/live/aufs}
     test -d $root || root=
