@@ -281,7 +281,7 @@ main_wrapper() {
 
     if [ -z "$DISABLE_STORE" ]; then
         if detect_old_persist_scripts $NEW_ROOT; then
-            warn "%s disabled due to outdated persistence scripts and libs" "$(pqw LiveUSB-Storage)"
+            warn "%s disabled due to outdated persistence scripts and libs" "$(pqw Live-usb-storage)"
         else
             confile remasterable && run_init_scripts $NEW_ROOT live-usb-storage
 
