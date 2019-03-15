@@ -328,6 +328,10 @@ main_wrapper() {
 
     write_log_files $MY_LOG $NEW_ROOT/$LOG_FILE
     MY_LOG=$NEW_ROOT/$LOG_FILE.color
+    [ "$NO_SAVE_LOGS" ] || copy_live_logs "$NEW_ROOT" "$LOG_DIR"
+
+    breakpoint b9    "Bash shell right before starting init"
+    breakpoint bash  "Bash shell right before starting init"
 
     #free -m >> $MY_LOG
     echo 3 > /proc/sys/vm/drop_caches
@@ -837,6 +841,8 @@ read_cmdline_params()
                       nomodeset) NO_MODESET=true                                 ;;
             noumount|noumnt|noU) NO_UMOUNT=true                                  ;;
                           [1-6]) RUN_LEVEL=$val                                  ;;
+                     nosavelogs) NO_SAVE_LOGS=true                               ;;
+                       notmptmp) $NO_TMP_TMP=true                                ;;
 
         #----- These get interpreted late but we don't want them to be unknown
                 hwclock=*|hwc=*)  ;;
@@ -5864,6 +5870,26 @@ write_log_files() {
     mkdir -p $(dirname $color_log)
     cp $my_log $color_log
     decolor_file $color_log
+}
+
+#------------------------------------------------------------------------------
+# Make a copy of /var/log/live/ at /root/Live-usb-storage/live-logs
+# Backup the previous version with a .old extension.
+#------------------------------------------------------------------------------
+copy_live_logs() {
+    local new_root=$1  log_dir=$2
+    local targ_dir=$new_root/root/Live-usb-storage
+    test -d $targ_dir || return
+    local targ_live=$targ_dir/$LIVE_LOGS_DIR
+    local targ_old=$targ_live.old
+
+    # Make room for new .old directory
+    [ -e $targ_live -a -e $targ_old ] && rm -rf $targ_old
+
+    # Save current to .old
+    [ -e $targ_live ] && mv $targ_live $targ_old
+
+    cp -r $new_root$log_dir $targ_live
 }
 
 #------------------------------------------------------------------------------
