@@ -3045,6 +3045,8 @@ breakpoint() {
 
     local bp_time_1=$(get_time)
 
+    sync
+
     trap - $SIGNAL_LIST
 
     env PS1="${green}bp $red$bp$cyan>$nc_co " BP=$bp PATH=$LIVE_BIN:$PATH \
