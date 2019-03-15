@@ -1015,7 +1015,11 @@ write_issue_file() {
     (   imsg "Welcome to %s! Powered by %s" "$(iq $pretty_name)" "$(iq Debian)."
         if [ -n "$installer" ]; then
             echo
-            imsg "For command line install, login as %s (password=%s)." "$(iq root)" "$(iq root)"
+            if test -e /live/config/persist-root; then
+                imsg "For command line install, login as %s." "$(iq root)"
+            else
+                imsg "For command line install, login as %s (password=%s)." "$(iq root)" "$(iq root)"
+            if
             imsg "Enter the command %s.  Follow the instructions." "$(iq $installer)"
         fi
         if [ -n "$cli_cc" ]; then
