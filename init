@@ -6191,6 +6191,8 @@ prepare_switch_root() {
     mount_tmpfs $new_root/run    10 /run        mode=755,nodev
     mount_tmpfs $new_live        10 $live_dir   mode=755
 
+    [ "$NO_TMP_TMP" ] || mount_tmpfs $new_root/tmp 10 /tmp mode=755
+
     ln -s . $new_live/live
 
     local f
