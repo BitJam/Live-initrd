@@ -308,13 +308,14 @@ main_wrapper() {
     done
     rm -f $rm_list
 
-    rm -f $NEW_ROOT$BLACK_LIST_FILE
-    [ -e $BLACK_LIST_FILE ] && cp $BLACK_LIST_FILE $NEW_ROOT$BLACK_LIST_FILE
+    if [ -e $BLACK_LIST_FILE ]; then
+        local modprobe_d=$NEW_ROOT/run/modprobe.d
+        mkdir -p $modprobe_d
+        cp $BLACK_LIST_FILE $modprobe_d
+    fi
 
     dmesg > $NEW_ROOT/live/config/dmesg.out
 
-    breakpoint bash  "Bash shell right before starting init"
-    breakpoint b9    "Bash shell right before starting init"
     breakpoint 9     "right before starting init"
 
     stop_hotplug
