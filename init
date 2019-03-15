@@ -127,8 +127,14 @@ MKFS_FREE_MARGIN=10
       MADE_BY_FILE="made-by-live-usb-maker"
     PROG_BAR_WIDTH=100
 
-   MIN_SCREEN_WIDTH=80
-   DEF_SCREEN_WIDTH=120
+  MIN_SCREEN_WIDTH=80
+  DEF_SCREEN_WIDTH=120
+
+      DID_EFI_FILE="boot/grub/config/did-efi-grub"
+     EFI_GRUB_CONF="boot/grub/config/efi-grub.cfg"
+    UEFI_UUID_FILE="antiX/esp-uuid"
+
+     LIVE_LOGS_DIR="live-logs"
 
     #           HUP INT QUIT SEGV TERM
     SIGNAL_LIST="1   2   3    11   15"
@@ -462,6 +468,8 @@ main_core() {
     fi
 
     mount_linuxfs "$SQFS_MP" "$SQFILE_FULL" "$WRAP_FILE_MP"
+
+    fix_old_lum "$BOOT_MP" "${BIOS_UUID:-$BOOT_UUID}"
 
     if [ "$LOAD_ALL_MODULES" ]; then
         debug_cmd find /sys/devices -name uevent -exec sed -n 's/^MODALIAS=//p' '{}' + 2>/dev/null | sort -u
@@ -6066,6 +6074,71 @@ write_ntfs_pids() {
     [ "$ntfs_pids" ] || return
     mkdir -p $(dirname $file)
     echo "$ntfs_pids" > $file
+}
+
+
+#------------------------------------------------------------------------------
+# This makes old live-usb-maker acting on a new iso just like the new LUM.
+#------------------------------------------------------------------------------
+fix_old_lum() {
+    boot_mp=$1  bios_uuid=$2
+
+    test -e $boot_mp/$DID_EFI_FILE  && return 0
+    test -e $boot_mp/$EFI_GRUB_CONF || return 0
+
+    msg "Updating grub config to %s" "$(pq 2.0)"
+
+    vmsg 7 "Using BIOS UUID: %s" "$(pq $bios_uuid)"
+
+    [ -z "$bios_uuid" ] && return 1
+
+    local efi_uuid efi_uuid_file=$boot_mp/$UEFI_UUID_FILE
+    test -r $efi_uuid_file || return 1
+    read efi_uuid 2>/dev/null <$efi_uuid_file
+
+    vmsg 7 'EFI UUID: %s' "$efi_uuid"
+    [ ${#efi_uuid} -gt 0 ] || return 1
+
+    local efi_mp=/live/efi
+    mkdir -p $efi_mp
+    local dev=$(uuid_to_dev $efi_uuid)
+    vmsg 7 'EFI device; %s'  "$dev"
+    test -b "$dev" || return 1
+
+    log_cmd mount "$dev" "$efi_mp"
+    mountpoint -q $efi_mp || return 1
+
+    local efi_grub_dir="$efi_mp/boot/grub"
+    log_cmd rm -rf   "$efi_grub_dir"
+    log_cmd mkdir -p "$efi_grub_dir"
+
+    local efi_grub_cfg="$efi_grub_dir/grub.cfg"
+    log_cmd cp $boot_mp/$EFI_GRUB_CONF $efi_grub_cfg
+
+    sed -i "/^\s*#/! s/%UUID%/$bios_uuid/" $efi_grub_cfg
+
+    if grep -q "^[^#]*%ID_FILE%" $efi_grub_cfg ; then
+        local rand_file=/boot/grub/config/$(random_string).id
+        log_cmd touch $boot_mp$rand_file
+        sed -i "/^\s*#/! s|%ID_FILE%|$rand_file|" $efi_grub_cfg
+    fi
+
+    sync
+
+    breakpoint F "After updating grub config from old LUM"
+
+    umount $efi_mp
+
+    touch $boot_mp/$DID_EFI_FILE
+    return 0
+}
+
+#------------------------------------------------------------------------------
+# Create a random hex string $cnt * 2 chars long
+#------------------------------------------------------------------------------
+random_string() {
+    local cnt=${1:-16}
+    dd if=/dev/urandom status=none bs=1 count=$cnt | od -An -x | tr -d " "
 }
 
 #------------------------------------------------------------------------------
