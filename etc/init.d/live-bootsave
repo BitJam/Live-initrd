@@ -4,6 +4,7 @@ export PATH=/sbin:/usr/sbin:/bin:/usr/bin:/usr/local/bin:/live/bin
 
 BIOS_UUID_FNAME="bios-dev-uuid"
 UEFI_UUID_FNAME="esp-uuid"
+   DID_EFI_FILE="boot/grub/config/did-efi-grub"
 
 . /live/lib/live-init-utils.sh
 
@@ -85,26 +86,23 @@ do_gfxsave() {
 do_boot_save() {
     . /live/config/initrd.out
 
-    if [ "$BOOT_FSTYPE" = vfat ]; then
+    if test -e $BOOT_MP/$DID_EFI_FILE; then
         grub2-save $BOOT_MP
+        return $?
     fi
 
-    local uuid dir uuid_file name=$UEFI_UUID_FNAME
-    for dir in $SQFILE_DIR $BOOT_MP; do
-        test -r $dir/$name || continue
-        uuid_file=$dir/$name
-    done
+    local uuid uuid_file=$SQFILE_DIR/$UEFI_UUID_FNAME
     test -r $uuid_file || return
     read uuid 2>/dev/null <$uuid_file
     [ ${#uuid} -gt 0 ] || return
 
-    local esp_mp=/live/esp
-    mkdir -p $esp_mp
-    mount --uuid $uuid $esp_mp
-    mountpoint -q $esp_mp || return
-    grub2-save $esp_mp
+    local efi_mp=/live/efi
+    mkdir -p $efi_mp
+    mount --uuid $uuid $efi_mp
+    mountpoint -q $efi_mp || return
+    grub2-save $efi_mp
     sync
-    umount $esp_mp
+    umount $efi_mp
 }
 
 #------------------------------------------------------------------------------
