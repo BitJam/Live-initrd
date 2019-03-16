@@ -1019,7 +1019,7 @@ write_issue_file() {
                 imsg "For command line install, login as %s." "$(iq root)"
             else
                 imsg "For command line install, login as %s (password=%s)." "$(iq root)" "$(iq root)"
-            if
+            fi
             imsg "Enter the command %s.  Follow the instructions." "$(iq $installer)"
         fi
         if [ -n "$cli_cc" ]; then
