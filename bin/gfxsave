@@ -98,6 +98,11 @@ Expected$cheat_co menus custom both$err_co or$cheat_co reset"
         esac
 
         case $gfx_cmd in
+            reset) remove_custom_entry $XXX_LINUX_CFG ;;
+        esac
+
+
+        case $gfx_cmd in
             menus|both) update_gfxmenus $MENU_DIR;;
         esac
 
@@ -536,6 +541,15 @@ Config_File
 
     mv $file2 $file
     DEFAULT_LABEL=custom
+}
+
+
+#------------------------------------------------------------------------------
+# Remove the custom entry (if it exists)
+#------------------------------------------------------------------------------
+remove_custom_entry() {
+    local file=$1
+    sed -i "/^LABEL custom/,/^$/d" "$file"
 }
 
 #------------------------------------------------------------------------------
