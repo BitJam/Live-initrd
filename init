@@ -375,7 +375,7 @@ main_core() {
 
     breakpoint 1 "before welcome"
 
-    do_tsplash
+    start_tsplash
 
     # These ones must be loaded before the others
     # Add a cheap black-lister
@@ -845,6 +845,7 @@ read_cmdline_params()
                           [1-6]) RUN_LEVEL=$val                                  ;;
                      nosavelogs) NO_SAVE_LOGS=true                               ;;
                        notmptmp) $NO_TMP_TMP=true                                ;;
+                      tsplash=*) DO_TSPLASH=$value                               ;;
 
         #----- These get interpreted late but we don't want them to be unknown
                 hwclock=*|hwc=*)  ;;
@@ -6175,7 +6176,14 @@ random_string() {
 #------------------------------------------------------------------------------
 #
 #------------------------------------------------------------------------------
-do_tsplash() {
+start_tsplash() {
+    case $DO_TSPLASH in
+        no|off) return ;;
+    esac
+
+    DO_TSPLASH=true
+    touch $OUTPUT_DIR/tsplash
+
     openvt -c 10 -s tsplash
 }
 

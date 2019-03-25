@@ -1,6 +1,6 @@
 #!/bin/sh
 
-PATH=/live/bin:/bin
+PATH=$PATH:/live/bin
 dir=/live/custom/lao
 
 main() {
