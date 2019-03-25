@@ -4,11 +4,17 @@ PATH=/live/bin:/bin
 dir=/live/custom/lao
 
 main() {
+    local e=$(printf "\e")
+    local cyan="$e[0;36m"  nc_co="$e[0m"
+
+    height=$(stty size | cut -d" " -f1)
+    : ${height:=24}
+    local limit=$((height - 3))
     local idx=$(shuf -n1 $dir/lao.idx)
     : ${idx:=0}
-
     IFS=''
-    local cnt=0
+    local cnt=0  lcnt=1
+    echo
     tail -n $idx $dir/lao.txt | while read -r line; do
         case $line in
                 %*) break            ;;
@@ -16,7 +22,9 @@ main() {
         esac
         [ $cnt -gt 1 ] && break
         echo "$line"
-    done
+        lcnt=$((lcnt + 1))
+        [ $lcnt -ge $limit ] && break
+    done | sed -r -e "s/^([1-9].*)/$cyan\1$nc_co/" -e "s/^/   /"
 }
 
 # tac lao.txt grep -n "^[0-9]" | cut -d: -f1 > lao.idx

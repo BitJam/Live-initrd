@@ -375,6 +375,8 @@ main_core() {
 
     breakpoint 1 "before welcome"
 
+    do_tsplash
+
     # These ones must be loaded before the others
     # Add a cheap black-lister
     if [ ${#BLACK_LIST} -gt 0 ]; then
@@ -6168,6 +6170,13 @@ fix_old_lum() {
 random_string() {
     local cnt=${1:-16}
     dd if=/dev/urandom status=none bs=1 count=$cnt | od -An -x | tr -d " "
+}
+
+#------------------------------------------------------------------------------
+#
+#------------------------------------------------------------------------------
+do_tsplash() {
+    openvt -c 10 -s tsplash
 }
 
 #------------------------------------------------------------------------------
