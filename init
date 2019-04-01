@@ -356,7 +356,7 @@ main_wrapper() {
         vmsg 6 "Start %s process" $(pq $INIT_COMMAND)
 
         [ "$NO_CLEAR" ] || [ "$NO_MODESET" ] || clear
-        exec $LIVE_BIN/switch_root -c /dev/console $NEW_ROOT $INIT_COMMAND "$@"
+        exec $LIVE_BIN/switch_root -c /dev/tty1 $NEW_ROOT $INIT_COMMAND "$@"
     fi
 }
 
