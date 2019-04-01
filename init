@@ -3430,6 +3430,7 @@ fatal_dmesg() {
     printf "%s\n" "$rbar"
     dmesg | tail -n$lines
     printf "%s\n" "$lbar"
+    printf "Kernel: %s\n" "$(uname -r)"
 
     fatal "$@"
 }
