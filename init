@@ -102,7 +102,8 @@
 
         BLACK_LIST=
    BLACK_LIST_FILE=/etc/modprobe.d/live-initrd-blacklist.conf
- KMS_VIDEO_MODULES="ast,bochs-drm,cirrus,emgd,gma500_gfx,i915,mgag200,nouveau,qxl,radeon,udl,vmwgfx"
+KMS_VIDEO_MODULES="amdgpu,analogix-anx78xx,ast,bochs-drm,ch7006,cirrus,gma500_gfx,hibmc-drm,i915,mgag200,nouveau,qxl,radeon,tda998x,udl,vboxvideo,virtio-gpu,vkms,vmwgfx"
+
     DEFAULT_SQFILE=/antiX/linuxfs
   DEFAULT_ISO_FILE=/antiX/antiX.iso
 
