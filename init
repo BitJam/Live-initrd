@@ -680,14 +680,18 @@ read_late_cmdline_params() {
                     toram_store) TO_RAM=true ; TORAM_STORE=true       ;;
 
         # Convenience short cuts from our menus
-                    persist_all) PERSIST='root!,home'                 ;;
+                    persist_all) PERSIST='root!,home!'                ;;
                    persist_root) PERSIST='root!'                      ;;
-                 persist_static) PERSIST='root!,home,static'          ;;
+                 persist_static) PERSIST='root!,home!,static'         ;;
+            persist_static_root) PERSIST='root!,static'               ;;
+                  p_static_root) PERSIST='root!,static'               ;;
                    persist_home) PERSIST='home!'                      ;;
 
-                 frugal_persist) set_frugal 'root!,home'              ;;
+                 frugal_persist) set_frugal 'root!,home!'             ;;
                     frugal_root) set_frugal 'root!'                   ;;
-                  frugal_static) set_frugal 'root!,home,static'       ;;
+                  frugal_static) set_frugal 'root!,home!,static'      ;;
+             frugal_static_root) set_frugal 'root!,home!,static'      ;;
+                  f_static_root) set_frugal 'root!,home!,static'      ;;
                     frugal_home) set_frugal 'home!'                   ;;
                     frugal_only) set_frugal                           ;;
 
@@ -867,10 +871,14 @@ read_cmdline_params()
                     persist_all)  ;;
                    persist_root)  ;;
                  persist_static)  ;;
+            persist_static_root)  ;;
+                  p_static_root)  ;;
                    persist_home)  ;;
                  frugal_persist)  ;;
                     frugal_root)  ;;
                   frugal_static)  ;;
+             frugal_static_root)  ;;
+                  f_static_root)  ;;
                     frugal_home)  ;;
                     frugal_only)  ;;
                         nostore)  ;;
