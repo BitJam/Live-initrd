@@ -59,7 +59,7 @@ do_start() {
 
     if [ "$DISABLE" ]; then
         echo_live "Disabling live-usb storage"
-        rmdir /root/$STORAGE_BIND $USER_HOME/$STORAGE_BIND 2>/dev/null
+        rmdir /root/$STORAGE_BIND /home/*/$STORAGE_BIND 2>/dev/null
         return
     fi
 
