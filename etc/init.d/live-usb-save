@@ -33,6 +33,7 @@ MSTATE_FILES="# File: machine-state-files
 /etc/modules
 /etc/udev/rules.d/*-persistent-net.rules
 # /etc/X11/xorg.conf
+/etc/X11/xorg.conf.d/*
 /sys/class/backlight/*/brightness
 /var/lib/alsa/asound.state"
 
