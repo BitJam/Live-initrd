@@ -5201,6 +5201,14 @@ default_makefs_size() {
     [ $size -gt $max_size ] && size=$max_size
     [ $size -gt $avail    ] && size=$avail
     [ $size -lt $min_size ] && return 1
+
+    # Round
+    if [ $size -gt $((3 * 1024)) ]; then
+        size=$(((size/1024) * 1024))
+    elif [ $size -gt 500 ]; then
+        size=$(((size/100) * 100))
+    fi
+
     echo $size
     return 0
 }
