@@ -35,6 +35,11 @@ do_start() {
 
     . $INITRD_OUT
 
+    CRIPPLED_FS=
+    case $BOOT_FSTYPE in
+        vfat|ntfs*) CRIPPLED_FS=true ;;
+    esac
+
     local bdir root_dir
     for bdir in $SQFILE_DIR $TORAM_MP; do
         [ -d $bdir ] || continue
@@ -108,7 +113,7 @@ create_user_storage() {
         return
     fi
 
-    if [ "$BOOT_FSTYPE" = vfat -a $uid -ne 0 -a $uid -ne $USER_UID ]; then
+    if [ -n "$CRIPPLED_FS" -a $uid -ne 0 -a $uid -ne $USER_UID ]; then
         echo_live "Can only use %s storage with UID of %s" "$(pquote vfat live-usb)" "$(pquote $USER_UID)"
         return
     fi
@@ -123,7 +128,7 @@ create_user_storage() {
     chown $uid:$gid $from_dir
 
     mkdir -p $store_dir
-    [ "$BOOT_FSTYPE" != vfat ] && chown $uid:$gid $store_dir
+    [  -z "$CRIPPLED_FS" ] && chown $uid:$gid $store_dir
 
     if mountpoint -q $from_dir; then
         echo_live "Directory %s is already a mountpoint" "$(pquote $from_dir)"
