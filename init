@@ -3805,44 +3805,43 @@ do_late_menus() {
     [ ${#cmdline} -gt 0 ] && echo "$cmdline" >> /live/config/cmdline
 }
 
-#------------------------------------------------------------------------------
-#
-#------------------------------------------------------------------------------
-size_label_m() { _size_label $1   "M G T" ;}
-size_label_k() { _size_label $1 "K M G T" ;}
 
-_size_label() {
-    local unit frac  size=$1  units=$2
-    for unit in $units; do
-        if [ $size -lt 1000 ]; then
-            if [ "$frac" -a $size -lt 10 ]; then
-                echo "$size.$frac$unit"
-            else
-                echo "$size$unit"
-            fi
-            return
-        fi
-        frac=$(( 10 * ($size % 1024) / 1024 ))
-        size=$(( size / 1024))
+#------------------------------------------------------------------------------
+# Label size given in Megs (MiB)
+#------------------------------------------------------------------------------
+label_meg() { label_any_size "$1" " " MiB GiB TiB PiB EiB; }
+
+#------------------------------------------------------------------------------
+# More compact horizontally, for tables
+#------------------------------------------------------------------------------
+size_label_m() { label_any_size "$1" "" M G T P E; }
+
+#------------------------------------------------------------------------------
+# Bite the bullet and do it "right"
+#------------------------------------------------------------------------------
+label_any_size() {
+    local size=$1 sep=$2 u0=$3 unit=$4  meg=$((1024 * 1024))  new_unit ; shift 4
+
+    for new_unit; do
+        [ $size -lt $meg ] && break
+        size=$((size / 1024))
+        unit=$new_unit
     done
-    echo "$size$unit"
-}
 
-#------------------------------------------------------------------------------
-#
-#------------------------------------------------------------------------------
-meg_to_gig() {
-    local meg=$1
-    local gig=$((meg / 1024))
-    if [ $((meg - gig * 1024)) -eq 0 ]; then
-        echo "${gig}GiB"
+    if [ $size -ge 102400 ]; then
+        awk "BEGIN {printf \"%d$sep$unit\n\", $size / 1024}"
+    elif [ $size -ge 10240 ]; then
+        awk "BEGIN {printf \"%0.1f$sep$unit\n\", $size / 1024}"
+    elif [ $size -ge 1024 ]; then
+        awk "BEGIN {printf \"%0.2f$sep$unit\n\", $size / 1024}"
     else
-        echo "${meg}MiB"
+        awk "BEGIN {printf \"%d$sep$u0\n\", $size}"
     fi
 }
 
+nq_label_meg() { nq $(label_meg $1); }
 #------------------------------------------------------------------------------
-#
+#  Allow user to select a partition from a menu of choices
 #------------------------------------------------------------------------------
 select_device() {
     local title_type=$1  var=$2  min_size=${3:-0} not_mounted=$4
@@ -4996,7 +4995,7 @@ create_persist_files() {
         local default_size rootfs_file=rootfs
         if [ "$WILL_REMASTER" ]; then
             default_size=$(stat -c %s $dir/rootfs 2>/dev/null)
-            msg 'default size: %s MiB' "$(nq $default_size)"
+            msg 'default size: %s' "$(nq_label_meg $default_size)"
             [ "$default_size" ] && default_size=$((default_size/1024/1024))
             rootfs_file=rootfs.new
         fi
@@ -5046,7 +5045,7 @@ _persist_makefs() {
     local base_file=${file%%.*}
     local default_size=$(default_makefs_size $avail ${base_file}_SIZE_PARAM $orig_def_size)
 
-    vmsg 6 '    Default size: %s MiB' $(nq $default_size)
+    vmsg 6 '    Default size: %s' "$(nq_label_meg $default_size)"
 
     : ${default_size:=-1}
 
@@ -5101,8 +5100,8 @@ _persist_makefs() {
     #[ "$needed" ] && quit=
 
     heading "create %s persistence file" "$(fq $file)"
-    vmsg 1 "Default size: %s MiB.  Filesystem type: %s" $(nq $default_size) $(pq ext4)
-    vmsg 1 "This default size will leave %s MiB free" $(nq $((avail - default_size)))
+    vmsg 1 "Default size: %s.  Filesystem type: %s" "$(nq_label_meg $default_size)" "$(pq ext4)"
+    vmsg 1 "This default size will leave %s free" "$(nq_label_meg $((avail - default_size)))"
     [ "$is_vfat" ] &&  warn "Warning: this can take several minutes per Gig on a %s file system" $(pqw $part_fstype)
 
     if [ "$AUTO_MAKE_FS" ]; then
@@ -5129,7 +5128,7 @@ _persist_makefs() {
         # Add "G" and "M" suffixes
         local size_menu=$(
         for size in $sizes; do
-            meg_to_gig $size
+            label_meg $size
         done)
 
         my_select "$title" fs_size 9 "$default_cnt" $size_menu "$quit"
