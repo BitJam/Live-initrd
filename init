@@ -110,13 +110,16 @@ KMS_VIDEO_MODULES="amdgpu,analogix-anx78xx,ast,bochs-drm,ch7006,cirrus,gma500_gf
   LIVE_X64_LD_PATH="/lib:/lib/x86_64-linux-gnu:/usr/lib"
   LIVE_386_LD_PATH="/lib:/lib/i386-linux-gnu:/usr/lib"
 
-MKFS_FREE_MARGIN=10
+   MKFS_FREE_MARGIN=10
   rootfs_SIZE_PARAM="min_size=250 mid_size=100 max_size=8192  factor=50"
   homefs_SIZE_PARAM="min_size=10  mid_size=100 max_size=10240 factor=25"
-         MKFS_SIZES="500 750 1024 1500 2048 2500 3072 4096"
-       BIGGER_SIZES="5120 6144 8192 10240 12288 15360 20480"
-      BIGGEST_SIZES="51200 102400 204800 512000"
-      SMALLER_SIZES="10 100 175 250 375"
+        MKFS_SIZES="5 10 50 100 150 200 250 300 400 500 750 1024 1536 2048 2560 3072 4096
+                    5120 6144 8192 10240 12288 14336 16384 18432 20480 25600 30720 35840 40960
+                    46080  51200 61440 71680 81920 102400  128000 153600 179200 204800 256000
+                    307200 358400 409600 460800 512000"
+
+   MAX_ROOTFS_SIZE="40960"  # 40 GiB
+   MIN_ROOTFS_SIZE="100"
 
       LIVE_SCRIPTS="live-L10n live-init"
       LAST_BP_TIME=0
@@ -3807,7 +3810,7 @@ do_late_menus() {
 
 
 #------------------------------------------------------------------------------
-# Label size given in Megs (MiB)
+# Label sizes given in Megs (MiB)
 #------------------------------------------------------------------------------
 label_meg() { label_any_size "$1" " " MiB GiB TiB PiB EiB; }
 
@@ -3820,7 +3823,7 @@ size_label_m() { label_any_size "$1" "" M G T P E; }
 # Bite the bullet and do it "right"
 #------------------------------------------------------------------------------
 label_any_size() {
-    local size=$1 sep=$2 u0=$3 unit=$4  meg=$((1024 * 1024))  new_unit ; shift 4
+    local size=$1  sep=$2  u0=$3  unit=$4  meg=$((1024 * 1024))  new_unit ; shift 4
 
     for new_unit; do
         [ $size -lt $meg ] && break
@@ -4995,8 +4998,10 @@ create_persist_files() {
         local default_size rootfs_file=rootfs
         if [ "$WILL_REMASTER" ]; then
             default_size=$(stat -c %s $dir/rootfs 2>/dev/null)
-            msg 'default size: %s' "$(nq_label_meg $default_size)"
-            [ "$default_size" ] && default_size=$((default_size/1024/1024))
+            if [ -n "$default_size" ]; then
+                default_size=$((default_size / 1024 / 1024))
+                msg 'default size: %s' "$(nq_label_meg $default_size)"
+            fi
             rootfs_file=rootfs.new
         fi
 
@@ -5035,12 +5040,13 @@ _persist_makefs() {
     local free=$(free_space $mp)
     local avail=$((free - MKFS_FREE_MARGIN))
 
-    vmsg 6 '      Free space: %s MiB' $(nq $free)
-    vmsg 6 ' Available space: %s MiB' $(nq $avail)
+    vmsg 6 '      Free space: %s' "$(nq_label_meg $free)"
+    vmsg 6 ' Available space: %s' "$(nq_label_meg $avail)"
+
 
     [ "$orig_def_size" ] && [ $orig_def_size -gt $avail ] \
-        && warn "Not enough room on Live device to create %s file of size %s MiB" \
-            $(fq $file) $(nq $orig_def_size)
+        && warn "Not enough room on Live device to create %s file of size %s" \
+            $(fq $file) "$(nq_label_meg $orig_def_size)"
 
     local base_file=${file%%.*}
     local default_size=$(default_makefs_size $avail ${base_file}_SIZE_PARAM $orig_def_size)
@@ -5049,39 +5055,30 @@ _persist_makefs() {
 
     : ${default_size:=-1}
 
-
+    mkfs_size=
     # Make sure we don't exceed max size of 4G - 1 on vfat file systems
     mkdir -p $dir
-    local part_fstype=$(mntpnt_fstype $dir) mkfs_sizes=$MKFS_SIZES is_vfat
+    local part_fstype=$(mntpnt_fstype $dir)  is_vfat
+
     case $part_fstype in
         vfat) is_vfat=true ;;
-           *) mkfs_sizes="$mkfs_sizes $BIGGER_SIZES"
-              [ "$base_file" = homefs ] && mkfs_sizes="$mkfs_sizes $BIGGEST_SIZES";;
     esac
 
-    [ "$base_file" = homefs -a "$avail" -lt 1024 ] && mkfs_sizes="$SMALLER_SIZES $mkfs_sizes"
+    # Set the maximum size for this meun
+    local max_size=$avail  min_size=0
+    [ -n "$is_vfat" -a "$max_size" -gt 4095 ] && max_size=4095
+    if [ "$base_file" = rootfs ]; then
+        [ "$max_size" -gt "$MAX_ROOTFS_SIZE" ] && max_size=$MAX_ROOTFS_SIZE
+        min_size=$MIN_ROOTFS_SIZE
+    fi
 
-    local max_mkfs_size=${mkfs_sizes##* }
-
-    # Create a menu of sizes.  Include the default size
-    local size sizes default_cnt cnt=1
-    for size in $mkfs_sizes; do
-        if [ -z "$default_cnt" -a $default_size -gt 0 -a $size -ge $default_size ]; then
-            sizes="$sizes $default_size"
-            default_cnt=$cnt
-        fi
-        cnt=$((cnt + 1))
-        [ $size -gt $avail ] && break
-        [ $size -eq $default_size ] && continue
+    # Create a menu of sizes, stop when the sizes are too big
+    local size sizes
+    for size in $MKFS_SIZES; do
+        [ $size -gt $max_size ] && break
+        [ $size -lt $min_size ] && continue
         sizes="$sizes $size"
     done
-
-    # FIXME: this needs to be rounded or something
-    # Include default size at end of menu if needed
-    if [ -z "$default_cnt" -a $default_size -gt 0 ]; then
-        sizes="$sizes $default_size"
-        default_cnt=$cnt
-    fi
 
     if [ -z "$sizes" -o "$default_size" = -1 ]; then
         if [ "$needed" ]; then
@@ -5092,12 +5089,11 @@ _persist_makefs() {
         return 1
     fi
 
-   # Include all available in menu if it is appropriate
+   # Include all available space as last entry in menu if it is appropriate
     local max=$(echo "$sizes" | sed 's/.* //')
-    [ $max -lt $avail -a $avail -lt $max_mkfs_size ] && sizes="$sizes $avail"
+    [ $max -lt $max_size ] && sizes="$sizes $max_size"
 
     local fs_type fs_size auto_mode create_mode quit=$(printf "quit")
-    #[ "$needed" ] && quit=
 
     heading "create %s persistence file" "$(fq $file)"
     vmsg 1 "Default size: %s.  Filesystem type: %s" "$(nq_label_meg $default_size)" "$(pq ext4)"
@@ -5110,8 +5106,8 @@ _persist_makefs() {
         local title=$(printf "Create %s file, manually or automatically" $(fq $file))
         my_select "$title" create_mode 0 1 "create automatically" "create custom" "$quit"
         case $create_mode in
-                            "quit") return 1;;
-            "create automatically") auto_mode=true;;
+                            "quit") return 1 ;;
+            "create automatically") auto_mode=true ;;
         esac
     fi
 
@@ -5123,31 +5119,16 @@ _persist_makefs() {
         local title=$(printf "Please select size of %s file" $(pqw $file))
 
         echo
-        vmsg 1 "There is %s MiB available on the device" $(nq $avail)
+        vmsg 1 "There is %s available on the device" "$(nq_label_meg $avail)"
 
-        # Add "G" and "M" suffixes
-        local size_menu=$(
-        for size in $sizes; do
-            label_meg $size
-        done)
-
-        my_select "$title" fs_size 9 "$default_cnt" $size_menu "$quit"
+        size_menu fs_size "$title" "" $sizes
         [ "$fs_size" = "quit" ] && return 1
 
-        # Remove "G" and "M" suffixes
-        [ -z "${fs_size%%*GiB}" ] && fs_size=$((${fs_size%GiB} * 1024))
-        fs_size=${fs_size%MiB}
-
-        vmsg 1 "Filesystem size %s MiB" $(nq $fs_size)
-
-        #title=$(printf "Please select file system for %s file" $(pqw $file))
-        #echo
-        #my_select "$title" fs_type 0 2 ext2 ext3 ext4 "$quit"
-        #[ "$fs_type" = "quit" ] && return 1
+        vmsg 1 "Filesystem size %s" "$(nq_label_meg $fs_size)"
         fs_type=ext4
     fi
 
-    vmsg 1 "Create %s file of type %s and size %s MiB" "$(fq $file)" "$(pq $fs_type)" "$(nq $fs_size)"
+    vmsg 1 "Create %s file of type %s and size %s" "$(fq $file)" "$(pq $fs_type)" "$(nq_label_meg $fs_size)"
 
     # Now do the actual work
 
@@ -5211,6 +5192,50 @@ default_makefs_size() {
     echo $size
     return 0
 }
+
+#------------------------------------------------------------------------------
+# Let user select from a wide range of sizes
+#------------------------------------------------------------------------------
+size_menu() {
+    local var=$1 title=$2  max_s=${3:-12} ; shift 3
+
+    # create a variable for each row
+    local i
+    for i in $(seq 1 $max_s); do
+        eval local s_$i
+    done
+
+    # Fill the rows with  "cnt) label"
+    local cnt=0  scnt=0  size  data label  s
+    for size in $* quit ; do
+        cnt=$((cnt + 1))
+        scnt=$((scnt + 1))
+
+        case $size in
+                quit) label=$(bq "quit")       ;;
+            *[^0-9]*) label=$(bq "$size")      ;;
+                   *) label=$(label_meg $size) ;;
+        esac
+
+        data="$data$cnt:$size\n"
+        eval s=\$s_$scnt
+        s="$s$(printf "%3s) %-12s" "$cnt" "$label")"
+        eval s_$scnt=\$s
+        [ $scnt -ge $max_s ] && scnt=0
+    done
+    [ $cnt -lt $max_s ] && max_s=$cnt
+
+    local display
+    for cnt in $(seq 1 $max_s); do
+        eval s=\$s_$cnt
+        display="$display$s\n"
+    done
+
+    display=$(echo -e "$display" | sed -r -e "s/( [0-9]+)(\))/ $green\1$white\2$cyan/g" -e "s/$/$nc_co/")
+
+    my_select_2 "$title"  $var  "" "$data" "$display"
+}
+
 
 #------------------------------------------------------------------------------
 #
@@ -5314,7 +5339,7 @@ copy_persist_to_ram() {
         vmsg_nc 3 $tbar
         return 1
     fi
-    vmsg 5 "Copy %s MiB to RAM ..." "${num_co}$persist_used${m_co}"
+    vmsg 5 "Copy %s to RAM ..." "$(nq_label_meg $persist_used)"
     if ! cp_dir $ROOTFS_MP $AUFS_RAM_MP 2>&1; then
          err "Copy persistent root to RAM failed!  Will erase partial copy ..."
          rm -rf $AUFS_RAM_MP/*
