@@ -591,7 +591,7 @@ mountpoint_list() {
         esac
 
         case $mp in
-            /|/dev|/dev/*|/proc|/sys|/run*) continue;;
+            /|/dev|/dev/*|/proc|/proc/*|/sys|/sys/*|/run|/run/*) continue;;
         esac
         ret=0
         echo -n "$mp "
