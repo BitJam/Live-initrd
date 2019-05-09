@@ -5064,7 +5064,7 @@ _persist_makefs() {
         vfat) is_vfat=true ;;
     esac
 
-    # Set the maximum size for this meun
+    # Set the maximum size for this menu
     local max_size=$avail  min_size=0
     [ -n "$is_vfat" -a "$max_size" -gt 4095 ] && max_size=4095
     if [ "$base_file" = rootfs ]; then
