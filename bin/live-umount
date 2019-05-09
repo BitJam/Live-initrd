@@ -615,7 +615,7 @@ umount_most() {
         echo 'losetup >'
         losetup
     else
-        losetup > /dev/null
+        losetup >/dev/null 2>/dev/null
     fi
 
     for try in $(seq 1 3); do
