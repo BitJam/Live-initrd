@@ -151,6 +151,7 @@ do_start() {
         # If the ## expression matches then the resulting string length is zero
         [ -z "${disable_param##*[a]*}" ] &&   DISABLE_ACPID=true
         [ -z "${disable_param##*[A]*}" ] &&    ENABLE_ACPID=true
+        [ -z "${disable_param##*[c]*}" ] && DISABLE_CONNMAN=true
         [ -z "${disable_param##*[d]*}" ] &&         NO_DBUS=true
         [ -z "${disable_param##*[g]*}" ] &&     DISABLE_GPM=true
         [ -z "${disable_param##*[i]*}" ] && DISABLE_IFPLUGD=true
@@ -250,6 +251,11 @@ do_start() {
     if [ "$DISABLE_GPM" ]; then
         echo_live "Disabling %s services %s" $(pquote gpm) $(paren g)
         disable_services "gpm (g)" "$GPM_SERVICES"
+    fi
+
+    if [ "$DISABLE_CONNMAN" ]; then
+        echo_live "Disabling %s services %s" $(pquote connman) $(paren c)
+        disable_services "gpm (g)" "connman"
     fi
 
     [ "$OUT" ] && echo "$OUT" | tr "," "\n" > $OUT_FILE
