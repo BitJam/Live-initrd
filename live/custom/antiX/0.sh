@@ -45,6 +45,10 @@ live_param_filter() {
         i915powersave) ;;
         wicd|nowicd) ;;
         nomicrocode);;
+        live_swap=off)  ;;
+        live_swap=force)  ;;
+        live_swap=all-off)  ;;
+        mk_swap_file=*)     ;;
 
         # Most kernel codes from version 4.19 (plus additions)
         3c574_cs.*=*|3c589_cs.*=*|3c59x.*=*|3w-9xxx.*=*|3w-sas.*=*|8139cp.*=*|8139too.*=*|8250.*=*|8390.*=*);;
