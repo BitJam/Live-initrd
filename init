@@ -133,6 +133,7 @@ KMS_VIDEO_MODULES="amdgpu,analogix-anx78xx,ast,bochs-drm,ch7006,cirrus,gma500_gf
 
   MIN_SCREEN_WIDTH=80
   DEF_SCREEN_WIDTH=120
+         CON_WIDTH=120
 
       DID_EFI_FILE="boot/grub/config/did-efi-grub"
      EFI_GRUB_CONF="boot/grub/config/efi-grub.cfg"
@@ -214,7 +215,7 @@ main_wrapper() {
     set_colors "$NO_COLOR" "$LOW_COLOR"
 
     read_xlat init $LANG
-    set_console_width "$CON_WIDTH" "$LANG"
+    set_console_width "$CON_WIDTH" "$LANG" 6
 
     # disable console screen blanking
     printf "\e[9;0]\e[14;0]"
@@ -1091,7 +1092,7 @@ read_xlat() {
 #
 #------------------------------------------------------------------------------
 set_console_width() {
-    local width=${1:-$DEF_SCREEN_WIDTH}  lang=$2  dir=${3:-$LOCALE_DIR/fonts}
+    local width=${1:-$DEF_SCREEN_WIDTH}  lang=$2  verb=${3:-5} dir=${4:-$LOCALE_DIR/fonts}
     local def_size=8  name=Terminus  ext=.psf
 
     # allow conwidth=aa,bb
@@ -1170,7 +1171,7 @@ set_console_width() {
     fi
 
     [ "$NO_CLEAR" ] || clear
-    vmsg 5 "Set font to %s" "$(pq $font)"
+    vmsg $verb "Set font to %s" "$(pq $font)"
 
     log_cmd setfont $file -C $(tty)
 
@@ -3761,6 +3762,7 @@ do_early_menus() {
                 read_xlat init $LANG       ;;
     esac
 
+    vmsg 1 "Console columns is currently set to %s" "$(pq $CON_WIDTH)"
     my_select_menu "Select number of console columns"  "Wider means a smaller font"    w conwidth "Console columns"  'conwidth=*'
 
     case $MENU_VALUE in
