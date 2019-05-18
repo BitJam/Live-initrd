@@ -11,8 +11,8 @@
 #  Documentation/x86/microcode.txt
 #------------------------------------------------------------------------------
 
-     VERSION="3.02"
-VERSION_DATE="Tue Mar  5 16:57:16 MST 2019"
+     VERSION="3.04"
+VERSION_DATE="Fri May 17 18:13:07 MDT 2019"
 
 ME=${0##*/}
 
@@ -161,7 +161,7 @@ unpack_initrd() {
         if ! is_empty_dir "$dir"; then
             if [ "$DO_CLEAR" ]; then
                 qsay "Clearing %s" "$(pq $dir)"
-                cmd rm -r "$dir"
+                cmd rm -rf "$dir"
             elif [ "$PRETEND" ]; then
                 :
             else
@@ -329,7 +329,7 @@ repack_initrd() {
     fi
 
     # Create the cpio archive, ignore our two meta-data files and then compress
-    (cd "$dir" && cmd find . | grep -E -v "^\./\.(compress|microcode)$" | cmd cpio $REPACK_ARGS) \
+    (cd "$dir" && cmd find . | exclude_files | cmd cpio $REPACK_ARGS) \
         | cmd $prog $args | cmd append_file "$file"
 
     [ "$NO_MD5" ] && return
@@ -337,6 +337,19 @@ repack_initrd() {
     # Create .md5 file
     local fname=$(basename $file)
     (cd "$targ_dir" && cmd md5sum "$(basename "$fname")" | cmd write_file "$fname.md5")
+}
+
+#------------------------------------------------------------------------------
+# Exclude commmon editor backup files, git stuff and my Private directory
+#------------------------------------------------------------------------------
+exclude_files() {
+    grep -E -v \
+        -e '^\./\.(compress|microcode)$' \
+        -e '^\./Private/'   \
+        -e '^\./Private$'   \
+        -e '^\./\.git'      \
+        -e '/\.[^/]*\.swp$' \
+        -e '/\.[^/]*~$'
 }
 
 #------------------------------------------------------------------------------
@@ -403,7 +416,7 @@ write_file() { cat > "$1" ; }
 append_file() {  cat >> "$1" ; }
 
 #------------------------------------------------------------------------------
-# Error out of $prog is not on the PATH
+# Error out if $prog is not on the PATH
 #------------------------------------------------------------------------------
 need_prog() {
     local prog=$1
