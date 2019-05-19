@@ -113,6 +113,13 @@ do_scripts() {
 
     breakpoint s1 "Before running scripts"
 
+    # run the brightness shutdown script when using sysvinit
+    if ! test -e /live/config/systemd; then
+        if test -x /etc/init.d/brightness; then
+            /etc/init.d/brightness stop
+        fi
+    fi
+
     if test -e /live/config/remasterable; then
         seed_file=$(cat /live/config/seed-file 2>/dev/null)
         prep_seed_dev_random "$seed_file"
