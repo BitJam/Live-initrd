@@ -98,10 +98,9 @@ automount=off|amnt=off)                          AUTOMOUNT_OFF=true ;;
              vboxdecor)    VBOX_DECOR=true                          ;;
          i915powersave) ENABLE_I915_POWER_SAVE=true                 ;;
            nomicrocode) NO_MICRO_CODE=true                          ;;
-
-         live_swap=off)      NO_SWAP=true                          ;;
-       live_swap=force)   FORCE_SWAP=true                          ;;
-     live_swap=all-off)      NO_SWAP=true  ; NO_SWAP_FILE=true     ;;
+         live_swap=off)      NO_SWAP=true                           ;;
+       live_swap=force)   FORCE_SWAP=true                           ;;
+     live_swap=all-off)      NO_SWAP=true  ; NO_SWAP_FILE=true      ;;
 
     esac
 done
@@ -256,15 +255,17 @@ create_fstab() {
     #--- Create swap options ---
 
     # first see if we should add a swap file
-    local swap_opts  remasterable file=$SWAP_FILE
+    local swap_opts  remasterable  file=$SWAP_FILE
     test -e /live/config/remasterable && remasterable=true
-    if [ -z "$NO_SWAP_FILE" && -n "$remasterable" -a -w "$file" ] then
+
+    if [ -z "$NO_SWAP_FILE" -a -n "$remasterable" -a -w "$file" ]; then
         if file -b "$file" | grep -q "^data$"; then
+            echo_live "Running %s on %s" "$(pquote mkswap)" "$(pquote $file)"
             chmod 0600 "$file"
             chown root:root "$file"
             mkswap --label "live-swap-file" "$file"
         fi
-        file -b "$file" | grep -iq "swap file" swap_opts="$swap_opts --swap-file=$file"
+        file -b "$file" | grep -iq "swap file" && swap_opts="$swap_opts --swap-file=$file"
     fi
 
     # disable swap if encrypted or if user asks for no swap
