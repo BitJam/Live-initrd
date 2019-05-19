@@ -54,6 +54,9 @@
 VERSION="0.91"
 VERSION_DATE="Sat May 11 02:09:10 MDT 2013"
 
+# Note: this does not start with "/live" because we have already pivoted
+SWAP_FILE="/boot-dev/swap-file"
+
 me=${0##*/}
 
      NEW_ROOT=/live
@@ -327,6 +330,11 @@ final_umount() {
     kill_procs_fast
 
     breakpoint 7 "After killing processes"
+
+    if grep -q "^$SWAP_FILE" /proc/swaps; then
+        msg "Disable live swapfile"
+        swapoff "$SWAP_FILE"
+    fi
 
     msg "Unmount most filesystems"
     kill_specific_progs $KILL_PROGS
