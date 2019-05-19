@@ -138,6 +138,8 @@ KMS_VIDEO_MODULES="amdgpu,analogix-anx78xx,ast,bochs-drm,ch7006,cirrus,gma500_gf
       DID_EFI_FILE="boot/grub/config/did-efi-grub"
      EFI_GRUB_CONF="boot/grub/config/efi-grub.cfg"
     UEFI_UUID_FILE="antiX/esp-uuid"
+         SWAP_FILE="/live/boot-dev/swap-file"
+   USB_DIRTY_BYTES=20000000
 
      LIVE_LOGS_DIR="live-logs"
 
@@ -506,6 +508,8 @@ main_core() {
     # Check for ehci warning
     dmesg | grep 'Warning.*ehci' >&2
 
+    make_swap_file "$SWAP_FILE"  "$SWAP_FILE_SIZE"
+
     breakpoint 5 "after mounting persistence device"
 
     fsck_any_device "$SQFILE_DEV" "$SQFILE_MP" boot
@@ -701,6 +705,8 @@ read_late_cmdline_params() {
 
                         nostore) NO_STORE=true                        ;;
                         dostore) DO_STORE=true                        ;;
+
+                 mk_swap_file=*) SWAP_FILE_SIZE=$value                ;;
         esac
     done
 }
@@ -870,6 +876,8 @@ read_cmdline_params()
               private|private=*)  ;;
                           toram)  ;;
                     toram_store)  ;;
+
+                 mk_swap_file=*)  ;;
 
         # Convenience short cuts from our menus
                     persist_all)  ;;
@@ -4270,6 +4278,113 @@ prog_copy() {
 
     return 0
 }
+
+#------------------------------------------------------------------------------
+# Show a progress arrow while doing "dd" command
+#------------------------------------------------------------------------------
+prog_dd() {
+    local dest=$1  cnt=$2  src=${3:-/dev/zero}  bs=${4:-1M}
+
+    local err_file=/dd-copy-failed
+    # TEST directories or fatal error
+
+    mkdir -p "$(dirname "$dest")"
+    if [ "$NO_PROGRESS" ]; then
+        dd if=$src of=$dest bs=$bs count=$cnt status=none
+        return $?
+    fi
+
+    rm -f "$file"
+    local final_size=$cnt  base_size=0
+
+    local dirty_ratio dirty_bytes
+    read dirty_ratio < /proc/sys/vm/dirty_ratio
+    read dirty_bytes < /proc/sys/vm/dirty_bytes
+    echo $USB_DIRTY_BYTES > /proc/sys/vm/dirty_bytes
+
+    rm -f $err_file
+    (dd if=$src of=$dest bs=$bs count=$cnt status=none || echo $? > $err_file)  &
+    COPY_PID=$!
+    #echo "copy pid: $COPY_PID" >> $LOG_FILE
+
+    # Disable cursor
+    printf "\e[?25l"
+
+    local cur_size=$base_size cur_pct last_pct=0
+    while true; do
+        if ! test -d /proc/$COPY_PID; then
+            echo 1000
+            break
+        fi
+        sleep 0.1
+
+        cur_size=$(du_size $dest)
+        cur_pct=$((cur_size * 1000 / final_size))
+        [ $cur_pct -gt $last_pct ] || continue
+        echo $cur_pct
+        last_pct=$cur_pct
+
+    done | text_progress
+
+    echo
+
+    sync ; sync
+
+    # Enable cursor
+    printf "\e[?25h"
+
+    echo $dirty_bytes >> /proc/sys/vm/dirty_bytes
+    echo $dirty_ratio >> /proc/sys/vm/dirty_ratio
+
+    # Use err_file as a semaphore from (...)& process
+    if test -e $err_file; then
+        rm -f $err_file
+        return 2
+    fi
+
+    test -d /proc/$COPY_PID && wait $COPY_PID
+
+    return 0
+}
+
+#------------------------------------------------------------------------------
+# chreat a zeroed out swap file, if it doesn't exist and if a size is given
+# and the size is reasonable.  We let live-init run the mkswap command if
+# if needed since it is aleady in a chroot.
+#------------------------------------------------------------------------------
+make_swap_file() {
+    local file=$1  size=$(echo $2 | tr 'mg' 'MG')  raw_size=$2
+    [ -z "$size" ]  && return
+    test -e "$file" && return
+
+    local dir=$(dirname "$file")
+    local free_space=$(free_space "$dir")
+    local megs  factor=
+    case $size in
+        [0-9]*[0-9]) megs=${size%M} ; factor=1    ;;
+                 *M) megs=${size%M} ; factor=1    ;;
+                 *G) megs=${size%G} ; factor=1024 ;;
+    esac
+
+    msg "Freespace: $free_space"
+
+    if [ -z "$factor" ] || ! echo "$megs" | grep -q "^[0-9]\+$"; then
+        warn "Invalid %s option %s" "mk_swap_file=" "$(pqw $raw_size)"
+        return
+    fi
+    megs=$((megs * factor))
+
+    msg "Megs: $megs"
+
+    if [ $((free_space - megs)) -lt 10 ]; then
+        warn "Not enough space to create a %s swap file" "$(pqw $raw_size)"
+        return
+    fi
+
+    msg "Creating %s swap file at %s ..." "$(pq $raw_size)" "$(pq $file)"
+    prog_dd "$file" "$megs"
+}
+
 #------------------------------------------------------------------------------
 # This acts like an external program to draw a progress bar on the screen.
 # It expects integer percentages as input on stdin to move the bar.
