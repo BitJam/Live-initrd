@@ -2,8 +2,7 @@
 
 export PATH=/sbin:/usr/sbin:/bin:/usr/bin:/usr/local/bin:/live/bin
 
-BIOS_UUID_FNAME="bios-dev-uuid"
-UEFI_UUID_FNAME="esp-uuid"
+BOOT_UUID_FNAME="bios-dev-uuid"
    DID_EFI_FILE="boot/grub/config/did-efi-grub"
 
 . /live/lib/live-init-utils.sh
@@ -44,65 +43,66 @@ do_start() {
     echo_script "Possibly saving boot parameters" $0
     get_real_vga_code "$vga_ask" "$gfx_cmd"
 
-    [ -n "$gfx_cmd"   ] && do_gfxsave
-    [ -n "$boot_save" ] && do_boot_save
-}
-
-do_gfxsave() {
-
-    export CMDLINE
-    export GFX_LOG_FILE=/var/log/live/gfxsave.log
-
     . $INITRD_OUT
 
-    local bios_uuid_file="$SQFILE_DIR/$BIOS_UUID_FNAME"
+    [ -n "$gfx_cmd$boot_save" ] || return
+
+    mount_boot_partition || return
+
+    if [ -n "$gfx_cmd" ]; then
+        local script=/live/bin/gfxsave
+        # echo $script "$BIOS_MP/boot" $gfx_cmd
+        env VERBOSE=3 $script "$BIOS_MP/boot" $gfx_cmd
+    fi
+
+    if [ -n "$boot_save" ]; then
+        #echo grub2-save $BIOS_MP
+        grub2-save $BIOS_MP
+    fi
+
+    sync
+
+    #[ -n "$TO_UMOUNT" ] && umount "$TO_UMOUNT"
+
+}
+
+#------------------------------------------------------------------------------
+# Mount out bios/boot partition if we were encrypted
+#------------------------------------------------------------------------------
+mount_boot_partition() {
+    export CMDLINE
+    export GFX_LOG_FILE=/var/log/live/gfxsave.log
+    unset BOOTLOADER_DIR
+
+    local boot_uuid_file="$SQFILE_DIR/$BOOT_UUID_FNAME"
 
     local dir=$BIOS_MP/boot
 
-    if test -r $bios_uuid_file; then
-        local bios_uuid=$(cat $bios_uuid_file | head -n1 2>/dev/null)
-        [ -n "$bios_uuid" ] && mount_boot_dev "$bios_uuid" $BIOS_MP
+    # echo "uuid file: $boot_uuid_file"
+
+    if test -r $boot_uuid_file; then
+        local boot_uuid=$(cat $boot_uuid_file | head -n1 2>/dev/null)
+        # echo "boot uuid; $boot_uuid"
+        [ -n "$boot_uuid" ] && mount_boot_dev "$boot_uuid" $BIOS_MP
         dir=$ROOT_MP/boot
     fi
 
     test -d $dir || dir=$BOOT_MP/boot
-    test -d $dir || return
+    test -d $dir || return 1
 
     local dev=$(df -P $dir | tail -n1 | cut -d" " -f1)
     echo_live "bootloader device: $(pquote $dev)"
 
     mount -o remount,rw ${dir%/boot}
 
-    local script=/live/bin/gfxsave
-
     if ! [ -e /live/config/remasterable ]; then
         echo_live "Can't update %s on read-only boot media" "$(pquote gfxboot)"
-        return
+        return 1
     fi
 
-    $script $dir $gfx_cmd
-}
+    BOOT_LOADER_DIR=$dir
 
-do_boot_save() {
-    . /live/config/initrd.out
-
-    if test -e $BOOT_MP/$DID_EFI_FILE; then
-        grub2-save $BOOT_MP
-        return $?
-    fi
-
-    local uuid uuid_file=$SQFILE_DIR/$UEFI_UUID_FNAME
-    test -r $uuid_file || return
-    read uuid 2>/dev/null <$uuid_file
-    [ ${#uuid} -gt 0 ] || return
-
-    local efi_mp=/live/efi
-    mkdir -p $efi_mp
-    mount --uuid $uuid $efi_mp
-    mountpoint -q $efi_mp || return
-    grub2-save $efi_mp
-    sync
-    umount $efi_mp
+    return 0
 }
 
 #------------------------------------------------------------------------------
@@ -235,6 +235,7 @@ mount_boot_dev() {
         echo_live "Could not remount boot device"
         return 1
     fi
+    TO_UMOUNT="$mp"
 
     ROOT_MP=$mp
     return 0
