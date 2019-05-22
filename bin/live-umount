@@ -246,7 +246,7 @@ do_sendsigs() {
 
     echo "> ps (no threads)"
     ps_no_kthreads
-    err "Unable to kill: %s" "$white $(echo $list)"
+    err "Unable to kill %s" "$white $(echo $list)"
 }
 
 #------------------------------------------------------------------------------
