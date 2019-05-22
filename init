@@ -2295,7 +2295,7 @@ find_crypt_or_linuxfs() {
         msg "Looking for encrypted device with uuid %s" "$(pq "$CRYPT_UUID")"
         for try in $(seq 1 $BOOT_RETRY); do
 
-            devs=$(uuid_to_dev $CRYPT_UUID "TYPE=.crypto_LUKS")
+            devs=$(uuid_to_dev $CRYPT_UUID 'TYPE=.crypto_LUKS')
             [ -n "$devs" ] && break
             echo -n "."
             sleep 1
@@ -3312,7 +3312,7 @@ _error() {
 
     local match="$(echo $NO_ERROR | sed 's/_/ /g')"
     if [ "$NO_ERROR" -a -z ${msg##$match*} ]; then
-        msg "Skip Error: %s" "$(bq $msg)"
+        msg "Skip Error %s" "$(bq $msg)"
         return
     fi
 
@@ -4364,7 +4364,7 @@ make_swap_file() {
     msg "Freespace: $free_space"
 
     if [ -z "$factor" ] || ! echo "$megs" | grep -q "^[0-9]\+$"; then
-        warn "Invalid %s option %s" "mk_swap_file=" "$(pqw $raw_size)"
+        warn "Invalid %s option %s" 'mk_swap_file=' "$(pqw $raw_size)"
         return
     fi
     megs=$((megs * factor))
@@ -4376,7 +4376,7 @@ make_swap_file() {
         return
     fi
 
-    msg "Creating %s swap file at %s ..." "$(pq $raw_size)" "$(pq $file)"
+    msg "Creating %s swap file at %s.  Please be patient ..." "$(pq $raw_size)" "$(pq $file)"
     prog_dd "$file" "$megs"
 }
 
