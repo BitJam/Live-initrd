@@ -136,7 +136,7 @@ do_start() {
 
     if test -x /etc/init.d/nfs-kernel-server; then
         DISABLE_NFS=true
-        NFS_REASON="no exports"
+        NFS_REASON='no exports'
 
         local file export_files="/etc/exports"
         for file in /etc/exports.d/*.exports ; do
@@ -186,11 +186,11 @@ do_start() {
 
     if test -e /etc/init.d/virtualbox-guest-utils; then
         if test -e /live/config/virtualbox; then
-            echo_live "Enabling %s services" "$(pquote Virtual Box)"
+            echo_live "Enabling %s service" "$(pquote Virtual Box)"
             update-rc.d virtualbox-guest-utils defaults
             test -e /etc/init.d/virtualbox-guest-x11 && update-rc.d virtualbox-guest-x11 defaults
         else
-            echo_live "Disabling %s services" "$(pquote Virtual Box)"
+            echo_live "Disabling %s service" "$(pquote Virtual Box)"
             update-rc.d virtualbox-guest-utils remove
             test -e /etc/init.d/virtualbox-guest-x11 && update-rc.d virtualbox-guest-x11 remove
         fi
@@ -198,7 +198,7 @@ do_start() {
 
     [ "$ENABLE_NTPD"     ] || disable_services "ntpd disable by default" ntp
     [ "$ENABLE_PAM"      ] || disable_pam_login
-    [ "$ENABLE_PLYMOUTH" ] || disable_services "plymouth" plymouth
+    [ "$ENABLE_PLYMOUTH" ] || disable_services 'plymouth' plymouth
     [ "$ENABLE_FBDEV"    ] || disable_fbdev
 
     # only exit early if "disable=OFF" is given (see above)
@@ -210,52 +210,52 @@ do_start() {
         [ "$ENABLE_ACPID" ]  || LEAN_SERVICES="$LEAN_SERVICES acpid"
 
         echo_live "Disabling some services %s" "$(paren L, lean)"
-        disable_services "lean (l)" "$LEAN_SERVICES"
+        disable_services 'lean (l)' "$LEAN_SERVICES"
     fi
 
     if [ "$DISABLE_IFPLUGD" ]; then
         echo_live "Disabling %s services %s" "$(pquote ifplugd)" $(paren i)
-        disable_services "ifplugd (i)" "ifplugd"
+        disable_services 'ifplugd (i)' 'ifplugd'
     fi
 
     if [ "$DISABLE_ACPID" ]; then
         echo_live "Disabling %s services %s" "$(pquote acpid)" $(paren a)
-        disable_services "acpid (a)" "$ACPID_SERVICES"
+        disable_services 'acpid (a)' "$ACPID_SERVICES"
     fi
 
     if [ "$MEAN" ]; then
         echo_live "Disabling network services %s" "$(paren M, mean)"
-        disable_services "mean (m)" "$MEAN_SERVICES"
+        disable_services 'mean (m)' "$MEAN_SERVICES"
     fi
 
     if [ "$XTRA_LEAN" ]; then
         echo_live "Disabling more services %s" "$(paren X, Xtralean)"
-        disable_services "Xtralean (x)" "$XTRA_LEAN_SERVICES"
+        disable_services 'Xtralean (x)' "$XTRA_LEAN_SERVICES"
     fi
 
     if [ "$NO_DBUS" ]; then
-        echo_live "Disabling %s services %s" "debus" "$(paren D, nodbus)"
-        disable_services "nodbus (d)" "$NO_DBUS_SERVICES"
+        echo_live "Disabling %s services %s" 'debus' "$(paren D, nodbus)"
+        disable_services 'nodbus (d)' "$NO_DBUS_SERVICES"
     fi
 
     if [ "$DISABLE_VBOX" ]; then
-        echo_live "Disabling %s services %s" "Virtual Box" "$(paren v)"
-        disable_services "vbox (v)" "$VBOX_SERVICES"
+        echo_live "Disabling %s services %s" 'Virtual Box' "$(paren v)"
+        disable_services 'vbox (v)' "$VBOX_SERVICES"
     fi
 
     if [ "$DISABLE_NFS" ]; then
         echo_live "Disabling NFS server %s" "$(paren $NFS_REASON)"
-        disable_services "nfs (n)" "$NFS_SERVICES"
+        disable_services 'nfs (n)' "$NFS_SERVICES"
     fi
 
     if [ "$DISABLE_GPM" ]; then
         echo_live "Disabling %s services %s" $(pquote gpm) $(paren g)
-        disable_services "gpm (g)" "$GPM_SERVICES"
+        disable_services 'gpm (g)' "$GPM_SERVICES"
     fi
 
     if [ "$DISABLE_CONNMAN" ]; then
         echo_live "Disabling %s services %s" $(pquote connman) $(paren c)
-        disable_services "gpm (g)" "connman"
+        disable_services 'connman (c)' 'connman'
     fi
 
     [ "$OUT" ] && echo "$OUT" | tr "," "\n" > $OUT_FILE
