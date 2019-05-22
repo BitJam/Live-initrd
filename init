@@ -1574,14 +1574,9 @@ from_filter() {
         case $(stat -c %t $dev) in
 
             b) cd_devs="$cd_devs $dev" ;;
-           b3) mmc_devs="$mmc_devs $dev"
-               if is_removable $dev; then
-                    usb_devs="$usb_devs $dev"
-                else
-                    hd_devs="$hd_devs $dev"
-                fi ;;
 
-   3|8|22|103) if is_usb_or_removable $dev; then
+            3|8|16|b3|ca|fe|103)
+                if is_usb_or_removable $dev; then
                     usb_devs="$usb_devs $dev"
                 else
                     hd_devs="$hd_devs $dev"
