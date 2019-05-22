@@ -6384,6 +6384,8 @@ prepare_switch_root() {
 
     # cp -a /bin/shutdown $new_live/
 
+    cp /init $new_live
+
     mkdir -p $new_live/oldroot
 
     local mp new
