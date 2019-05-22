@@ -573,6 +573,8 @@ extra_cmdline_params() {
                     hwclock=*) continue ;;
                     desktop=*) continue ;;
             nouveau.modeset=0) continue ;;
+                 mk_swap_file) continue ;;
+               mk_swap_file=*) continue ;;
         esac
         case " $ALL_MENU_PARAMS " in
             *" ${param%%=*} "*) ;;
