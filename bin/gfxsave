@@ -251,7 +251,6 @@ reset_one_dir() {
 
     [ -n "$dir" ] || return
 
-    bold
     bold "Reset bootloader menu defaults"
 
     local fcnt=0
