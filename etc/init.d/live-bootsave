@@ -1,9 +1,17 @@
 #!/live/bin/sh
 
+#==============================================================================
+# Update the bootloader configurations to save the current boot parameters
+# as weill as parameters selected by the text menus.
+#
+# The actual saving is done by grub2-save and gfxsave.
+#
+# The tricky part is if encryption or frugal were used then we need to mount
+# the BIOS boot partition and update the bootloaders there.
+#==============================================================================
 export PATH=/sbin:/usr/sbin:/bin:/usr/bin:/usr/local/bin:/live/bin
 
 BOOT_UUID_FNAME="bios-dev-uuid"
-   DID_EFI_FILE="boot/grub/config/did-efi-grub"
 
 . /live/lib/live-init-utils.sh
 
@@ -47,17 +55,32 @@ do_start() {
 
     [ -n "$gfx_cmd$boot_save" ] || return
 
-    mount_boot_partition || return
+    if ! [ -e /live/config/remasterable ]; then
+        echo_live "Can't update %s on read-only boot media" "$(pquote gfxboot)"
+        return 1
+    fi
+
+    # Start with the default mountpoint at /live/boot-dev
+    BOOT_LOADER_MP=$BOOT_MP
+
+    # Change to /live/bios if needed (changed the called scripts)
+    local uuid_file="$SQ_FILE_DIR/$BOOT_UUID_FNAME"
+    if ! mount_boot_partition "$uuid_file"; then
+        error "Could not mount the BIOS boot partition"
+        exit 1
+    fi
 
     if [ -n "$gfx_cmd" ]; then
         local script=/live/bin/gfxsave
-        # echo $script "$BIOS_MP/boot" $gfx_cmd
-        env VERBOSE=3 $script "$BIOS_MP/boot" $gfx_cmd
+        local dir=$BOOT_LOADER_MP/boot
+        local env="GFX_LOG_FILE=/var/log/live/gfxsave.log VERBOSE=3"
+        #echo $script $dir $gfx_cmd
+        env $env $script "$dir" $gfx_cmd
     fi
 
     if [ -n "$boot_save" ]; then
-        #echo grub2-save $BIOS_MP
-        grub2-save $BIOS_MP
+        #echo grub2-save $BOOT_LOADER_MP
+        grub2-save $BOOT_LOADER_MP
     fi
 
     sync
@@ -67,42 +90,19 @@ do_start() {
 }
 
 #------------------------------------------------------------------------------
-# Mount out bios/boot partition if we were encrypted
+# Mount out bios/boot partition if we were encrypted or frugal
 #------------------------------------------------------------------------------
 mount_boot_partition() {
-    export CMDLINE
-    export GFX_LOG_FILE=/var/log/live/gfxsave.log
-    unset BOOTLOADER_DIR
+    local uuid_file=$1
 
-    local boot_uuid_file="$SQFILE_DIR/$BOOT_UUID_FNAME"
+    # If there is no uuid file then proceed as normal
+    test -r "$uuid_file" || return 0
 
-    local dir=$BIOS_MP/boot
+    echo "uuid file: $uuid_file"
 
-    # echo "uuid file: $boot_uuid_file"
-
-    if test -r $boot_uuid_file; then
-        local boot_uuid=$(cat $boot_uuid_file | head -n1 2>/dev/null)
-        # echo "boot uuid; $boot_uuid"
-        [ -n "$boot_uuid" ] && mount_boot_dev "$boot_uuid" $BIOS_MP
-        dir=$ROOT_MP/boot
-    fi
-
-    test -d $dir || dir=$BOOT_MP/boot
-    test -d $dir || return 1
-
-    local dev=$(df -P $dir | tail -n1 | cut -d" " -f1)
-    echo_live "bootloader device: $(pquote $dev)"
-
-    mount -o remount,rw ${dir%/boot}
-
-    if ! [ -e /live/config/remasterable ]; then
-        echo_live "Can't update %s on read-only boot media" "$(pquote gfxboot)"
-        return 1
-    fi
-
-    BOOT_LOADER_DIR=$dir
-
-    return 0
+    local boot_uuid=$(cat $uuid_file | head -n1 2>/dev/null)
+    echo "boot uuid; $boot_uuid"
+    mount_boot_dev "$boot_uuid" $BIOS_MP || return 1
 }
 
 #------------------------------------------------------------------------------
@@ -202,11 +202,11 @@ old_get_real_vga_code() {
 
 
 #------------------------------------------------------------------------------
-# Mount boot device for case of frugal install
+# Mount boot device for case of frugal install or encrypted
+# Set BOOT_LOADER_MP to the mount point
 #------------------------------------------------------------------------------
 mount_boot_dev() {
     uuid=$1  mp=$2
-    ROOT_MP=
 
     debug "uuid=$uuid  mp=$mp"
 
@@ -224,8 +224,8 @@ mount_boot_dev() {
 
     local existing_mp=$(grep "^$boot_dev " /proc/mounts | cut -d" " -f2)
     debug "existing_mp=$existing_mp"
-    if [ "$existing_mp" ]; then
-        ROOT_MP=$existing_mp
+    if [ -n "$existing_mp" ]; then
+        BOOT_LOADER_MP=$existing_mp
         return 0
     fi
 
@@ -237,13 +237,14 @@ mount_boot_dev() {
     fi
     TO_UMOUNT="$mp"
 
-    ROOT_MP=$mp
+    BOOT_LOADER_MP=$mp
     return 0
 }
 
 debug() { return; echo "db: $*"; }
 
 echo_cmd() { echo " > $*" >/dev/null ; "$@" ; }
+
 main "$@" 2>&1 | tee -a $INIT_LOG_FILE
 
 exit 0
