@@ -351,19 +351,12 @@ do_stop() {
 
 #------------------------------------------------------------------------------
 # Create a file in tmpfs to blackist nvidiafb and rivafb
+# and others as well.
 #------------------------------------------------------------------------------
 disable_fbdev() {
     local dir=/run/modprobe.d  file=live-fbdev-blacklist.conf
     mkdir -p "$dir"
-    cat << Disable_Fbdev > $dir/$file
-# Created by antiX/MX live initrd
-# Since we do not load video modules in the live initrd we need to
-# blacklist the hardware specific framebuffers
-
-blacklist nvidiafb
-blacklist rivafb
-
-Disable_Fbdev
+    cp /live/etc/modprobe.d/$file "$dir"
 }
 
 config_wicd() {
