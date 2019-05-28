@@ -142,7 +142,8 @@ KMS_VIDEO_MODULES="amdgpu,analogix-anx78xx,ast,bochs-drm,ch7006,cirrus,gma500_gf
    USB_DIRTY_BYTES=20000000
 
      LIVE_LOGS_DIR="live-logs"
-       TSPLASH_TTY=10
+
+       TSPLASH_TTY=7
             MY_TTY=1
 
     #           HUP INT QUIT SEGV TERM
@@ -756,6 +757,7 @@ read_cmdline_params()
                        splash=*) SPLASH_PARAM=$value                             ;;
                         tsplash) DO_TSPLASH=true                                 ;;
                       tsplash=*) DO_TSPLASH=$value                               ;;
+                        tstty=*) TSPLASH_TTY=$value                              ;;
                       console=*) MY_TTY=${value#tty}                             ;;
                       CONSOLE=*) MY_TTY=${value#tty}                             ;;
                        poweroff) poweroff -f -n                                  ;;
@@ -6368,6 +6370,7 @@ random_string() {
 #------------------------------------------------------------------------------
 start_tsplash() {
     tsplash_enabled || return
+    sed -r -i "s/^(tty)=.*/\1=$TSPLASH_TTY/" /bin/tsplash
     openvt -s -c $TSPLASH_TTY _tsplash start
 }
 
