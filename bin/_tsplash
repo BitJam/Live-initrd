@@ -41,6 +41,13 @@ main() {
     stty cbreak -echo
 
     printf "\e[?25l"  # cursor off
+    MY_TTY=$(tty)
+
+    case $MY_TTY in
+        /dev/tty*) TTY_NUM=${MY_TTY#/dev/tty} ;;
+                *) fatal "$ME can only be run in a virtual console" ;;
+    esac
+
 
     case $cmd in
          start)  do_start ; exit  0 ;;
@@ -111,16 +118,6 @@ do_start() {
     local WELCOME_MSG=$(get_welcome_msg)
     echo "$WELCOME_MSG" > $WELCOME_FILE
     log_it "$WELCOME_MSG"
-
-    local tty_num  my_tty=$(tty)
-    log_it "my_tty: $my_tty"
-
-    case $my_tty in
-        /dev/tty*) 
-            TTY_NUM=${my_tty#/dev/tty}
-            echo $TTY_NUM > $TTY_NUM_FILE ;;
-                *) fatal "$ME can only be run in a virtual console" ;;
-    esac
 
     touch $PROG_FILE
     #echo "start" >> $PROG_FILE
@@ -219,13 +216,13 @@ get_seconds() {
 #
 #------------------------------------------------------------------------------
 draw_nav_keys() {
+
     local left_press=$(mk_key_str  "%s boot process" "Alt-F1")
-    local right_press=$(mk_key_str "%s return here"  "Alt-F10")
+    local right_press=$(mk_key_str "%s return here"  "Alt-$TTY_NUM")
 
     left_text  $((SCREEN_BOTTOM))  "  $left_press"
     right_text $((SCREEN_BOTTOM))  "$right_press  "
 }
-
 
 #------------------------------------------------------------------------------
 #
