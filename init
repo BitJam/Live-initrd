@@ -259,7 +259,7 @@ main_wrapper() {
     # Need to run persist-password outside of our error catching
 
     msg "tsplash: $DO_TSPLASH"
-    tsplash_progress scripts
+    tsplash_progress scripts-start
 
     breakpoint 8      "before running live init.d scripts"
     breakpoint b8     "Bash shell before running live init.d scripts"
@@ -294,7 +294,7 @@ main_wrapper() {
 
     late_umount $BIOS_DEV
 
-    tsplash_progress "scripts-2"
+    tsplash_progress scripts-end
 
     if [ -z "$DISABLE_STORE" ]; then
         if detect_old_persist_scripts $NEW_ROOT; then
@@ -343,7 +343,7 @@ main_wrapper() {
     vmsg 5 "The %s program took %s seconds" "$ME" $(nq $(get_seconds $dt))
     vmsg 6 $hbar
 
-    tsplash_progress "init"
+    tsplash_progress init
     copy_tsplash $NEW_ROOT
 
     write_log_files $MY_LOG $NEW_ROOT/$LOG_FILE
@@ -3779,6 +3779,7 @@ xlat_mfile() {
 #
 #------------------------------------------------------------------------------
 do_early_menus() {
+    tsplash_off
     local BOOT_MENU_DIR=/live/menus
     local MENU_VALUE BOOT_MENU_WARN=true
     local lang time_zone option persist desktop
@@ -3819,12 +3820,14 @@ do_early_menus() {
     my_select_menu "Select font size"          "Scale fonts in graphics display.  Default is 1.0"  f fontsize "X font size" 'fontsize=*'
     #vmsg 6 "cmdline:$white $cmdline"
     [ ${#cmdline} -gt 0 ] && echo "$cmdline" >> /live/config/cmdline
+    tsplash_on
 }
 
 #------------------------------------------------------------------------------
 #
 #------------------------------------------------------------------------------
 do_late_menus() {
+    tsplash_off
     local BOOT_MENU_DIR=/live/aufs/usr/local/share/boot-menus
     local BOOT_MENU_WARN=
     local lang time_zone option persist desktop
@@ -3839,6 +3842,7 @@ do_late_menus() {
 
     #vmsg 6 "cmdline:$white $cmdline"
     [ ${#cmdline} -gt 0 ] && echo "$cmdline" >> /live/config/cmdline
+    tsplash_on
 }
 
 
@@ -5151,6 +5155,8 @@ create_persist_files() {
     #msg "need_homefs:$need_homefs  make_homefs:$make_homefs"
     [ -n "$need_homefs" -o -n "$make_homefs" ] \
         && persist_makefs home $mp $dir homefs NEED_HOMEFS
+
+    tsplash_on
 }
 
 #------------------------------------------------------------------------------
@@ -5158,9 +5164,11 @@ create_persist_files() {
 #------------------------------------------------------------------------------
 persist_makefs() {
     local type=$1
+    tsplash_off
     _persist_makefs "$@" && return
 
     warn "Disable %s persistence" $(pqw $type)
+
 }
 
 _persist_makefs() {
