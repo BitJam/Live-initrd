@@ -162,7 +162,7 @@ do_progress() {
 #
 #------------------------------------------------------------------------------
 do_redraw() {
-    log_it redraw
+    log_it "redraw on %s" "$(tty)"
     clear
     set_color
     set_console_width 
