@@ -931,7 +931,9 @@ set_server_dpi() {
     local file
     for file in /etc/slim.conf /usr/share/slim/themes/antiX/slim-install.conf; do
         [ -e $file ] || continue
-        sed -i -e "s/^xserver_arguments.*/xserver_arguments -dpi $dpi -nolisten tcp/" $file
+        # remove existing dpi argument and add a new one
+        sed -i -e "/^xserver_arguments/ s/-dpi\s+[0-9]+\s*//p" \
+        -e "s/^(xserver_arguments\s+)/\1-dpi $dpi /" $file
     done
 
     file=/etc/lightdm/lightdm.conf
