@@ -13,4 +13,4 @@ header="\n---------------------------"
 printf "$header\n[%8s] CMD: %s\n" "$(get_seconds)" "$*" >> $log_file
 
 pgrep _tsplash >/dev/null && return
-openvt -c $tty $my_dir/_tsplash "$@" 2>>$log_file
+openvt -c $tty $my_dir/tsplash "$@" 2>>$log_file

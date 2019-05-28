@@ -259,7 +259,6 @@ main_wrapper() {
 
     # Need to run persist-password outside of our error catching
 
-    msg "tsplash: $DO_TSPLASH"
     tsplash_progress scripts-start
 
     breakpoint 8      "before running live init.d scripts"
@@ -6370,14 +6369,14 @@ random_string() {
 #------------------------------------------------------------------------------
 start_tsplash() {
     tsplash_enabled || return
-    sed -r -i "s/^(tty)=.*/\1=$TSPLASH_TTY/" /bin/tsplash
-    openvt -s -c $TSPLASH_TTY _tsplash start
+    sed -r -i "s/^(tty)=.*/\1=$TSPLASH_TTY/" /bin/tell-tsplash
+    openvt -s -c $TSPLASH_TTY tsplash start
 }
 
 tsplash_enabled()  { [ -n "$DO_TSPLASH" ]; return $?        ; }
 tsplash_off()      { chvt $MY_TTY                           ; }
 tsplash_on()       { [ "$DO_TSPLASH" ] && chvt $TSPLASH_TTY ; }
-tsplash_progress() { [ "$DO_TSPLASH" ] && /live/bin/tsplash progress "$*" ; }
+tsplash_progress() { [ "$DO_TSPLASH" ] && /live/bin/tell-tsplash progress "$*" ; }
 
 #------------------------------------------------------------------------------
 #
