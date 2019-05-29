@@ -6430,7 +6430,6 @@ prepare_switch_root() {
     mount_tmpfs $new_live        10 $live_dir   mode=755
 
     mkdir -p -m 777 $new_root/run/lock
-    ln -s ../dev/shm $new_root/run/shm
 
     rm -f $new_root/etc/resolv.conf
     ln -s ../run/resolvconf/resolv.conf $new_root/etc/resolv.conf
