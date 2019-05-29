@@ -6378,7 +6378,15 @@ random_string() {
 #------------------------------------------------------------------------------
 start_tsplash() {
     tsplash_enabled || return
+
+    case $CMD_MY_TTY in
+        [1-9]|1[0-2]) ;;
+        *) DO_TSPLASH= ; TSPLASH_ERROR=true ; return ;;
+  esac
+
     sed -r -i "s/^(tty)=.*/\1=$TSPLASH_TTY/" /bin/tell-tsplash
+    sed -r -i "s/tty[0-9]+/tty$TSPLASH_TTY/" /bin/clear-tsplash
+
     openvt -s -c $TSPLASH_TTY tsplash start
 }
 
