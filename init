@@ -6094,6 +6094,7 @@ copy_live_logs() {
     [ -e $targ_live ] && mv $targ_live $targ_old
 
     cp -r $new_root$log_dir $targ_live
+    [ "$DB_PLUS" ] && cp -r $new_root/live/config $targ_live/
 }
 
 #------------------------------------------------------------------------------
