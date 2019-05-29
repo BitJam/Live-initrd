@@ -1,5 +1,7 @@
 #!/bin/bash
 
+PATH=/sbin:/bin/:/usr/sbin:/usr/bin:/live/bin
+
 my_dir=${0%/*}
 log_file=/live/config/tsplash/tsplash.log
 tty=10
