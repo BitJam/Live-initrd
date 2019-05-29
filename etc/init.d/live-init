@@ -24,8 +24,8 @@ test -e "/live/bin/make-fstab" && MAKE_FSTAB="/live/bin/make-fstab"
  FOUND_VDRIVER=
  VERSION_FILES="/etc/antix-version /live/boot-dev/version"
 
-ALL_VIDEO_MODULES="amdgpu|ast|bochs[_-]drm|cirrus|emgd|gma500[_-]gfx|i810|i915|mga|mgag200|nouveau|nvidia|qxl|r128|radeon|savage|sis|sis[_-]agp|tdfx|vboxvideo|via|via[_-]agp|vmwgfx"
-KMS_VIDEO_MODULES="amdgpu|ast|bochs[_-]drm|cirrus|emgd|gma500[_-]gfx|i915|mgag200|nouveau|nvidia|qxl|radeon|udl|vboxvideo|vmwgfx"
+ALL_VIDEO_MODULES="amdgpu|ast|bochs[_-]drm|cirrus|emgd|gma500[_-]gfx|i810|i915|mga|mgag200|nouveau|nvidia|qxl|r128|radeon|savage|sis|sis[_-]agp|tdfx|vboxvideo|via|via[_-]agp|virtio[_-]gpu|vmwgfx"
+KMS_VIDEO_MODULES="amdgpu|ast|bochs[_-]drm|cirrus|emgd|gma500[_-]gfx|i915|mgag200|nouveau|nvidia|qxl|radeon|udl|vboxvideo|virtio[_-]gpu|vmwgfx"
 SISIMEDIA_K_DRIVERS="sis|sis[_-]agp"
 XORG_DRIVER_DIR="/usr/lib/xorg/modules/drivers"
 
