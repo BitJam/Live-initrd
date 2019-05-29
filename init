@@ -345,7 +345,9 @@ main_wrapper() {
     vmsg 5 "The %s program took %s seconds" "$ME" $(nq $(get_seconds $dt))
     vmsg 6 $hbar
 
-    tsplash_progress init
+    #tsplash_progress init
+
+    open_vt -w -c $TSPLASH_TTY /live/bin/tsplash progress init
     copy_tsplash $NEW_ROOT
 
     write_log_files $MY_LOG $NEW_ROOT/$LOG_FILE
