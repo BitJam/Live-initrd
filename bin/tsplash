@@ -82,6 +82,7 @@ eval_cmd() {
                    echo udev-start >> $PROG_FILE ;;
 
          udev-end) udev_end          ;;
+            final) do_final          ;;
                 *) fatal "Unknown command %$" "$cmd" ;;
     esac
 
@@ -97,9 +98,18 @@ do_clear() {
 #
 #------------------------------------------------------------------------------
 udev_end() {
-    echo -e "udev-end\n\n\n" >> $PROG_FILE
+    echo -e "udev-end" >> $PROG_FILE
     do_redraw $((MAX_PROGRESS - 1))
 }
+
+#------------------------------------------------------------------------------
+#
+#------------------------------------------------------------------------------
+final() {
+    echo -e "final" >> $PROG_FILE
+    do_redraw $MAX_PROGRESS
+}
+
 
 #------------------------------------------------------------------------------
 # Set up our work directory and then draw/redraw the screen
