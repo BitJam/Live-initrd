@@ -225,6 +225,8 @@ main_wrapper() {
     read_xlat init $LANG
     set_console_width "$CON_WIDTH" "$LANG" 6
 
+    [ "$TSPLASH_ERROR" ] && non_fatal "The %s feature requires the %s boot parameter" 'tsplash' 'console=tty1'
+
     # disable console screen blanking
     printf "\e[9;0]\e[14;0]"
 
@@ -760,8 +762,8 @@ read_cmdline_params()
                         tsplash) DO_TSPLASH=true                                 ;;
                       tsplash=*) DO_TSPLASH=$value                               ;;
                         tstty=*) TSPLASH_TTY=$value                              ;;
-                      console=*) MY_TTY=${value#tty}                             ;;
-                      CONSOLE=*) MY_TTY=${value#tty}                             ;;
+                      console=*) CMD_MY_TTY=${value#tty}                         ;;
+                      CONSOLE=*) CMD_MY_TTY=${value#tty}                         ;;
                        poweroff) poweroff -f -n                                  ;;
                          reboot) reboot -f -n                                    ;;
                          fdir=*) FRUGAL_DIR=$value                               ;;
@@ -937,6 +939,8 @@ read_cmdline_params()
        BOOT_RETRY=${CMD_BOOT_RETRY:-$BOOT_RETRY}
      FRUGAL_RETRY=${CMD_FRUGAL_RETRY:-$FRUGAL_RETRY}
     PERSIST_RETRY=${CMD_PERSIST_RETRY:-$PERSIST_RETRY}
+
+    MY_TTY=${CMD_MY_TTY:-$MY_TTY}
 
     if [ "$DISABLE_STORE" ]; then
         USER_UID=0
