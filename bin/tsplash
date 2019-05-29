@@ -98,7 +98,7 @@ do_clear() {
 #------------------------------------------------------------------------------
 udev_end() {
     echo -e "udev-end\n\n\n" >> $PROG_FILE
-    do_redraw
+    do_redraw $((MAX_PROGRESS - 1))
 }
 
 #------------------------------------------------------------------------------
@@ -160,6 +160,7 @@ do_progress() {
 #
 #------------------------------------------------------------------------------
 do_redraw() {
+    local cnt=$1
     log_it "redraw on %s" "$(tty)"
     clear
     set_color
@@ -172,7 +173,7 @@ do_redraw() {
     #log_it "welcome: $WELCOME_MSG"
     ctext "$y1" "" "$WELCOME_MSG" "$lt_cyan"
 
-    show_progress
+    show_progress $cnt
     draw_nav_keys
 }
 
@@ -181,11 +182,12 @@ do_redraw() {
 # is the number of lines in the "progress" file.
 #------------------------------------------------------------------------------
 show_progress() {
+    local p_cnt=${1:-$(cat $PROG_FILE 2>/dev/null | wc -l)}
+
     local y=$((CENTER_Y))
     local x=$(((RAW_SCREEN_WIDTH - MAX_PROGRESS * PROG_CHARS / 2) / 2))
 
     printf "$bold_co\e[$y;${x}H"
-    local cnt p_cnt=$(cat $PROG_FILE 2>/dev/null | wc -l)
     for cnt in $(seq 1 $MAX_PROGRESS); do
         [ $cnt -gt ${p_cnt:-0} ] && printf "$dk_grey"
         printf "%-${PROG_CHARS}s" "$C_DOT"
