@@ -24,8 +24,7 @@ test -e "/live/bin/make-fstab" && MAKE_FSTAB="/live/bin/make-fstab"
  FOUND_VDRIVER=
  VERSION_FILES="/etc/antix-version /live/boot-dev/version"
 
-ALL_VIDEO_MODULES="amdgpu|ast|bochs[_-]drm|cirrus|emgd|gma500[_-]gfx|i810|i915|mga|mgag200|nouveau|nvidia|qxl|r128|radeon|savage|sis|sis[_-]agp|tdfx|vboxvideo|via|via[_-]agp|virtio[_-]gpu|vmwgfx"
-KMS_VIDEO_MODULES="amdgpu|ast|bochs[_-]drm|cirrus|emgd|gma500[_-]gfx|i915|mgag200|nouveau|nvidia|qxl|radeon|udl|vboxvideo|virtio[_-]gpu|vmwgfx"
+OTHER_VIDEO_MODULES="i810|mga|r128|savage|sis|sis[_-]agp|tdfx|via|via[_-]agp"
 SISIMEDIA_K_DRIVERS="sis|sis[_-]agp"
 XORG_DRIVER_DIR="/usr/lib/xorg/modules/drivers"
 
@@ -192,7 +191,8 @@ do_start() {
 
     # Only do X stuff on systems that seem to have X
     if  [ "$HAVE_X" ]; then
-
+        KMS_VIDEO_MODULES_REGEX=$(kms_video_modules_regex)
+        ALL_VIDEO_MODULES="$KMS_VIDEO_MODULES_REGEX|$OTHER_VIDEO_MODULES"
         detect_any_video_driver
 
         if [ ${#FONT_SIZE} -gt 0 ]; then
@@ -785,7 +785,7 @@ detect_any_video_driver() {
 
     FOUND_VDRIVER=true
 
-    FOUND_KMS_DRIVER="$(echo "$video_modules" | egrep "^($KMS_VIDEO_MODULES)$")"
+    FOUND_KMS_DRIVER="$(echo "$video_modules" | egrep "^($KMS_VIDEO_MODULES_REGEX)$")"
     if [ "$FOUND_KMS_DRIVER" ]; then
         #. Found <KMS> video module(s) <module-name(s)>
         echo_live "Found %s video module(s) %s" KMS "$(pquote $(echo $FOUND_KMS_DRIVER))"
@@ -799,12 +799,26 @@ detect_any_video_driver() {
 }
 
 #------------------------------------------------------------------------------
+# Create a regular expression for all modules that depend on drm.ko
+#------------------------------------------------------------------------------
+kms_video_modules_regex() {
+    grep 'drm\.ko' /lib/modules/$(uname -r)/modules.dep \
+        | sed -e "s/:.*//"  \
+        -e "s|.*/||"        \
+        -e "s/\.ko$//"      \
+        -e "s/[_-]/[_-]/"   \
+        | grep -v "^drm"    \
+        | sort              \
+        | tr '\n' '|' | sed "s/|$//"
+}
+
+#------------------------------------------------------------------------------
 # Note: we will report FOUND_VDRIVER even if "nomodeset" is used because unless
 # the user wants safe mode then they should be allowed to use the KMS driver and
 # "nomodeset" without us forcing vesa.  That's what safe mode is for.
 #------------------------------------------------------------------------------
 detect_kms_driver() {
-    local kms_drivers=$(find_video_modules "$KMS_VIDEO_MODULES|drm_kms_helper")
+    local kms_drivers=$(find_video_modules "$KMS_VIDEO_MODULES_REGEX|drm_kms_helper")
     [ "$kms_drivers" ] || return
     echo_live "Found %s video module(s) %s" KMS ""
     FOUND_VDRIVER=true
