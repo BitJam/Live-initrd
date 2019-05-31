@@ -6392,7 +6392,7 @@ start_tsplash() {
     sed -r -i "s/^(tty)=.*/\1=$TSPLASH_TTY/" /bin/tell-tsplash
     sed -r -i "s/tty[0-9]+/tty$TSPLASH_TTY/" /bin/clear-tsplash
 
-    openvt -s -c $TSPLASH_TTY tsplash start
+    openvt -s -c $TSPLASH_TTY tsplash start "$DO_TSPLASH"
 }
 
 tsplash_enabled()  { [ -n "$DO_TSPLASH" ]; return $?        ; }
