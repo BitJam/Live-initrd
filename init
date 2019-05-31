@@ -143,7 +143,7 @@ KMS_VIDEO_MODULES="amdgpu,analogix-anx78xx,ast,bochs-drm,ch7006,cirrus,gma500_gf
 
      LIVE_LOGS_DIR="live-logs"
 
-       TSPLASH_TTY=7
+       TSPLASH_TTY=10
             MY_TTY=1
 
     #           HUP INT QUIT SEGV TERM
