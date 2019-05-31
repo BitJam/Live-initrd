@@ -4,8 +4,10 @@ ME=${0##*/}
 ME=${ME#_}
 
 #DB_HEIGHT=25
+DEF_SCREEN_WIDTH=100
 
 RAW_SCREEN_HEIGHT=24
+
 RAW_Y0=1
 Y0=1
 X0=1
@@ -31,7 +33,6 @@ LANG_FILE=$CONF_DIR/lang
        FIFO_IN=$WORK_DIR/fifo
   MY_CONF_FILE=$WORK_DIR/config
 
-DEF_SCREEN_WIDTH=100
   PROG_BAR_WIDTH=100
 
 C_DOT="\u2022"
@@ -235,10 +236,10 @@ do_redraw() {
     screen_init
 
     [ -n "$SHOW_BORDER" ] && box $SCREEN_BOX $lt_cyan
-    local y1=$((CENTER_Y - 2))
 
     #log_it "welcome: $WELCOME_MSG"
-    ctext "$y1" "" "$WELCOME_MSG" "$lt_cyan"
+
+    ctext "$WELCOME_Y" "" "$WELCOME_MSG" "$lt_cyan"
 
     show_progress $cnt
     [ -n "$SHOW_NAV" ] && draw_nav_keys
@@ -301,6 +302,16 @@ draw_nav_keys() {
     left_text  $((SCREEN_BOTTOM))  "  $left_press"
     right_text $((SCREEN_BOTTOM))  "$right_press  "
 }
+
+#------------------------------------------------------------------------------
+# Blank out a line but stay away from the edges
+#------------------------------------------------------------------------------
+blank_line() {
+    local y=$1
+    printf "\e[$y;${SCREEN_X0}H%${SCREEN_WIDTH}s" ""
+}
+
+
 
 #------------------------------------------------------------------------------
 #
@@ -511,10 +522,11 @@ screen_init() {
     CENTER_Y=$((SCREEN_HEIGHT / 2 + RAW_Y0))
     SCREEN_BOX="$RAW_X0 $RAW_Y0 $RAW_SCREEN_WIDTH $RAW_SCREEN_HEIGHT"
 
-    PROG_Y=$((CENTER_Y))
-    PROG_X=$(((RAW_SCREEN_WIDTH - MAX_PROGRESS * PROG_CHARS / 2) / 2))
-
+    WELCOME_Y=$((CENTER_Y - 4))
+    PROG_Y=$((WELCOME_Y +  2))
     PROG_Y2=$((PROG_Y + 2))
+
+    PROG_X=$(((RAW_SCREEN_WIDTH - MAX_PROGRESS * PROG_CHARS / 2) / 2))
 
 }
 
