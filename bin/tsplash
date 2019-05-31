@@ -84,6 +84,7 @@ eval_cmd() {
 
     case $cmd in
            redraw) do_redraw          ;;
+     redraw-clear) do_redraw_clear    ;;
             clear) clear              ;;
          progress) do_progress "$@"   ;;
    clear-progress) clear_progress     ;;
@@ -217,9 +218,9 @@ clear_progress() {
 #------------------------------------------------------------------------------
 #
 #------------------------------------------------------------------------------
-blank_line() {
-    local y=$1
-    printf "\e[$y;${SCREEN_X0}H%${SCREEN_WIDTH}s" ""
+do_redraw_clear() {
+    do_redraw 0
+    clear_progress
 }
 
 #------------------------------------------------------------------------------
