@@ -8,8 +8,14 @@ RAW_Y0=1
 Y0=1
 X0=1
 
-MAX_PROGRESS=8
-PROG_CHARS=4
+CONF_FILE="/live/etc/tsplash.conf"
+
+VERBOSE_PROGRESS=true
+SHOW_BORDER=true
+SHOW_NAV=true
+
+MAX_PROGRESS=7
+PROG_CHARS=5
 
 CONF_DIR=/live/config
 WORK_DIR=$CONF_DIR/tsplash
@@ -21,6 +27,7 @@ LANG_FILE=$CONF_DIR/lang
       TTY_FILE=$WORK_DIR/tty
   TTY_NUM_FILE=$WORK_DIR/tty-num
        FIFO_IN=$WORK_DIR/fifo
+  MY_CONF_FILE=$WORK_DIR/config
 
 DEF_SCREEN_WIDTH=100
   PROG_BAR_WIDTH=100
@@ -45,18 +52,19 @@ main() {
 
     case $MY_TTY in
         /dev/tty*) TTY_NUM=${MY_TTY#/dev/tty} ;;
-                *) fatal "$ME can only be run in a virtual console" ;;
+                *) fatal "$ME can only be run in a virtual console %s" "$MY_TTY" ;;
     esac
 
 
     case $cmd in
-         start)  do_start ; exit  0 ;;
+         start)  do_start "$@" ; exit  0 ;;
     esac
 
     #echo -e "\n---------------------------" >> $LOG_FILE
     log_it "cmd: %s" "$cmd $*"
-    # Read back what we stored when we started
-    LANG=$(cat $LANG_FILE 2>/dev/null)
+
+    # Read back our configuration
+    /live/bin/bash -n $MY_CONF_FILE 2>/dev/null 1>/dev/null && . $MY_CONF_FILE
 
     #TTY_NUM=$(cat $TTY_NUM_FILE 2>/dev/null)
     #[ -z "$TTY_NUM" ] && fatal "Could not find the tty number in %s" "$TTY_NUM_FILE"
@@ -73,17 +81,22 @@ eval_cmd() {
     local cmd=$1 ; shift
 
     case $cmd in
-           redraw) do_redraw         ;;
-            clear) clear             ;;
-         progress) do_progress "$@"  ;;
+           redraw) do_redraw          ;;
+            clear) clear              ;;
+         progress) do_progress "$@"   ;;
+   clear-progress) clear_progress     ;;
 
-        udev-rule) do_redraw         ;;
+        udev-rule) do_redraw          ;;
        udev-start) do_clear
                    echo udev-start >> $PROG_FILE ;;
 
-         udev-end) udev_end          ;;
-            final) do_final          ;;
-                *) fatal "Unknown command %$" "$cmd" ;;
+         udev-end) udev_end           ;;
+            final) do_final           ;;
+
+        shutdown) clear_progress $cmd ;;
+          reboot) clear_progress $cmd ;;
+
+                *) fatal "Unknown command %s" "$cmd" ;;
     esac
 
     exit 0
@@ -115,7 +128,7 @@ do_final() {
 # Set up our work directory and then draw/redraw the screen
 #------------------------------------------------------------------------------
 do_start() {
-
+    local param=$1
     # Set up files under /live/config/tsplash
 
     rm -rf   "$WORK_DIR"
@@ -123,7 +136,28 @@ do_start() {
 
     local start_t=$(get_seconds $(cut -d" " -f22 /proc/$$/stat))
 
-    printf  "[%8s] Started %s\n" "$start_t" "$ME" >> $LOG_FILE
+    printf  "[%8s] Started %s with '%s'\n" "$start_t" "$ME" "$param" >> $LOG_FILE
+
+    test -r $CONF_FILE && /live/bin/bash >/dev/null 2>/dev/null && . $CONF_FILE
+
+    # Read back what we stored when we started
+    LANG=$(cat $LANG_FILE 2>/dev/null)
+
+    if [ -n "$param" ]; then
+        [ -z "${param##*[ba]*}" ] && SHOW_BORDER=true
+        [ -z "${param##*[BA]*}" ] && SHOW_BORDER=
+        [ -z "${param##*[pa]*}" ] && VERBOSE_PROGRESS=true
+        [ -z "${param##*[PA]*}" ] && VERBOSE_PROGRESS=
+        [ -z "${param##*[na]*}" ] && SHOW_NAV=true
+        [ -z "${param##*[NA]*}" ] && SHOW_NAV=
+    fi
+
+    cat <<Config > $MY_CONF_FILE
+VERBOSE_PROGRESS=$VERBOSE_PROGRESS
+SHOW_BORDER=$SHOW_BORDER
+SHOW_NAV=$SHOW_NAV
+LANG=$LANG
+Config
 
     local WELCOME_MSG=$(get_welcome_msg)
     echo "$WELCOME_MSG" > $WELCOME_FILE
@@ -139,8 +173,8 @@ do_start() {
 #
 #------------------------------------------------------------------------------
 do_fifo() {
-    local cmd line 
-    rm -f $FIFO_IN 
+    local cmd line
+    rm -f $FIFO_IN
     mkfifo $FIFO_IN
     log 'start FIFO'
     read_state
@@ -162,8 +196,28 @@ do_progress() {
     echo "$*" >> $PROG_FILE
     set_color
     screen_init
-
     show_progress
+}
+
+#------------------------------------------------------------------------------
+#
+#------------------------------------------------------------------------------
+clear_progress() {
+    local cmd=$1
+    set_color
+    screen_init
+    blank_line $PROG_Y
+    blank_line $PROG_Y2
+    [ -z "$cmd" ] && return
+    ctext $PROG_Y "" "$cmd" $bold_co
+}
+
+#------------------------------------------------------------------------------
+#
+#------------------------------------------------------------------------------
+blank_line() {
+    local y=$1
+    printf "\e[$y;${SCREEN_X0}H%${SCREEN_WIDTH}s" ""
 }
 
 #------------------------------------------------------------------------------
@@ -174,17 +228,17 @@ do_redraw() {
     log_it "redraw on %s" "$(tty)"
     clear
     set_color
-    set_console_width 
+    set_console_width
     screen_init
 
-    #box $SCREEN_BOX $lt_cyan
+    [ -n "$SHOW_BORDER" ] && box $SCREEN_BOX $lt_cyan
     local y1=$((CENTER_Y - 2))
 
     #log_it "welcome: $WELCOME_MSG"
     ctext "$y1" "" "$WELCOME_MSG" "$lt_cyan"
 
     show_progress $cnt
-    draw_nav_keys
+    [ -n "$SHOW_NAV" ] && draw_nav_keys
 }
 
 #------------------------------------------------------------------------------
@@ -194,8 +248,8 @@ do_redraw() {
 show_progress() {
     local p_cnt=${1:-$(cat $PROG_FILE 2>/dev/null | wc -l)}
 
-    local y=$((CENTER_Y))
-    local x=$(((RAW_SCREEN_WIDTH - MAX_PROGRESS * PROG_CHARS / 2) / 2))
+    local y=$PROG_Y
+    local x=$PROG_X
 
     printf "$bold_co\e[$y;${x}H"
     for cnt in $(seq 1 $MAX_PROGRESS); do
@@ -203,6 +257,15 @@ show_progress() {
         printf "%-${PROG_CHARS}s" "$C_DOT"
     done
     printf "$nc_co"
+
+    [ -n "$VERBOSE_PROGRESS" ] || return
+
+    local last_msg=$(tail -n1 $PROG_FILE)
+    [ -n "$last_msg" ] || return
+
+    local y2=$PROG_Y2
+    blank_line $y2
+    ctext $y2 "" "$last_msg"   $lt_grey
 }
 
 #------------------------------------------------------------------------------
@@ -441,6 +504,12 @@ screen_init() {
 
     CENTER_Y=$((SCREEN_HEIGHT / 2 + RAW_Y0))
     SCREEN_BOX="$RAW_X0 $RAW_Y0 $RAW_SCREEN_WIDTH $RAW_SCREEN_HEIGHT"
+
+    PROG_Y=$((CENTER_Y))
+    PROG_X=$(((RAW_SCREEN_WIDTH - MAX_PROGRESS * PROG_CHARS / 2) / 2))
+
+    PROG_Y2=$((PROG_Y + 2))
+
 }
 
 #------------------------------------------------------------------------------
