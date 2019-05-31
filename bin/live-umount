@@ -859,6 +859,8 @@ breakpoint() {
              *) return ;;
     esac
 
+    [ -n "$OUR_TTY" ] && chvt $OUR_TTY
+
     echo "$green$TBAR$nc"
     echo "$green==>$cyan limited shell @ breakpoint [$red$1$cyan]$white $2"
     echo "$green    Use the$white exit$green command or hit$white Ctrl-d$green to continue"
