@@ -3,6 +3,8 @@
 ME=${0##*/}
 ME=${ME#_}
 
+#DB_HEIGHT=25
+
 RAW_SCREEN_HEIGHT=24
 RAW_Y0=1
 Y0=1
@@ -493,6 +495,9 @@ screen_init() {
     RAW_X0=1 ; RAW_Y0=1
     RAW_SCREEN_WIDTH=${WIDTH:-$(  stty size | cut -d" " -f2)}
     RAW_SCREEN_HEIGHT=${HEIGHT:-$(stty size | cut -d" " -f1)}
+
+    RAW_SCREEN_HEIGHT=${DB_HEIGHT:-$RAW_SCREEN_HEIGHT}
+
     REAL_HEIGHT=$RAW_SCREEN_HEIGHT
 
     SCREEN_X0=$((SCREEN_BORDER + RAW_X0))
