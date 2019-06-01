@@ -76,7 +76,7 @@ main() {
     esac
 
     #echo -e "\n---------------------------" >> $LOG_FILE
-    log_it "cmd: %s" "$cmd $*"
+    log_it 'cmd: %s' "$cmd $*"
 
     # Read back our configuration
     /live/bin/bash -n $MY_CONF_FILE 2>/dev/null 1>/dev/null && . $MY_CONF_FILE
@@ -96,24 +96,29 @@ eval_cmd() {
     local cmd=$1 ; shift
 
     case $cmd in
-         prog-bar) test_prog_bar      ;;
-           redraw) do_redraw          ;;
-     redraw-clear) do_redraw_clear    ;;
-            clear) clear              ;;
-         progress) do_progress "$@"   ;;
-   clear-progress) clear_progress     ;;
+             prog-bar) test_prog_bar "$@"  ;;
+               redraw) do_redraw           ;;
+         redraw-clear) do_redraw_clear     ;;
+                clear) clear               ;;
+             progress) do_progress "$@"    ;;
 
-        udev-rule) do_redraw          ;;
-       udev-start) do_clear
-                   echo udev-start >> $PROG_FILE ;;
+      redraw-progress) do_redraw
+                       do_progress "$@"    ;;
 
-         udev-end) udev_end           ;;
-            final) do_final           ;;
+       clear-progress) clear_progress      ;;
 
-        shutdown) clear_progress $cmd ;;
-          reboot) clear_progress $cmd ;;
+            udev-rule) do_redraw           ;;
+             udev-end) udev_end            ;;
+     prepare-consoles) do_final            ;;
 
-                *) fatal "Unknown command %s" "$cmd" ;;
+              start-x) echo "start X" >> $PROG_FILE
+                       do_redraw
+                       do_progress         ;;
+
+             shutdown) clear_progress $cmd ;;
+               reboot) clear_progress $cmd ;;
+
+                *) fatal 'Unknown command %s' "$cmd" ;;
     esac
 
     exit 0
@@ -128,7 +133,7 @@ do_clear() {
 #
 #------------------------------------------------------------------------------
 udev_end() {
-    echo -e "udev-end" >> $PROG_FILE
+    echo -e "udev done" >> $PROG_FILE
     do_redraw $((MAX_PROGRESS - 1))
 }
 
@@ -136,10 +141,9 @@ udev_end() {
 #
 #------------------------------------------------------------------------------
 do_final() {
-    echo -e "final" >> $PROG_FILE
+    echo -e "prepare consoles" >> $PROG_FILE
     do_redraw $MAX_PROGRESS
 }
-
 
 #------------------------------------------------------------------------------
 # Set up our work directory and then draw/redraw the screen
@@ -242,7 +246,7 @@ do_redraw_clear() {
 #------------------------------------------------------------------------------
 do_redraw() {
     local cnt=$1
-    log_it "redraw on %s" "$(tty)"
+    log_it 'redraw on %s' "$(tty)"
     clear
     set_color
     set_console_width
@@ -309,8 +313,8 @@ get_seconds() {
 #------------------------------------------------------------------------------
 draw_nav_keys() {
 
-    local left_press=$(mk_key_str  "%s boot process" "Alt-F1")
-    local right_press=$(mk_key_str "%s return here"  "Alt-$TTY_NUM")
+    local  left_press=$(mk_key_str "%s %s" "see boot process" 'Alt-F1')
+    local right_press=$(mk_key_str "%s %s" "return here"      "Alt-$TTY_NUM")
 
     left_text  $((SCREEN_BOTTOM))  "  $left_press"
     right_text $((SCREEN_BOTTOM))  "$right_press  "
@@ -361,7 +365,7 @@ set_console_width() {
         break
     done
 
-    [ -n "$fdir" ] || fatal "could not find a font directory"
+    [ -n "$fdir" ] || fatal 'could not find a font directory'
     [ "$fdir" = /usr/share/consolefonts ] && ext=.psf.gz
 
     local code
@@ -388,7 +392,7 @@ set_console_width() {
         case $width in
             [1-9][0-9]|[1-9][0-9][0-9]) ;;
             off) break ;;
-              *) fatal "Invalid %s value %s" "$conwidth" "$width"
+              *) fatal 'Invalid %s value %s' "$conwidth" "$width"
                  break ;;
         esac
 
@@ -444,12 +448,12 @@ set_console_width() {
         test -e $file || return 2
     fi
 
-     log_it "Set font to %s" "$font"
+     log_it 'Set font to %s' "$font"
 
     setfont $file -C $(tty)
 
     SCREEN_WIDTH=$(stty size 2>/dev/null | cut -d" " -f2)
-    log_it "New screen width %s"  "$SCREEN_WIDTH"
+    log_it 'New screen width %s"  "$SCREEN_WIDTH'
 }
 
 #------------------------------------------------------------------------------
@@ -530,8 +534,6 @@ screen_init() {
 
     SCREEN_HEIGHT=$((RAW_SCREEN_HEIGHT - 2 * SCREEN_BORDER))
     SCREEN_WIDTH=$(( RAW_SCREEN_WIDTH  - 2 * SCREEN_BORDER))
-
-    log_it "SCREEN_WIDTH: $SCREEN_WIDTH"
 
     SCREEN_BOTTOM=$((RAW_SCREEN_HEIGHT - 1))
 
