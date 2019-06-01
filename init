@@ -226,8 +226,6 @@ main_wrapper() {
     read_xlat init $LANG
     set_console_width "$CON_WIDTH" "$LANG" 6
 
-    [ "$TSPLASH_ERROR" ] && non_fatal "The %s feature requires the %s boot parameter" 'tsplash' 'console=tty1'
-
     # disable console screen blanking
     printf "\e[9;0]\e[14;0]"
 
@@ -400,6 +398,8 @@ main_core() {
     blacklist_modules "$BLACK_LIST" "$BLACK_LIST_FILE"
 
     breakpoint 1 "before welcome"
+
+    [ "$TSPLASH_ERROR" ] && non_fatal "The %s feature requires the %s boot parameter" 'tsplash' 'console=tty1'
 
     # These ones must be loaded before the others
     # Add a cheap black-lister
