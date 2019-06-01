@@ -834,6 +834,7 @@ test_prog_bar() {
 
     sleep 1.5
     clear_prog_bar
+    chvt 7
     return 0
 }
 
