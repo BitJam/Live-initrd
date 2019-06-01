@@ -181,7 +181,6 @@ lbar="<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<"
 
 
 main_wrapper() {
-
     local black blue green cyan red purple brown lt_gray dk_gray lt_blue
     local lt_green lt_cyan lt_red magenta yellow white rev_red
     local cheat_co cmd_co dev_co err_co from_co to_co head_co
@@ -260,7 +259,7 @@ main_wrapper() {
 
     # Need to run persist-password outside of our error catching
 
-    tsplash_progress scripts-start
+    tsplash_progress "run live scripts"
 
     breakpoint 8      "before running live init.d scripts"
     breakpoint b8     "Bash shell before running live init.d scripts"
@@ -295,7 +294,7 @@ main_wrapper() {
 
     late_umount $BIOS_DEV
 
-    tsplash_progress scripts-end
+    #tsplash_progress "start init"
 
     if [ -z "$DISABLE_STORE" ]; then
         if detect_old_persist_scripts $NEW_ROOT; then
@@ -334,7 +333,7 @@ main_wrapper() {
 
     dmesg > $NEW_ROOT/live/config/dmesg.out
 
-    [ "$DO_TSPLASH" ] && openvt -w -c $TSPLASH_TTY /live/bin/tsplash progress init
+    [ "$DO_TSPLASH" ] && openvt -w -c $TSPLASH_TTY /live/bin/tsplash progress "start init"
 
     breakpoint 9     "right before starting init"
 
@@ -379,7 +378,9 @@ main_wrapper() {
         test -x $NEW_ROOT$INIT_COMMAND || INIT_COMMAND=/sbin/init
         vmsg 6 "Start %s process" $(pq $INIT_COMMAND)
 
-        [ "$NO_CLEAR" ] || [ "$NO_MODESET" ] || clear
+        # Note that "nomodeset" is yet again unreliable!
+        # [ "$NO_CLEAR" ] || [ "$NO_MODESET" ] || clear
+        [ "$NO_CLEAR" ] || clear
         exec $LIVE_BIN/switch_root -c /dev/tty1 $NEW_ROOT $INIT_COMMAND "$@"
     fi
 }
@@ -457,7 +458,7 @@ main_core() {
 
     #[ "$SET_CRYPT" -a -z "$NO_CRYPT" ] && setup_crypt "$CRYPT_ID" "$BOOT_DIR/$CRYPT_FNAME" "$BOOT_MP"
 
-    tsplash_progress search
+    tsplash_progress "search for boot device"
     breakpoint 3 "before looking for linuxfs file"
 
     RW_MODE=ro
@@ -487,7 +488,7 @@ main_core() {
     SEED_FULL=$(dirname "$SQFILE_FULL")/$SEED_FNAME
     seed_dev_random "$SEED_FULL"
 
-    tsplash_progress boot-dev
+    tsplash_progress "found boot device"
 
     breakpoint 4 "after mounting boot device"
     mount -o remount,rw $SQFILE_DEV 2>/dev/null
