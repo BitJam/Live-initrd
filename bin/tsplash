@@ -400,7 +400,8 @@ set_console_width() {
         local min_width=${MIN_SCREEN_WIDTH:-80}
         [ $width -lt $min_width ] && width=$min_width
 
-        local pixel_width=$(get_fbcondecor_width)
+        # Don't try setting font if we can't find the framebuffer!
+        local pixel_width=$(get_pixel_width) || return 1
         #log_it "pixel_width $pixel_width"
 
         log_it 'Width of screen in pixels %s'  "$pixel_width"
@@ -459,8 +460,14 @@ set_console_width() {
 #------------------------------------------------------------------------------
 #
 #------------------------------------------------------------------------------
+get_pixel_width() {
+    local res=$(cat /sys/class/graphics/fb0/virtual_size 2>/dev/null)
+    [ -z "$res" ] && return 1
+    echo ${res%%,*}
+}
+
 get_fbcondecor_width() {
-    local theme=${1:-default}  res
+    local theme=${1:-default}
     local res=$(cat /sys/class/graphics/fb0/virtual_size 2>/dev/null)
     [ -z "$res" ] && return
     if test -e /dev/fbcondecor-jbb; then
@@ -495,7 +502,6 @@ error() {
     exit 2
 }
 
-
 #------------------------------------------------------------------------------
 #
 #------------------------------------------------------------------------------
@@ -506,11 +512,7 @@ pqw()     { echo "$hi_co$*$m_co"           ;}
 #------------------------------------------------------------------------------
 
 #==============================================================================
-#==============================================================================
 #=======  OLD CODE STARTS HERE ================================================
-#==============================================================================
-#==============================================================================
-#==============================================================================
 
 
 #------------------------------------------------------------------------------
@@ -555,38 +557,21 @@ screen_init() {
 #------------------------------------------------------------------------------
 #
 #------------------------------------------------------------------------------
-set_color() {
-    local e=$(printf "\e")
-     black="$e[0;30m";    blue="$e[0;34m";    green="$e[0;32m";    cyan="$e[0;36m";
-       red="$e[0;31m";  purple="$e[0;35m";    brown="$e[0;33m"; lt_gray="$e[0;37m";
-   dk_grey="$e[1;30m"; lt_blue="$e[1;34m"; lt_green="$e[1;32m"; lt_cyan="$e[1;36m";
-    lt_red="$e[1;31m"; magenta="$e[1;35m";   yellow="$e[1;33m";   white="$e[1;37m";
-     nc_co="$e[0m";                           amber="$e[0;33m"; lt_grey="$e[0;37m";
+do_welcome() {
+    local pretty_name=$1 version=$2  v_date=$3  arch
+    case $(uname -m) in
+          i686) arch=" 32-bit" ;;
+        x86_64) arch=" 64-bit" ;;
+    esac
 
-    cheat_co=$white;      err_co=$red;       hi_co=$white;
-      cmd_co=$white;     from_co=$lt_green;  mp_co=$magenta;   num_co=$magenta;
-      dev_co=$magenta;   head_co=$yellow;     m_co=$lt_cyan;    ok_co=$lt_green;
-       to_co=$lt_green;  warn_co=$yellow;  bold_co=$yellow;
+    case $(uname -r) in
+        *[pP][aA][eE]) arch="$arch pae" ;;
+    esac
 
-    clear="$e[2;J"; cursor_off="$e[?25l"; cursor_on="$e[?25h"
-
-    SCREEN_BORDER_COLOR=$grey
-
-    printf $nc_co
+    pretty_name="$pretty_name$arch"
+    echo "$pretty_name"
 
 }
-
-#------------------------------------------------------------------------------
-#
-#------------------------------------------------------------------------------
-screen_draw_box() {
-    SCREEN_DID_BOX=
-    [ -n "$SCREEN_BOX_STYLE" -a -n "$SCREEN_BOX" ] || return
-    SCREEN_DID_BOX=true
-    box $SCREEN_BOX_STYLE $SCREEN_BOX $SCREEN_BORDER_COLOR
-}
-
-# box flag x y width heigh color
 
 #------------------------------------------------------------------------------
 # Draw a box in a certain style and with a color
@@ -628,28 +613,6 @@ box() {
         printf "\e[$y;${x1}H$vbar"
     done
     printf "\e[$((y0 + height - 1));${x0}H$bl_corn$bar$br_corn"
-}
-
-
-#------------------------------------------------------------------------------
-#
-#------------------------------------------------------------------------------
-cruler() {
-    local i y midx
-    for y in $(echo "$1" | sed 's/,/ /g'); do
-        y=$(($y + SCREEN_Y0)) color=$2
-        midx=$((RAW_SCREEN_WIDTH/2))
-        printf "\e[$y;1H$color"
-        for i in $(seq 1 $midx); do
-            printf $((i % 10))
-        done
-
-        for i in $(seq 1 $midx); do
-            printf "\e[$y;$((RAW_SCREEN_WIDTH -i + 1))H"
-            printf $((i % 10))
-        done
-        printf $nc
-    done
 }
 
 #======================================================================
@@ -732,22 +695,28 @@ right_text() {
 #------------------------------------------------------------------------------
 #
 #------------------------------------------------------------------------------
-do_welcome() {
-    local pretty_name=$1 version=$2  v_date=$3  arch
-    case $(uname -m) in
-          i686) arch=" 32-bit" ;;
-        x86_64) arch=" 64-bit" ;;
-    esac
+cruler() {
+    local i y midx
+    for y in $(echo "$1" | sed 's/,/ /g'); do
+        y=$(($y + SCREEN_Y0)) color=$2
+        midx=$((RAW_SCREEN_WIDTH/2))
+        printf "\e[$y;1H$color"
+        for i in $(seq 1 $midx); do
+            printf $((i % 10))
+        done
 
-    case $(uname -r) in
-        *[pP][aA][eE]) arch="$arch pae" ;;
-    esac
-
-    pretty_name="$pretty_name$arch"
-    echo "$pretty_name"
-
+        for i in $(seq 1 $midx); do
+            printf "\e[$y;$((RAW_SCREEN_WIDTH -i + 1))H"
+            printf $((i % 10))
+        done
+        printf $nc
+    done
 }
 
+
+#==============================================================================
+# Progress bar routines
+#==============================================================================
 
 #------------------------------------------------------------------------------
 # Do a "dd" command with a progress bar
@@ -927,6 +896,29 @@ text_progress() {
     done
 }
 
+#------------------------------------------------------------------------------
+#
+#------------------------------------------------------------------------------
+set_color() {
+    local e=$(printf "\e")
+     black="$e[0;30m";    blue="$e[0;34m";    green="$e[0;32m";    cyan="$e[0;36m";
+       red="$e[0;31m";  purple="$e[0;35m";    brown="$e[0;33m"; lt_gray="$e[0;37m";
+   dk_grey="$e[1;30m"; lt_blue="$e[1;34m"; lt_green="$e[1;32m"; lt_cyan="$e[1;36m";
+    lt_red="$e[1;31m"; magenta="$e[1;35m";   yellow="$e[1;33m";   white="$e[1;37m";
+     nc_co="$e[0m";                           amber="$e[0;33m"; lt_grey="$e[0;37m";
+
+    cheat_co=$white;      err_co=$red;       hi_co=$white;
+      cmd_co=$white;     from_co=$lt_green;  mp_co=$magenta;   num_co=$magenta;
+      dev_co=$magenta;   head_co=$yellow;     m_co=$lt_cyan;    ok_co=$lt_green;
+       to_co=$lt_green;  warn_co=$yellow;  bold_co=$yellow;
+
+    clear="$e[2;J"; cursor_off="$e[?25l"; cursor_on="$e[?25h"
+
+    printf $nc_co
+}
+
+
 mkdir -p $WORK_DIR
 # main "$@" 2>> $LOG_FILE
+
 main "$@"
