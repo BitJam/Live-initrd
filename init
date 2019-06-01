@@ -3349,9 +3349,13 @@ log_cmd() {
     return $?
 }
 
+#------------------------------------------------------------------------------
+#
+#------------------------------------------------------------------------------
 _error() {
     local type=$1  cmsg1=$2  cmsg2=$3  msg=$4
     shift 3
+    tsplash_clear
 
     local match="$(echo $NO_ERROR | sed 's/_/ /g')"
     if [ "$NO_ERROR" -a -z ${msg##$match*} ]; then
@@ -3377,6 +3381,7 @@ _error() {
 
     local prompt="${green}Select ${yellow}$cmsg1 p$green or$yellow r$green then press <enter>"
 
+
     local fmt="    $yellow%s$cyan =$white %s$nc_co\n"
     local reply
     while [ true ]; do
@@ -3399,7 +3404,10 @@ _error() {
                 safe_shutdown reboot;;
 
              c*|C*)
-                 [ "$cmsg1" ] && return;;
+                 if [ "$cmsg1" ]; then
+                     tsplash_on
+                     return
+                 fi ;;
         esac
         printf "\n${m_co} %s: >>$yellow$reply$m_co<<. %s:$nc_co\n" \
             "Unknown command" "Please try again"
@@ -3483,7 +3491,11 @@ fatal()      { _fatal     "$(printf "$@")"                   ;}
 non_fatal()  { _non_fatal "$(printf "$@")"                   ;}
 
 
+#------------------------------------------------------------------------------
+# Show last 10 lines of dmesg before the error message
+#------------------------------------------------------------------------------
 fatal_dmesg() {
+    tsplash_clear
     local lines=10
     printf 'Last %s lines of the dmesg output:\n' "$lines"
     printf "%s\n" "$rbar"
@@ -3621,7 +3633,8 @@ my_select_menu() {
     local title=$1  blurb=$2  cheat=$3  dfile=$dir/$4.data mfile=$dir/$4.menu  label=$5  fields=$6
 
     [ -z "${do_menu##*$cheat*}" ] || return
-    tsplash_off
+
+    tsplash_clear
 
     local def_label
     local data=$(cat $dfile)
@@ -4395,7 +4408,9 @@ prog_dd() {
 make_swap_file() {
     local file=$1  size=$(echo $2 | tr 'mg' 'MG')  raw_size=$2
     [ -z "$size" ]  && return
-    test -e "$file" && return
+    if test -e "$file"; then
+        warn "Swap file %s already  exists" "$(pqw $file)"
+    fi
 
     local dir=$(dirname "$file")
     local free_space=$(free_space "$dir")
@@ -4417,7 +4432,7 @@ make_swap_file() {
     msg "Megs: $megs"
 
     if [ $((free_space - megs)) -lt 10 ]; then
-        warn "Not enough space to create a %s swap file" "$(pqw $raw_size)"
+        non_fatal "Not enough space to create a %s swap file" "$(pqw $raw_size)"
         return
     fi
 
@@ -5175,7 +5190,7 @@ create_persist_files() {
 #------------------------------------------------------------------------------
 persist_makefs() {
     local type=$1
-    tsplash_off
+    tsplash_clear
     _persist_makefs "$@" && return
 
     warn "Disable %s persistence" $(pqw $type)
@@ -6394,8 +6409,30 @@ start_tsplash() {
 
 tsplash_enabled()  { [ -n "$DO_TSPLASH" ]; return $?        ; }
 tsplash_off()      { chvt $MY_TTY                           ; }
-tsplash_on()       { [ "$DO_TSPLASH" ] && chvt $TSPLASH_TTY ; }
 tsplash_progress() { [ "$DO_TSPLASH" ] && /live/bin/tell-tsplash progress "$*" ; }
+
+#------------------------------------------------------------------------------
+# Go back to the tsplash screen and reset the TSPLASH_CLEARED flag
+#------------------------------------------------------------------------------
+tsplash_on() {
+    tsplash_enabled || return
+    chvt $TSPLASH_TTY
+    unset TSPLASH_CLEARED
+}
+
+#------------------------------------------------------------------------------
+# Clear screen, wait briefly and then chvt back here.
+# Will only clear the screen once until we move back to the tsplash screen.
+#------------------------------------------------------------------------------
+tsplash_clear() {
+    tsplash_enabled || return
+    if [ -z "$TSPLASH_CLEARED" ]; then
+        clear
+        sleep .2
+        TSPLASH_CLEARED=true
+    fi
+    chvt $MY_TTY
+}
 
 #------------------------------------------------------------------------------
 #
