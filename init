@@ -1,7 +1,8 @@
 #!/bin/bash
 
 #==============================================================================
-# LiveCD/USB/HD init script
+# LiveCD/USB/HD init script for antiX/MX
+#
 # (C) 2009-2019 Paul Banham <antiX@operamail.com>
 # Inspired by the work of Klaus Knopper
 #
