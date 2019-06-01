@@ -801,28 +801,11 @@ bar_box() {
 test_prog_bar() {
     set_color
     screen_init
-    local dest=$1  cnt=$2  src=${3:-/dev/zero}  bs=${4:-1M}
-
     bar_box "$*"
 
-    #local err_file=/dd-copy-failed
-    # TEST directories or fatal error
+    local dest=$1  cnt=$2  src=${3:-/dev/zero}  bs=${4:-1M}
 
-    #mkdir -p "$(dirname "$dest")"
-
-    #rm -f "$file"
-    cnt=100
-    local final_size=$cnt  base_size=0
-
-    #local dirty_ratio dirty_bytes
-    #read dirty_ratio < /proc/sys/vm/dirty_ratio
-    #read dirty_bytes < /proc/sys/vm/dirty_bytes
-    #echo $USB_DIRTY_BYTES > /proc/sys/vm/dirty_bytes
-
-    #rm -f $err_file
-    #(dd if=$src of=$dest bs=$bs count=$cnt status=none || echo $? > $err_file) &
-    #COPY_PID=$!
-    #echo "copy pid: $COPY_PID" >> $LOG_FILE
+    local base_size=0
 
     local cur_size=$base_size cur_pct last_pct=0
     while true; do
