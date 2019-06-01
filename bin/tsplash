@@ -45,7 +45,7 @@ LANG_FILE=$CONF_DIR/lang
        FIFO_IN=$WORK_DIR/fifo
   MY_CONF_FILE=$WORK_DIR/config
 
-  PROG_BAR_WIDTH=100
+  PROG_BAR_WIDTH=90
 
 C_DOT="\u2022"
 C_DOT="•"
@@ -227,8 +227,8 @@ clear_progress() {
     local cmd=$1
     set_color
     screen_init
-    blank_line $PROG_Y
-    blank_line $PROG_Y2
+    clear_line $PROG_Y
+    clear_line $PROG_Y2
     [ -z "$cmd" ] && return
     ctext $PROG_Y "" "$cmd" $bold_co
 }
@@ -285,7 +285,7 @@ show_progress() {
     [ -n "$last_msg" ] || return
 
     local y2=$PROG_Y2
-    blank_line $y2
+    clear_line $y2
     ctext $y2 "" "$last_msg"   $lt_grey
 }
 
@@ -323,7 +323,7 @@ draw_nav_keys() {
 #------------------------------------------------------------------------------
 # Blank out a line but stay away from the edges
 #------------------------------------------------------------------------------
-blank_line() {
+clear_line() {
     local y=$1
     printf "\e[$y;${SCREEN_X0}H%${SCREEN_WIDTH}s" ""
 }
@@ -334,7 +334,7 @@ blank_line() {
 #
 #------------------------------------------------------------------------------
 mk_key() {
-    local key=$1 c1=$amber c2=$lt_grey
+    local key=$1 c1=$lt_cyan c2=$lt_grey
     echo  "<$c1$key$c2>"
 }
 
@@ -545,8 +545,8 @@ screen_init() {
     WELCOME_Y=$((CENTER_Y + WELCOME_Y_OFFSET))
     PROG_Y=$((WELCOME_Y +  2))
     PROG_Y2=$((PROG_Y + 2))
-    BAR_Y1=$(( SCREEN_HEIGHT * 3 / 4))
-    #BAR_Y1=$((PROG_Y + 4))
+    PROG_BAR_Y=$(( SCREEN_HEIGHT * 3 / 4))
+    #PROG_BAR_Y=$((PROG_Y + 4))
 
     PROG_X=$(((RAW_SCREEN_WIDTH - MAX_PROGRESS * PROG_CHARS / 2) / 2))
 
@@ -814,13 +814,15 @@ prog_dd() {
 #
 #------------------------------------------------------------------------------
 bar_box() {
-    local width=$((80 * SCREEN_WIDTH / 100 + 2))
+    local title="$*"
+    local width=$((PROG_BAR_WIDTH * SCREEN_WIDTH / 100 + 2))
     local x1=$((CENTER_X - width / 2))
-    local y1=$((BAR_Y1 - 1))
+    local y1=$((PROG_BAR_Y - 1))
     local height=3
 
-    log_it "box $CENTER_X | $SCREEN_WIDTH |  $x1 | $y1 | $width | $height"
-    box $x1 $y1 $width $height $lt_cyan
+    log_it "box $x1 | $y1 | $width | $height"
+    box $x1 $y1 $width $height $white
+    [ -n "$title" ] && ctext $((y1 - 1 )) "" " $title " $white
 }
 
 #------------------------------------------------------------------------------
@@ -831,21 +833,21 @@ test_prog_bar() {
     screen_init
     local dest=$1  cnt=$2  src=${3:-/dev/zero}  bs=${4:-1M}
 
-    bar_box
-    exit
+    bar_box "$*"
 
-    local err_file=/dd-copy-failed
+    #local err_file=/dd-copy-failed
     # TEST directories or fatal error
 
     #mkdir -p "$(dirname "$dest")"
 
-    rm -f "$file"
+    #rm -f "$file"
+    cnt=100
     local final_size=$cnt  base_size=0
 
-    local dirty_ratio dirty_bytes
-    read dirty_ratio < /proc/sys/vm/dirty_ratio
-    read dirty_bytes < /proc/sys/vm/dirty_bytes
-    echo $USB_DIRTY_BYTES > /proc/sys/vm/dirty_bytes
+    #local dirty_ratio dirty_bytes
+    #read dirty_ratio < /proc/sys/vm/dirty_ratio
+    #read dirty_bytes < /proc/sys/vm/dirty_bytes
+    #echo $USB_DIRTY_BYTES > /proc/sys/vm/dirty_bytes
 
     #rm -f $err_file
     #(dd if=$src of=$dest bs=$bs count=$cnt status=none || echo $? > $err_file) &
@@ -855,33 +857,26 @@ test_prog_bar() {
     local cur_size=$base_size cur_pct last_pct=0
     while true; do
         sleep 0.1
-        cur_pct=$((cur_pct + 1))
+        cur_pct=$((cur_pct + 8))
         [ $cur_pct -gt $last_pct ] || continue
         echo $cur_pct
         last_pct=$cur_pct
-
     done | text_progress
 
-    echo
-
-    #sync ; sync
-
-    # Enable cursor
-
-    #echo $dirty_bytes >> /proc/sys/vm/dirty_bytes
-    #echo $dirty_ratio >> /proc/sys/vm/dirty_ratio
-
-    # Use err_file as a semaphore from (...)& process
-    if test -e $err_file; then
-        rm -f $err_file
-        return 2
-    fi
-
-    #test -d /proc/$COPY_PID && wait $COPY_PID
-
+    sleep 1.5
+    clear_prog_bar
     return 0
 }
 
+#------------------------------------------------------------------------------
+#
+#------------------------------------------------------------------------------
+clear_prog_bar() {
+    local y  y0=$PROG_BAR_Y
+    for y in $(seq -2 1); do
+        clear_line $((y + y0))
+    done
+}
 #------------------------------------------------------------------------------
 # This acts like an external program to draw a progress bar on the screen.
 # It expects integer percentages as input on stdin to move the bar.
@@ -889,18 +884,22 @@ test_prog_bar() {
 # Yes, because there was aliasing between 100 steps and width of screen.
 #------------------------------------------------------------------------------
 text_progress() {
-    local abs_max_x=$((SCREEN_WIDTH * 90 / 100))
-    local min_x=$((SCREEN_WIDTH * 10 / 100))
-    local y=${PROG_BAR_Y:-$((1 + SCREEN_HEIGHT * 3 / 4))}
+    local width=$((PROG_BAR_WIDTH * SCREEN_WIDTH / 100))
+    local min_x=$((CENTER_X - width / 2))
+    local abs_max_x=$((min_x + width))
+    local y=$PROG_BAR_Y
 
     # length of ">100%" plus one = 6 (??)
     local max_x=$((abs_max_x - 7))
 
     # Create end-points and save our location on the screen
-    printf "\e[s$from_co|$nc_co\e[u"
+    printf "\e[$y;${min_x}H|$nc_co"
+    printf "\e[$y;${max_x}H|$nc_co"
     #printf "\e[u\e[$((max_x + 2))C$from_co|$nc_co\e[u"
-
     local cur_x last_x=$min_x  delta_x=$((max_x - min_x))
+
+    log_it "$min_x $max_x $width $delta_x"
+
     while read input; do
         case $input in
             [0-9]|[0-9][0-9]|[0-9][0-9][0-9]) ;;
@@ -909,15 +908,18 @@ text_progress() {
         esac
 
         [ $input -gt 1000 ] && input=1000
-        cur_x=$((min_x + max_x * input / 1000))
+        cur_x=$((min_x + delta_x * input / 1000))
+        local len=$((delta_x * input / 1000))
         # Note we always draw entire bar to avoid problems when switching
         # virtual terminals while the bar is being drawn
 
         [ $cur_x -le $last_x ] && continue
         # Draw the bar
-        printf "\e[u\e[0C$m_co%${delta_x}s$bold_co>$nc_co\e[u" | tr ' ' '='
+        printf "\e[$y;${min_x}H$lt_cyan%${len}s$bold_co>$nc_co\e[u" | tr ' ' '='
         # Show the percentage
-        printf "\e[$((max_x + 2))C%3s%%" "$((input / 10))"
+        local color=
+        [ $input -ge 1000 ] && color=$bold_co
+        printf "$color\e[$y;$((max_x + 2))H%3s%%" "$((input / 10))"
 
         last_x=$cur_x
 
