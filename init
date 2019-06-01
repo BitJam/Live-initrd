@@ -763,12 +763,8 @@ read_cmdline_params()
             rootdelay=*|delay=*) small_int COLDPLUG_DELAY $param                 ;;
                          splash) SPLASH_PARAM=v                                  ;;
                        splash=*) SPLASH_PARAM=$value                             ;;
-                splasht|tsplash) DO_TSPLASH=Z                                    ;;
-            splasht=*|tsplash=*) DO_TSPLASH=$value                               ;;
-
-               splash_t=*|s_t=*) DO_TSPLASH=$value                               ;;
-                   splash_t|s_t) DO_TSPLASH=Z                                    ;;
-
+                        splasht) DO_TSPLASH=Z                                    ;;
+                      splasht=*) DO_TSPLASH=$value                               ;;
                        st_tty=*) TSPLASH_TTY=$value                              ;;
                       console=*) CMD_MY_TTY=${value#tty}                         ;;
                       CONSOLE=*) CMD_MY_TTY=${value#tty}                         ;;
