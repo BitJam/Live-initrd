@@ -1,11 +1,20 @@
 #!/live/bin/bash
 
+#==============================================================================
+# Create a text based "splash screen" for starting live MX/antiX
+#
+# We rely on the openvt command to draw-on/work-in in a given tty.
+#
+# (C) 2019 Paul Banham <antiX@operamail.com>
+# License: GPLv3 or later
+#==============================================================================
+
 ME=${0##*/}
 ME=${ME#_}
 
 #DB_HEIGHT=25
 DEF_SCREEN_WIDTH=100
-
+WELCOME_Y_OFFSET=-4
 RAW_SCREEN_HEIGHT=24
 
 RAW_Y0=1
@@ -84,6 +93,7 @@ eval_cmd() {
     local cmd=$1 ; shift
 
     case $cmd in
+         prog-bar) test_prog_bar      ;;
            redraw) do_redraw          ;;
      redraw-clear) do_redraw_clear    ;;
             clear) clear              ;;
