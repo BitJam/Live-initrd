@@ -527,14 +527,21 @@ screen_init() {
 
     SCREEN_HEIGHT=$((RAW_SCREEN_HEIGHT - 2 * SCREEN_BORDER))
     SCREEN_WIDTH=$(( RAW_SCREEN_WIDTH  - 2 * SCREEN_BORDER))
+
+    log_it "SCREEN_WIDTH: $SCREEN_WIDTH"
+
     SCREEN_BOTTOM=$((RAW_SCREEN_HEIGHT - 1))
 
     CENTER_Y=$((SCREEN_HEIGHT / 2 + RAW_Y0))
+    CENTER_X=$((RAW_SCREEN_WIDTH / 2))
+
     SCREEN_BOX="$RAW_X0 $RAW_Y0 $RAW_SCREEN_WIDTH $RAW_SCREEN_HEIGHT"
 
-    WELCOME_Y=$((CENTER_Y - 4))
+    WELCOME_Y=$((CENTER_Y + WELCOME_Y_OFFSET))
     PROG_Y=$((WELCOME_Y +  2))
     PROG_Y2=$((PROG_Y + 2))
+    BAR_Y1=$(( SCREEN_HEIGHT * 3 / 4))
+    #BAR_Y1=$((PROG_Y + 4))
 
     PROG_X=$(((RAW_SCREEN_WIDTH - MAX_PROGRESS * PROG_CHARS / 2) / 2))
 
@@ -747,10 +754,6 @@ prog_dd() {
     # TEST directories or fatal error
 
     mkdir -p "$(dirname "$dest")"
-    if [ "$NO_PROGRESS" ]; then
-        dd if=$src of=$dest bs=$bs count=$cnt status=none
-        return $?
-    fi
 
     rm -f "$file"
     local final_size=$cnt  base_size=0
@@ -761,7 +764,7 @@ prog_dd() {
     echo $USB_DIRTY_BYTES > /proc/sys/vm/dirty_bytes
 
     rm -f $err_file
-    (dd if=$src of=$dest bs=$bs count=$cnt status=none || echo $? > $err_file)  &
+    (dd if=$src of=$dest bs=$bs count=$cnt status=none || echo $? > $err_file) &
     COPY_PID=$!
     #echo "copy pid: $COPY_PID" >> $LOG_FILE
 
@@ -801,6 +804,79 @@ prog_dd() {
 
     return 0
 }
+
+#------------------------------------------------------------------------------
+#
+#------------------------------------------------------------------------------
+bar_box() {
+    local width=$((80 * SCREEN_WIDTH / 100 + 2))
+    local x1=$((CENTER_X - width / 2))
+    local y1=$((BAR_Y1 - 1))
+    local height=3
+
+    log_it "box $CENTER_X | $SCREEN_WIDTH |  $x1 | $y1 | $width | $height"
+    box $x1 $y1 $width $height $lt_cyan
+}
+
+#------------------------------------------------------------------------------
+# Do a "dd" command with a progress bar
+#------------------------------------------------------------------------------
+test_prog_bar() {
+    set_color
+    screen_init
+    local dest=$1  cnt=$2  src=${3:-/dev/zero}  bs=${4:-1M}
+
+    bar_box
+    exit
+
+    local err_file=/dd-copy-failed
+    # TEST directories or fatal error
+
+    #mkdir -p "$(dirname "$dest")"
+
+    rm -f "$file"
+    local final_size=$cnt  base_size=0
+
+    local dirty_ratio dirty_bytes
+    read dirty_ratio < /proc/sys/vm/dirty_ratio
+    read dirty_bytes < /proc/sys/vm/dirty_bytes
+    echo $USB_DIRTY_BYTES > /proc/sys/vm/dirty_bytes
+
+    #rm -f $err_file
+    #(dd if=$src of=$dest bs=$bs count=$cnt status=none || echo $? > $err_file) &
+    #COPY_PID=$!
+    #echo "copy pid: $COPY_PID" >> $LOG_FILE
+
+    local cur_size=$base_size cur_pct last_pct=0
+    while true; do
+        sleep 0.1
+        cur_pct=$((cur_pct + 1))
+        [ $cur_pct -gt $last_pct ] || continue
+        echo $cur_pct
+        last_pct=$cur_pct
+
+    done | text_progress
+
+    echo
+
+    #sync ; sync
+
+    # Enable cursor
+
+    #echo $dirty_bytes >> /proc/sys/vm/dirty_bytes
+    #echo $dirty_ratio >> /proc/sys/vm/dirty_ratio
+
+    # Use err_file as a semaphore from (...)& process
+    if test -e $err_file; then
+        rm -f $err_file
+        return 2
+    fi
+
+    #test -d /proc/$COPY_PID && wait $COPY_PID
+
+    return 0
+}
+
 #------------------------------------------------------------------------------
 # This acts like an external program to draw a progress bar on the screen.
 # It expects integer percentages as input on stdin to move the bar.
