@@ -33,6 +33,7 @@ SHOW_NAV=true
 MAX_PROGRESS=7
 PROG_CHARS=5
 
+LOCALE_DIR=/live/locale
 CONF_DIR=/live/config
 WORK_DIR=$CONF_DIR/tsplash
 LANG_FILE=$CONF_DIR/lang
@@ -81,9 +82,7 @@ main() {
     # Read back our configuration
     /live/bin/bash -n $MY_CONF_FILE 2>/dev/null 1>/dev/null && . $MY_CONF_FILE
 
-    #TTY_NUM=$(cat $TTY_NUM_FILE 2>/dev/null)
-    #[ -z "$TTY_NUM" ] && fatal "Could not find the tty number in %s" "$TTY_NUM_FILE"
-    #openvt -c $TTY_NUM
+    read_xlat $ME $LANG
 
     WELCOME_MSG=$(cat $WELCOME_FILE 2>/dev/null)
     eval_cmd "$cmd" "$@"
@@ -163,6 +162,8 @@ do_start() {
 
     # Read back what we stored when we started
     LANG=$(cat $LANG_FILE 2>/dev/null)
+
+    read_xlat $ME $LANG
 
     if [ -n "$param" ]; then
         [ -z "${param##*[ba]*}" ] && SHOW_BORDER=true
@@ -454,7 +455,7 @@ set_console_width() {
     setfont $file -C $(tty)
 
     SCREEN_WIDTH=$(stty size 2>/dev/null | cut -d" " -f2)
-    log_it 'New screen width %s"  "$SCREEN_WIDTH'
+    log_it 'New screen width %s'  "$SCREEN_WIDTH"
 }
 
 #------------------------------------------------------------------------------
@@ -896,6 +897,26 @@ text_progress() {
         [ $input -ge 1000 ] && break
     done
 }
+
+#------------------------------------------------------------------------------
+#
+#------------------------------------------------------------------------------
+read_xlat() {
+    local prog=$1  lang=${2%%_*}
+    local xdir=$LOCALE_DIR/xlat
+
+    local xlat=$xdir/en/$prog.xlat
+    [ -r $xlat ] && . $xlat
+    [ -r $xlat ] && log_it "read $xlat"
+
+    [ "$lang" ] || return
+
+    xlat=$xdir/$lang/$prog.xlat
+    [ -r "$xlat" ] || return
+    . $xlat
+    log_it 'Translate to %s' $lang
+}
+
 
 #------------------------------------------------------------------------------
 #
