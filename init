@@ -6427,7 +6427,7 @@ tsplash_on() {
 #------------------------------------------------------------------------------
 tsplash_clear() {
     tsplash_enabled || return
-    if [ -z "$TSPLASH_CLEARED" ]; then
+    if [ -z "$TSPLASH_CLEARED" -a -z "$NO_CLEAR" ]; then
         clear
         sleep .2
         TSPLASH_CLEARED=true
