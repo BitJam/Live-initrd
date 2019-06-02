@@ -331,7 +331,7 @@ get_seconds() {
 draw_nav_keys() {
 
     local  left_press=$(mk_key_str "see boot process" 'Alt-F1')
-    local right_press=$(mk_key_str "return here"      "Alt-$TTY_NUM")
+    local right_press=$(mk_key_str "return here"      "Alt-F$TTY_NUM")
 
     left_text  $((SCREEN_BOTTOM))  "  $left_press"
     right_text $((SCREEN_BOTTOM))  "$right_press  "
