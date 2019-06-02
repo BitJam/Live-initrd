@@ -944,7 +944,7 @@ read_xlat() {
 #------------------------------------------------------------------------------
 my_exit() {
     local ret=$1  y=3  x=3
-    printf "\e[$y;${x}H$nc_co"
+    printf "\e[$y;${x}H$nc_co$black"
     exit $ret
 }
 
