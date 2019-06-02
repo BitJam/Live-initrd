@@ -214,7 +214,7 @@ main_wrapper() {
     read_cmdline_params
     select_breakpoints
 
-    start_tsplash
+    tsplash_start
 
     FREE_MEM=$(mem_info MemFree)
 
@@ -348,7 +348,7 @@ main_wrapper() {
 
     #tsplash_progress init
 
-    copy_tsplash $NEW_ROOT
+    tsplash_copy $NEW_ROOT
 
     write_log_files $MY_LOG $NEW_ROOT/$LOG_FILE
     MY_LOG=$NEW_ROOT/$LOG_FILE.color
@@ -6395,7 +6395,7 @@ random_string() {
 #------------------------------------------------------------------------------
 #
 #------------------------------------------------------------------------------
-start_tsplash() {
+tsplash_start() {
     tsplash_enabled || return
 
     case $CMD_MY_TTY in
@@ -6439,7 +6439,7 @@ tsplash_clear() {
 #------------------------------------------------------------------------------
 #
 #------------------------------------------------------------------------------
-copy_tsplash() {
+tsplash_copy() {
     tsplash_enabled || return
     local new_dir=$1
 
