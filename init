@@ -382,7 +382,8 @@ main_wrapper() {
         # Note that "nomodeset" is yet again unreliable!
         # [ "$NO_CLEAR" ] || [ "$NO_MODESET" ] || clear
         [ "$NO_CLEAR" ] || clear
-        exec $LIVE_BIN/switch_root -c /dev/tty1 $NEW_ROOT $INIT_COMMAND "$@"
+        #exec $LIVE_BIN/switch_root -c /dev/tty1 $NEW_ROOT $INIT_COMMAND "$@"
+        exec $LIVE_BIN/switch_root $NEW_ROOT /usr/bin/env CONSOLE=/dev/tty1 $INIT_COMMAND "$@"
     fi
 }
 
