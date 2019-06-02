@@ -466,6 +466,7 @@ main_core() {
 
     if [ "$FRUGAL_ID" ]; then
         find_frugal_file "$FRUGAL_ID" || frugal_error $?
+        tsplash_on
     else
         find_linuxfs_file
     fi
@@ -496,6 +497,7 @@ main_core() {
     dir_has_param "$SQFILE_MP" rw || REMASTERABLE=
 
     detect_vga_menu "$CMD_VGA" "$GFX_SAVE"
+    tsplash_on
 
     if remasterable; then
         do_remaster "$SQFILE_FULL"
@@ -524,6 +526,7 @@ main_core() {
     prepare_persistence
 
     mount_persist_device "$PERSIST_FILES" "$FROM_PERSIST"
+    tsplash_on
 
     list_modules
 
@@ -579,6 +582,8 @@ main_core() {
 
     [ "$WANT_HOMEFS" ] \
         && mount_homefs $PERSIST_FULL_PATH/homefs $NEW_ROOT/home "$WANT_HOMEFS" "$NEED_HOMEFS"
+
+    tsplash_on
 
     [ "$DO_XTRA"       ] && copy_xtra    $DEFAULT_DIR
     [ "$DO_XTRA"       ] && delete_files $DEFAULT_DIR
@@ -2134,12 +2139,10 @@ find_frugal_file() {
 
     if  [ -z "$device" ]; then
 
+        tsplash_clear
         msg "Looking for partitions with at least %s free.  Please wait ..." "$(nq $(size_label_m $needed))"
-
         select_device 'frugal' device $needed not_mounted || return 2
-
         local ret=$?
-
         [ -z "$device" -o "$device" = "quit" ] && return 1
 
         [ "$LABEL_FRUGAL" ] && label_device $device "$FRUGAL_NAME-Frugal"
@@ -2265,6 +2268,7 @@ find_linuxfs_file() {
     else
 
         find_crypt_or_linuxfs
+        tsplash_on
 
         SQFILE_MP=$BOOT_MP
         SQFILE_DEV=$FOUND_DEV
@@ -2377,6 +2381,7 @@ find_crypt_or_linuxfs() {
 
     BOOT_UUID=$CRYPT_UUID
 
+    tsplash_clear
     msg "Checking for encrypted partition on device %s ..." "$crypt_dev"
 
     test -e "$crypt_dev" || fatal "Encrypted device %s does not exist"                 "$(dqe $crypt_dev)"
@@ -3512,6 +3517,7 @@ YES_no() {  _yes_no 0 "yes" "$@" ;}
 yes_NO() {  _yes_no 1 "no"  "$@" ;}
 
 _yes_no() {
+    tsplash_clear
     local def_ret=$1  def_lab=$(cq $2)
     shift 2
     local ans title=$(printf "$m_co$@")
@@ -5125,7 +5131,6 @@ mount_persist_device() {
             unset WANT_ROOTFS WANT_HOMEFS NEED_ROOTFS NEED_HOMEFS
             return
         fi
-
     fi
 
     if [ $ret -eq 0 ]; then
@@ -5412,11 +5417,11 @@ size_menu() {
     my_select_2 "$title"  $var  "" "$data" "$display"
 }
 
-
 #------------------------------------------------------------------------------
 #
 #------------------------------------------------------------------------------
 select_persist_device() {
+    tsplash_clear
     local device label=$1
     warn
     warn "Could not find a partition with label %s" "$(pqw $label)"
