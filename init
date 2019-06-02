@@ -591,6 +591,7 @@ main_core() {
     [ "$DO_AUTO_LOGIN" ] && auto_login   "$AUTO_LOGIN_PROG" "$AUTO_LOGIN_TERMS" "$NEW_ROOT"
     [ "$DO_FANCY"      ] && fancy_prompt "$FANCY_PROMPT" "$NEW_ROOT"
     [ "$DB_PLUS"       ] && page_updown_keys "$NEW_ROOT"
+    tsplash_enabled && [ - z "$CMD_MY_TTY" ] && disable_tty1 "$NEW_ROOT"
 
     # FIXME: do this after copy_xtra for easy testing (for now) (????)
     PROC_CMDLINE=$(cat /live/config/proc-cmdline)
@@ -5742,6 +5743,15 @@ copy_homefs() {
     log_cmd mv -f $homefs.new $homefs
 
     return 0
+}
+
+
+#------------------------------------------------------------------------------
+#
+#------------------------------------------------------------------------------
+disable_tty1() {
+    local dir=$1
+    sed -r -i "s/^\s*(1:2345:respawn)/# \1/" $dir/etc/inittab
 }
 
 #------------------------------------------------------------------------------
