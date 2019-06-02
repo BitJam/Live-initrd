@@ -74,7 +74,7 @@ main() {
 
 
     case $cmd in
-         start)  do_start "$@" ; exit  0 ;;
+         start)  do_start "$@" ; my_exit  0 ;;
     esac
 
     #echo -e "\n---------------------------" >> $LOG_FILE
@@ -123,7 +123,7 @@ eval_cmd() {
                 *) fatal 'Unknown command %s' "$cmd" ;;
     esac
 
-    exit 0
+    my_exit 0
 }
 
 do_clear() {
@@ -510,13 +510,13 @@ log_it() {
 fatal() {
     local fmt=$1 ; shift
     printf "[%8s] Fatal: $fmt\n" "$(get_seconds)" "$@" >> $LOG_FILE
-    exit 2
+    my_exit 2
 }
 
 error() {
     local fmt=$1 ; shift
     printf "[%8s] Error: $fmt\n" "$(get_seconds)" "$@" >> $LOG_FILE
-    exit 2
+    my_exit 2
 }
 
 #------------------------------------------------------------------------------
@@ -753,7 +753,7 @@ mk_swap_file() {
     clear_prog_bar
     last_progress
     log_it "mk_swap_file done"
-    exit $ret
+    my_exit $ret
 }
 
 #------------------------------------------------------------------------------
@@ -936,6 +936,16 @@ read_xlat() {
     [ -r "$xlat" ] || return
     . $xlat
     log_it 'Translate to %s' $lang
+}
+
+#------------------------------------------------------------------------------
+# Park cursor in a safe place when we exit
+# FIXME replace $nc_co with $black after testing
+#------------------------------------------------------------------------------
+my_exit() {
+    local ret=$1  y=3  x=3
+    printf "\e[$y;${x}H$nc_co"
+    exit $ret
 }
 
 #------------------------------------------------------------------------------
