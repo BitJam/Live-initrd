@@ -53,6 +53,7 @@ C_DOT="•"
 
 FONT_DIRS="/usr/share/consolefonts /live/locale/fonts"
 
+USB_DIRTY_BYTES=20000000
 #------------------------------------------------------------------------------
 #
 #------------------------------------------------------------------------------
@@ -116,6 +117,8 @@ eval_cmd() {
 
              shutdown) clear_progress $cmd ;;
                reboot) clear_progress $cmd ;;
+
+         mk-swap-file) mk_swap_file "$@"   ;;
 
                 *) fatal 'Unknown command %s' "$cmd" ;;
     esac
@@ -282,12 +285,25 @@ show_progress() {
 
     [ -n "$VERBOSE_PROGRESS" ] || return
 
+    last_progress
+}
+
+#------------------------------------------------------------------------------
+# Normal verbose progress showing last line of progress file
+#------------------------------------------------------------------------------
+last_progress() {
     local last_msg=$(tail -n1 $PROG_FILE)
     [ -n "$last_msg" ] || return
+    verbose_progress "$last_msg" $lt_grey
+}
 
-    local y2=$PROG_Y2
+#------------------------------------------------------------------------------
+# Clear out verbose progress area and display any message and color
+#------------------------------------------------------------------------------
+verbose_progress() {
+    local msg=$1  color=${2:-$lt_grey}  y2=$PROG_Y2
     clear_line $y2
-    ctext $y2 "" "$last_msg"   $lt_grey
+    ctext $y2 "" "$msg" $color
 }
 
 #------------------------------------------------------------------------------
@@ -314,8 +330,8 @@ get_seconds() {
 #------------------------------------------------------------------------------
 draw_nav_keys() {
 
-    local  left_press=$(mk_key_str "%s %s" "see boot process" 'Alt-F1')
-    local right_press=$(mk_key_str "%s %s" "return here"      "Alt-$TTY_NUM")
+    local  left_press=$(mk_key_str "see boot process" 'Alt-F1')
+    local right_press=$(mk_key_str "return here"      "Alt-$TTY_NUM")
 
     left_text  $((SCREEN_BOTTOM))  "  $left_press"
     right_text $((SCREEN_BOTTOM))  "$right_press  "
@@ -341,7 +357,7 @@ mk_key() {
 
 mk_key_str() {
     local str=$1  key=$2
-    printf "$lt_grey$str$nc_co" "$(mk_key "$key")"
+    printf "%s $lt_grey$str$nc_co" "$(mk_key "$key")"
 }
 
 #------------------------------------------------------------------------------
@@ -720,12 +736,33 @@ cruler() {
 #==============================================================================
 
 #------------------------------------------------------------------------------
-# Do a "dd" command with a progress bar
+# mk_swap_file <file> <megs>
 #------------------------------------------------------------------------------
+mk_swap_file() {
+    local file=$1  size=$2   size_lab=$3
+    set_color
+    screen_init
+    verbose_progress mk_swap_file $bold_co
+
+    bar_box "Create $size swap file"
+
+    prog_dd "$file" "$size"
+    local ret=$?
+
+    sleep 1.5
+    clear_prog_bar
+    last_progress
+    log_it "mk_swap_file done"
+    exit $ret
+}
+
+#------------------------------------------------------------------------------
+# Do a "dd" from /dev/zero with a progress bar
+#------------------------------------------------------------------------------
+
 prog_dd() {
     local dest=$1  cnt=$2  src=${3:-/dev/zero}  bs=${4:-1M}
-
-    local err_file=/dd-copy-failed
+    local err_file=/live/dd-copy-failed
     # TEST directories or fatal error
 
     mkdir -p "$(dirname "$dest")"
@@ -759,15 +796,12 @@ prog_dd() {
 
     done | text_progress
 
-    echo
-
     sync ; sync
-
-    # Enable cursor
-    printf "\e[?25h"
 
     echo $dirty_bytes >> /proc/sys/vm/dirty_bytes
     echo $dirty_ratio >> /proc/sys/vm/dirty_ratio
+
+    log_it "text_progress done"
 
     # Use err_file as a semaphore from (...)& process
     if test -e $err_file; then
@@ -781,7 +815,7 @@ prog_dd() {
 }
 
 #------------------------------------------------------------------------------
-#
+# Draw a box around where the progress bar will go
 #------------------------------------------------------------------------------
 bar_box() {
     local title="$*"
@@ -790,7 +824,7 @@ bar_box() {
     local y1=$((PROG_BAR_Y - 1))
     local height=3
 
-    log_it "box $x1 | $y1 | $width | $height"
+    # log_it "box $x1 | $y1 | $width | $height"
     box $x1 $y1 $width $height $white
     [ -n "$title" ] && ctext $((y1 - 1 )) "" " $title " $white
 }
@@ -801,7 +835,9 @@ bar_box() {
 test_prog_bar() {
     set_color
     screen_init
-    bar_box "$*"
+    verbose_progress mk_swap_file $bold_co
+
+    bar_box "Create 100M swap file"
 
     local dest=$1  cnt=$2  src=${3:-/dev/zero}  bs=${4:-1M}
 
@@ -819,6 +855,8 @@ test_prog_bar() {
     sleep 1.5
     clear_prog_bar
     chvt 7
+    last_progress
+    sleep 1
     return 0
 }
 
@@ -900,7 +938,10 @@ read_xlat() {
     log_it 'Translate to %s' $lang
 }
 
-
+#------------------------------------------------------------------------------
+#
+#------------------------------------------------------------------------------
+du_size() { du -scm "$@" | awk 'END{ print $1}' ;}
 #------------------------------------------------------------------------------
 #
 #------------------------------------------------------------------------------
