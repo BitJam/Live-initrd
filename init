@@ -4450,7 +4450,12 @@ make_swap_file() {
     fi
 
     msg "Creating %s swap file at %s.  Please be patient ..." "$(pq $raw_size)" "$(pq $file)"
-    prog_dd "$file" "$megs"
+
+    if tsplash_enabled; then
+        tsplash_wait mk_swap_file "$file" "$megs"  "$size"
+    else
+        prog_dd "$file" "$megs"
+    fi
 }
 
 #------------------------------------------------------------------------------
@@ -6456,6 +6461,13 @@ tsplash_clear() {
         TSPLASH_CLEARED=true
     fi
     chvt $MY_TTY
+}
+
+#------------------------------------------------------------------------------
+#
+#------------------------------------------------------------------------------
+tsplash_wait() {
+    openvt -w -c $TSPLASH_TTY /live/bin/tsplash "$@"
 }
 
 #------------------------------------------------------------------------------
