@@ -941,7 +941,6 @@ read_xlat() {
 
 #------------------------------------------------------------------------------
 # Park cursor in a safe place when we exit
-# FIXME replace $nc_co with $black after testing
 #------------------------------------------------------------------------------
 my_exit() {
     local ret=$1  y=3  x=3
