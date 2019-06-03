@@ -6430,10 +6430,11 @@ tsplash_start() {
      #   *) DO_TSPLASH= ; TSPLASH_ERROR=true ; return ;;
     esac
 
+    vmsg 6 "@ %s starting %s" "$(get_seconds)" "$(pq tsplash)"
+
     sed -r -i "s/^(tty)=.*/\1=$TSPLASH_TTY/" /bin/tell-tsplash   /bin/tsplash-on
     sed -r -i "s/tty[0-9]+/tty$TSPLASH_TTY/" /bin/clear-tsplash
     openvt -s -c $TSPLASH_TTY tsplash start "$DO_TSPLASH"
-    vmsg 6 "@ %s starting %s" "$(get_seconds)" "$(pq tsplash)"
 }
 
 tsplash_enabled()  { [ -n "$DO_TSPLASH" ]; return $?        ; }
