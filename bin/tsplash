@@ -744,7 +744,7 @@ mk_swap_file() {
     screen_init
     verbose_progress 'mk_swap_file' $bold_co
 
-    bar_box "Create %s swap file" ${size_lab:-${cnt}MiB}
+    bar_box "Create %s swap file" "${size_lab:-${size}MiB}"
 
     prog_dd "$file" "$size"
     local ret=$?
@@ -818,7 +818,8 @@ prog_dd() {
 # Draw a box around where the progress bar will go
 #------------------------------------------------------------------------------
 bar_box() {
-    local title="$*"
+    local fmt=$1 ; shift
+    local title=$(printf "$fmt" "$@")
     local width=$((PROG_BAR_WIDTH * SCREEN_WIDTH / 100 + 2))
     local x1=$((CENTER_X - width / 2))
     local y1=$((PROG_BAR_Y - 1))
