@@ -11,7 +11,9 @@
 # Description:       Run persist-config on startup if needed.  Run persist-save if needed
 ### END INIT INFO
 
-export PATH=/sbin:/usr/sbin:/bin:/usr/bin:/usr/local/bin
+export PATH=/sbin:/usr/sbin:/bin:/usr/bin:/usr/local/bin:/live/bin
+
+test -d /live/config/tsplash && DO_TSPLASH=true
 
 # . /usr/share/antiX/lib/live-init-utils.sh
 . /live/lib/live-init-utils.sh
@@ -51,12 +53,16 @@ do_start() {
         exit 0
     fi
 
+    [ "$DO_TSPLASH" ] && tsplash_clear
+
     persist-config --cli --startup --nolog
     [ -e $persist_conf -o -e $new_passwd ] || exit 0
     [ -e $new_passwd ]   && echo_live "Save new passwords"
     [ -e $persist_conf ] && echo_live "Save new autosave selection"
 
     persist-save --quiet -cli --nolog
+
+    [ "$DO_TSPLASH" ] && tsplash-on
 }
 
 do_stop() {
@@ -83,6 +89,20 @@ do_stop() {
 
     local p_config=/usr/local/bin/persist-config
     test -x $p_config && $p_config --cli --shutdown
+}
+
+#------------------------------------------------------------------------------
+#
+#------------------------------------------------------------------------------
+tsplash_clear() {
+    [ "$DO_TSPLASH" ] || return
+
+    if [ -z "$TSPLASH_CLEARED" ]; then
+        clear
+        sleep .2
+        TSPLASH_CLEARED=true
+    fi
+    chvt 1
 }
 
 main "$@" 2>&1 | tee -a $INIT_LOG_FILE
