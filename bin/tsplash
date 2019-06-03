@@ -742,9 +742,9 @@ mk_swap_file() {
     local file=$1  size=$2   size_lab=$3
     set_color
     screen_init
-    verbose_progress mk_swap_file $bold_co
+    verbose_progress 'mk_swap_file' $bold_co
 
-    bar_box "Create $size swap file"
+    bar_box "Create %s swap file" ${size_lab:-${cnt}MiB}
 
     prog_dd "$file" "$size"
     local ret=$?
@@ -752,7 +752,7 @@ mk_swap_file() {
     sleep 1.5
     clear_prog_bar
     last_progress
-    log_it "mk_swap_file done"
+    log_it 'mk_swap_file done'
     my_exit $ret
 }
 
@@ -835,11 +835,11 @@ bar_box() {
 test_prog_bar() {
     set_color
     screen_init
-    verbose_progress mk_swap_file $bold_co
-
-    bar_box "Create 100M swap file"
+    verbose_progress 'mk_swap_file' $bold_co
 
     local dest=$1  cnt=$2  src=${3:-/dev/zero}  bs=${4:-1M}
+
+    bar_box "Creating %s swap file"   100M
 
     local base_size=0
 
