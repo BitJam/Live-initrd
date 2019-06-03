@@ -41,7 +41,6 @@
     DISABLE_SERVICES_OPTS="[aABcdgkilLmnNPrsSvVwWx]+"
 
            RW_MODE="ro"
-       #DISTRO_NAME="Linux"
             PRINTK=0
 
           LIVE_DIR="/live"
