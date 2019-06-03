@@ -717,6 +717,7 @@ read_late_cmdline_params() {
                   nousb2|noehci) NO_EHCI=true                         ;;
               private|private=*) FORCE_PASSWD=true                    ;;
                           toram) TO_RAM=true                          ;;
+                      toram_all) TO_RAM=true ; TOORAM_ALL=true        ;;
                     toram_store) TO_RAM=true ; TORAM_STORE=true       ;;
 
         # Convenience short cuts from our menus
@@ -912,6 +913,8 @@ read_cmdline_params()
               private|private=*)  ;;
                           toram)  ;;
                     toram_store)  ;;
+                      toram_all)  ;;
+
 
                  mk_swap_file=*)  ;;
 
@@ -6042,6 +6045,7 @@ SQFS_VID_FILE="$SQFS_VID_FILE"
 STATIC_ROOT="$STATIC_ROOT"
 TORAM_MP="$TORAM_MP"
 TORAM_STORE="$TORAM_STORE"
+TOORAM_ALL="$TOORAM_ALL"
 USER_GID="$USER_GID"
 USER_UID="$USER_UID"
 VID_ERROR="$VID_ERROR"
