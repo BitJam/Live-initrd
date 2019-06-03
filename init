@@ -213,16 +213,17 @@ main_wrapper() {
     read_cmdline_params
     select_breakpoints
 
-    tsplash_start
-
     FREE_MEM=$(mem_info MemFree)
 
     #[ -z "$NO_MODESET" -a -z "$LOW_COLOR" -a -z "$HIGH_COLOR" ] && NO_COLOR=true
     set_colors "$NO_COLOR" "$LOW_COLOR"
 
-    echo "$LANG" > $OUTPUT_DIR/lang
     read_xlat init $LANG
     set_console_width "$CON_WIDTH" "$LANG" 6
+
+    echo "$LANG" > $OUTPUT_DIR/lang
+    # Do this after we set the console font/width
+    tsplash_start
 
     # disable console screen blanking
     printf "\e[9;0]\e[14;0]"
