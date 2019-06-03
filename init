@@ -6409,25 +6409,27 @@ random_string() {
 }
 
 #------------------------------------------------------------------------------
-#
+# Start up the tsplash screen on its on tty
+# Modify our scripts so we all use the same tty
 #------------------------------------------------------------------------------
 tsplash_start() {
     tsplash_enabled || return
 
+    # This does nothing now
     case $CMD_MY_TTY in
         [1-9]|1[0-2]) ;;
      #   *) DO_TSPLASH= ; TSPLASH_ERROR=true ; return ;;
-  esac
+    esac
 
     sed -r -i "s/^(tty)=.*/\1=$TSPLASH_TTY/" /bin/tell-tsplash
     sed -r -i "s/tty[0-9]+/tty$TSPLASH_TTY/" /bin/clear-tsplash
-
     openvt -s -c $TSPLASH_TTY tsplash start "$DO_TSPLASH"
+    msg "Starting %s" "$(pq tsplash)"
 }
 
 tsplash_enabled()  { [ -n "$DO_TSPLASH" ]; return $?        ; }
 tsplash_off()      { chvt $MY_TTY                           ; }
-tsplash_progress() { [ "$DO_TSPLASH" ] && /live/bin/tell-tsplash progress "$*" ; }
+tsplash_progress() { tsplash_enabled && /live/bin/tell-tsplash progress "$*" ; }
 
 #------------------------------------------------------------------------------
 # Go back to the tsplash screen and reset the TSPLASH_CLEARED flag
