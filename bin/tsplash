@@ -118,7 +118,7 @@ eval_cmd() {
              shutdown) clear_progress $cmd ;;
                reboot) clear_progress $cmd ;;
 
-         mk-swap-file) mk_swap_file "$@"   ;;
+         mk_swap_file) mk_swap_file "$@"   ;;
 
                 *) fatal 'Unknown command %s' "$cmd" ;;
     esac
