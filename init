@@ -4936,6 +4936,7 @@ copy_to_ram() {
     else
         mountpoint -q $toram_mp && log_cmd umount $toram_mp
         [ -d $toram_mp ]        && rmdir $toram_mp
+        non_fatal "Copy to RAM failed"
     fi
     breakpoint t "After copy to ram"
 }
