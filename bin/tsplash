@@ -736,15 +736,15 @@ cruler() {
 #==============================================================================
 
 #------------------------------------------------------------------------------
-# mk_swap_file <file> <megs>
+# mk_swap_file <file> <megs> [size-label]
 #------------------------------------------------------------------------------
 mk_swap_file() {
-    local file=$1  size=$2   size_lab=$3
+    local file=$1  size=$2  label=$(label_meg $2)
     set_color
     screen_init
     verbose_progress 'mk_swap_file' $bold_co
 
-    bar_box "Create %s swap file" "${size_lab:-${size}MiB}"
+    bar_box "Create %s swap file" "$label"
 
     prog_dd "$file" "$size"
     local ret=$?
@@ -831,7 +831,6 @@ bar_box() {
 }
 
 #------------------------------------------------------------------------------
-# Do a "dd" command with a progress bar
 #------------------------------------------------------------------------------
 test_prog_bar() {
     set_color
@@ -918,6 +917,39 @@ text_progress() {
 
         [ $input -ge 1000 ] && break
     done
+}
+
+#------------------------------------------------------------------------------
+# Label sizes given in Megs (MiB)
+#------------------------------------------------------------------------------
+label_meg() { label_any_size "$1" " " MiB GiB TiB PiB EiB; }
+
+#------------------------------------------------------------------------------
+# More compact horizontally, for tables
+#------------------------------------------------------------------------------
+size_label_m() { label_any_size "$1" "" M G T P E; }
+
+#------------------------------------------------------------------------------
+# Bite the bullet and do it "right"
+#------------------------------------------------------------------------------
+label_any_size() {
+    local size=$1  sep=$2  u0=$3  unit=$4  meg=$((1024 * 1024))  new_unit ; shift 4
+
+    for new_unit; do
+        [ $size -lt $meg ] && break
+        size=$((size / 1024))
+        unit=$new_unit
+    done
+
+    if [ $size -ge 102400 ]; then
+        awk "BEGIN {printf \"%d$sep$unit\n\", $size / 1024}"
+    elif [ $size -ge 10240 ]; then
+        awk "BEGIN {printf \"%0.1f$sep$unit\n\", $size / 1024}"
+    elif [ $size -ge 1024 ]; then
+        awk "BEGIN {printf \"%0.2f$sep$unit\n\", $size / 1024}"
+    else
+        awk "BEGIN {printf \"%d$sep$u0\n\", $size}"
+    fi
 }
 
 #------------------------------------------------------------------------------
