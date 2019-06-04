@@ -864,8 +864,8 @@ test_prog_bar() {
 #
 #------------------------------------------------------------------------------
 clear_prog_bar() {
-    local y  y0=$PROG_BAR_Y
-    for y in $(seq -2 1); do
+    local y  y0=$((PROG_BAR_Y - 3))
+    for y in $(seq 1 4); do
         clear_line $((y + y0))
     done
 }
