@@ -50,6 +50,9 @@
           AUFS_DIR="aufs"
 
        EXTRA_FILES="deb xtra xtra.tgz"
+ TORAM_ALL_BDIR_FILES="vmlinuz vmlinuz1 initrd.gz"
+TORAM_ALL_OTHER_FILES="boot EFI version"
+
        MIN_SYS_RAM=80
       MIN_AUFS_RAM=80
 
@@ -718,8 +721,8 @@ read_late_cmdline_params() {
                   nousb2|noehci) NO_EHCI=true                         ;;
               private|private=*) FORCE_PASSWD=true                    ;;
                           toram) TO_RAM=true                          ;;
-                      toram_all) TO_RAM=true ; TOORAM_ALL=true        ;;
-                    toram_store) TO_RAM=true ; TORAM_STORE=true       ;;
+                      toram=all) TO_RAM=true ; TORAM_ALL=true         ;;
+                    toram=store) TO_RAM=true ; TORAM_STORE=true       ;;
 
         # Convenience short cuts from our menus
                     persist_all) PERSIST='root!,home!'                ;;
@@ -913,7 +916,7 @@ read_cmdline_params()
                   nousb2|noehci)  ;;
               private|private=*)  ;;
                           toram)  ;;
-                    toram_store)  ;;
+                        toram=*)  ;;
                       toram_all)  ;;
 
 
@@ -4930,6 +4933,7 @@ copy_to_ram() {
 _copy_to_ram() {
     local from=$1 toram_mp=$2  err_toram=$(cqe toram)
     local name=$(basename $from) dir=$(dirname $from)
+    local dir_dir=$(dirname $dir)
 
     heading "copy %s file to RAM" "$(fq $name)"
     local real_sq_file=$(readlink -f $from)
@@ -4939,8 +4943,26 @@ _copy_to_ram() {
     local format2="%s: %10d k"
     vmsg 8 "$format" "$name" $sq_size_k
 
+    local extra_files=$EXTRA_FILES
+
     local extra ex_full size_k
-    for extra in $EXTRA_FILES; do
+    if [ "$TORAM_ALL" ]; then
+        extra_files="$extra_files $TORAM_ALL_BDIR_FILES"
+
+        # Get the size of the additional files/dirs we are going to copy
+        for extra in $TORAM_ALL_OTHER_FILES; do
+            ex_full="$(readlink -f $dir_dir/$extra)"
+            [ -e "$ex_full" ] || continue
+            size_k="$(du -sk $ex_full | cut -f 1)"
+            sq_size_k=$((sq_size_k + size_k))
+            vmsg 8 "$format" $extra $size_k
+            # Total [RAM needed]
+            vmsg 8 "$format2" '          Total'  $sq_size_k
+        done
+    fi
+
+    # Get the size of all extra files/dirs we are going to copy
+    for extra in $extra_files; do
         ex_full="$(readlink -f $dir/$extra)"
         [ -e "$ex_full" ] || continue
         size_k="$(du -sk $ex_full | cut -f 1)"
@@ -4975,15 +4997,25 @@ _copy_to_ram() {
     vmsg 3 "Will copy files from %s to %s. Please be patient ..." \
         "$(dq $orig)" "$(dq $dest)"
 
-    for extra in $EXTRA_FILES; do
+    local from_list
+
+    if [ "$TORAM_ALL" ]; then
+        for extra in $TORAM_ALL_OTHER_FILES; do
+            from_list="$from_list $(readlink -f $dir_dir/$extra)"
+        done
+        log_cmd cp -a $from_list $toram_mp
+    fi
+
+    local from_list=$orig/$name
+    for extra in $extra_files; do
         local full=$(readlink -f $dir/$extra)
-        [ -e "$full" ] && cp -a $full $dest
+        [ -e "$full" ] && from_list="$from_list $full"
+        [ -e "$full.md5" ] && from_list="$from_list $full.md5"
     done
-    [ -e $from ] && cp $from.md5 $dest
 
     #if ! cp_file $orig $name $dest 2>&1; then
 
-    if ! prog_copy $dest $orig/$name; then
+    if ! tsplash_prog_copy $dest $from_list; then
         err "Copy failed.  Cannot do %s" $err_toram
         return 3
     fi
@@ -6063,6 +6095,7 @@ Initrd_Out
 
     [ -e /sys/firmare/efi ]                  && touch $dir/uefi
     [ "$DID_TORAM"    ]                      && touch $dir/did-toram
+    [ "$TORAM_ALL"    ]                      && touch $dir/toram-all
     [ "$TORAM_STORE"  ]                      && touch $dir/toram-store
     [ "$REMASTERABLE" ]                      && touch $dir/remasterable
     [ "$PERSIST_ROOT" ]                      && touch $dir/persist-root
