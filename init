@@ -68,6 +68,7 @@
       FRUGAL_FILES="linuxfs vmlinuz vmlinuz1 initrd.gz xtra xtra.tgz esp-uuid"
       FRUGAL_FILES="$FRUGAL_FILES ../boot ../efi ../EFI ../cdrom.ico ../version"
        FRUGAL_NAME="antiX"
+  DEFAULT_BOOT_DIR="antiX"
 
      MAX_MOUNT_CNT=30
        RETRY_DELAY=50               # in hundredths of a second
@@ -3580,7 +3581,7 @@ my_select() {
 #------------------------------------------------------------------------------
 my_select_2() {
     local title=$1  var=$2  default=$3  data=$4  display=$5
-    local def_prompt=$(printf "Press <%s> for the default selection" "$(cq "enter")")
+    local def_prompt=$(printf "Press <%s> for the default selection" "$(cq "Enter")")
 
     local val input err_msg
     while [ -z "$val" ]; do
@@ -4909,10 +4910,11 @@ copy_to_ram() {
 
     if _copy_to_ram "$@"; then
 
+        local bdir=$toram_mp/$DEFAULT_BOOT_DIR
         LINUXFS_DEV=
         SQFILE_MP=$toram_mp
-        SQFILE_DIR=$toram_mp
-        SQFILE_FULL=$toram_mp/$name
+        SQFILE_DIR=$bdir
+        SQFILE_FULL=$bdir/$name
         DEFAULT_DIR=$SQFILE_DIR
 
         log_cmd umount $SQFS_MP
@@ -4966,7 +4968,7 @@ _copy_to_ram() {
     fi
 
     local orig=$dir
-    local dest=$toram_mp
+    local dest=$toram_mp/$DEFAULT_BOOT_DIR
 
     mkdir -p $dest
 
@@ -6221,6 +6223,7 @@ update_file() {
 #
 #------------------------------------------------------------------------------
 press_enter() {
+    # As in:  Press Enter to continue
     local ans enter="Enter"
     msg "Press <%s> to continue" "$(pq "$enter")"
     read ans
