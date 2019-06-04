@@ -4452,7 +4452,7 @@ make_swap_file() {
     msg "Creating %s swap file at %s.  Please be patient ..." "$(pq $raw_size)" "$(pq $file)"
 
     if tsplash_enabled; then
-        tsplash_wait mk_swap_file "$file" "$megs"  "$size"
+        tsplash_wait mk_swap_file "$file" "$megs"
     else
         prog_dd "$file" "$megs"
     fi
