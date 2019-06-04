@@ -1009,4 +1009,4 @@ set_color() {
 mkdir -p $WORK_DIR
 # main "$@" 2>> $LOG_FILE
 
-main "$@"
+main "$@" 2>> $WORK_DIR/errors
