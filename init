@@ -4434,7 +4434,7 @@ make_swap_file() {
                  *G) megs=${size%G} ; factor=1024 ;;
     esac
 
-    msg "Freespace: $free_space"
+    # msg "Freespace: $free_space"
 
     if [ -z "$factor" ] || ! echo "$megs" | grep -q "^[0-9]\+$"; then
         warn "Invalid %s option %s" 'mk_swap_file=' "$(pqw $raw_size)"
@@ -4442,7 +4442,7 @@ make_swap_file() {
     fi
     megs=$((megs * factor))
 
-    msg "Megs: $megs"
+    # msg "Megs: $megs"
 
     if [ $((free_space - megs)) -lt 10 ]; then
         non_fatal "Not enough space to create a %s swap file" "$(pqw $raw_size)"
