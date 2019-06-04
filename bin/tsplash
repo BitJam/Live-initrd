@@ -749,7 +749,7 @@ mk_swap_file() {
     prog_dd "$file" "$size"
     local ret=$?
 
-    sleep 1.5
+    sleep 1
     clear_prog_bar
     last_progress
     log_it 'mk_swap_file done'
