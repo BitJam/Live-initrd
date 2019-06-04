@@ -118,7 +118,8 @@ eval_cmd() {
              shutdown) clear_progress $cmd ;;
                reboot) clear_progress $cmd ;;
 
-         mk_swap_file) mk_swap_file "$@"   ;;
+         mk_swap_file) mk_swap_file $cmd "$@"   ;;
+           copy_toram) copy_toram   $cmd "$@"   ;;
 
                 *) fatal 'Unknown command %s' "$cmd" ;;
     esac
@@ -135,6 +136,7 @@ do_clear() {
 #
 #------------------------------------------------------------------------------
 udev_end() {
+    # Note: udev is the name of a program
     echo -e "udev done" >> $PROG_FILE
     do_redraw $((MAX_PROGRESS - 1))
 }
@@ -734,15 +736,38 @@ cruler() {
 #==============================================================================
 # Progress bar routines
 #==============================================================================
+#------------------------------------------------------------------------------
+# copy_toram() $dest (src1 src2 ...)
+#------------------------------------------------------------------------------
+copy_toram() {
+    local cmd=$1 ; shift
+    set_color
+    screen_init
+    verbose_progress "$cmd" $bold_co
+
+    local size=$(du_size "$@")
+    # Copy <size> to RAM
+    bar_box "Copy %s to RAM" "$(label_meg $size)"
+
+    prog_copy "$@"
+    local ret=$?
+
+    sleep 1
+    clear_prog_bar
+    last_progress
+    log_it '%s done'" $cmd"
+    my_exit $ret
+}
+
 
 #------------------------------------------------------------------------------
 # mk_swap_file <file> <megs> [size-label]
 #------------------------------------------------------------------------------
 mk_swap_file() {
-    local file=$1  size=$2  label=$(label_meg $2)
+    local  cmd=$1  file=$2  size=$3  label=$(label_meg $3)
     set_color
     screen_init
-    verbose_progress 'mk_swap_file' $bold_co
+    verbose_progress $cmd  $bold_co
 
     bar_box "Create %s swap file" "$label"
 
@@ -752,7 +777,7 @@ mk_swap_file() {
     sleep 1
     clear_prog_bar
     last_progress
-    log_it 'mk_swap_file done'
+    log_it '%s done'" $cmd"
     my_exit $ret
 }
 
@@ -815,6 +840,63 @@ prog_dd() {
 }
 
 #------------------------------------------------------------------------------
+# prog_copy <dest> <src1> <src2> ...
+# Copy source files to destination directory and display a bar indicating the
+# progress.
+#------------------------------------------------------------------------------
+prog_copy() {
+    local dest=$1 ; shift
+    local err_file=/prog-copy-failed
+    # TEST directories or fatal error
+
+    local final_size=$(du_size "$@")
+    local base_size=$(du_size "$dest")
+
+    local dirty_ratio dirty_bytes
+    read dirty_ratio < /proc/sys/vm/dirty_ratio
+    read dirty_bytes < /proc/sys/vm/dirty_bytes
+
+    mkdir -p "$dest"
+    rm -f $err_file
+    (cp -a "$@" $dest/ || echo $? > $err_file) &
+    COPY_PID=$!
+    #echo "copy pid: $COPY_PID" >> $LOG_FILE
+
+    local cur_size=$base_size cur_pct last_pct=0
+    while true; do
+        if ! test -d /proc/$COPY_PID; then
+            echo 1000
+            break
+        fi
+        sleep 0.1
+
+        cur_size=$(du_size $dest)
+        cur_pct=$((cur_size * 1000 / final_size))
+        [ $cur_pct -gt $last_pct ] || continue
+        echo $cur_pct
+        last_pct=$cur_pct
+
+    done | text_progress
+
+    echo
+
+    sync ; sync
+
+    echo $dirty_bytes >> /proc/sys/vm/dirty_bytes
+    echo $dirty_ratio >> /proc/sys/vm/dirty_ratio
+
+    # Use err_file as a semaphore from (...)& process
+    if test -e $err_file; then
+        rm -f $err_file
+        return 2
+    fi
+
+    test -d /proc/$COPY_PID && wait $COPY_PID
+
+    return 0
+}
+
+#------------------------------------------------------------------------------
 # Draw a box around where the progress bar will go
 #------------------------------------------------------------------------------
 bar_box() {
@@ -839,7 +921,8 @@ test_prog_bar() {
 
     local dest=$1  cnt=$2  src=${3:-/dev/zero}  bs=${4:-1M}
 
-    bar_box "Creating %s swap file"   100M
+    # Create <size> swap file
+    bar_box "Create %s swap file"   100M
 
     local base_size=0
 
