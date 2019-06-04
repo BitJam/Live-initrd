@@ -6465,7 +6465,7 @@ tsplash_clear() {
 }
 
 #------------------------------------------------------------------------------
-#
+# Wait for tsplash to finish before moving on
 #------------------------------------------------------------------------------
 tsplash_wait() {
     openvt -w -c $TSPLASH_TTY /live/bin/tsplash "$@"
