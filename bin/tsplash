@@ -969,8 +969,8 @@ text_progress() {
     local max_x=$((abs_max_x - 7))
 
     # Create end-points and save our location on the screen
-    printf "\e[$y;${min_x}H|$nc_co"
-    printf "\e[$y;${max_x}H|$nc_co"
+    #printf "\e[$y;${min_x}H|$nc_co"
+    printf "\e[$y;${max_x}H$white|$nc_co"
     #printf "\e[u\e[$((max_x + 2))C$from_co|$nc_co\e[u"
     local cur_x last_x=$min_x  delta_x=$((max_x - min_x))
 
