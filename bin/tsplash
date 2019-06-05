@@ -45,7 +45,6 @@ LANG_FILE=$CONF_DIR/lang
       LOG_FILE=$WORK_DIR/$ME.log
       TTY_FILE=$WORK_DIR/tty
   TTY_NUM_FILE=$WORK_DIR/tty-num
-       FIFO_IN=$WORK_DIR/fifo
   MY_CONF_FILE=$WORK_DIR/config
 
   PROG_BAR_WIDTH=90
@@ -199,26 +198,6 @@ Config
 
     do_redraw
 }
-
-#------------------------------------------------------------------------------
-#
-#------------------------------------------------------------------------------
-do_fifo() {
-    local cmd line
-    rm -f $FIFO_IN
-    mkfifo $FIFO_IN
-    log 'start FIFO'
-    read_state
-    local stdin=$(readlink -f /proc/$$/fd/0)
-    log "stdin: $stdin"
-    while : ; do
-        while read cmd line; do
-            log_it "fifo: cmd=$cmd line=$line"
-            eval_command "$cmd" $line
-        done < $FIFO_IN
-    done
-}
-
 
 #------------------------------------------------------------------------------
 #
