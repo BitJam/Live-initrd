@@ -26,6 +26,8 @@ X0=1
 
 CONF_FILE="/live/etc/tsplash.conf"
 
+PROG_BAR_PAUSE="1"
+
 VERBOSE_PROGRESS=true
 SHOW_BORDER=true
 SHOW_NAV=true
@@ -754,7 +756,7 @@ copy_toram() {
     prog_copy "$@"
     local ret=$?
 
-    sleep 1
+    sleep $PROG_BAR_PAUSE
     clear_prog_bar
     last_progress
     log_it '%s done'" $cmd"
@@ -776,7 +778,7 @@ mk_swap_file() {
     prog_dd "$file" "$size"
     local ret=$?
 
-    sleep 1
+    sleep $PROG_BAR_PAUSE
     clear_prog_bar
     last_progress
     log_it '%s done'" $cmd"
