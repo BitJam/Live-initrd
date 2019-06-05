@@ -16,7 +16,7 @@ ME=${0##*/}
 ME=${ME#_}
 
 #DB_HEIGHT=25
-DEF_SCREEN_WIDTH=100
+SCREEN_COLS=100
 WELCOME_Y_OFFSET=-4
 RAW_SCREEN_HEIGHT=24
 
@@ -183,6 +183,8 @@ do_start() {
 VERBOSE_PROGRESS=$VERBOSE_PROGRESS
 SHOW_BORDER=$SHOW_BORDER
 SHOW_NAV=$SHOW_NAV
+SCREEN_COLS=$SCREEN_COLS
+PROG_BAR_PAUSE=$PROG_BAR_PAUSE
 LANG=$LANG
 Config
 
@@ -374,7 +376,7 @@ read_distro_release() {
 #
 #------------------------------------------------------------------------------
 set_console_width() {
-    local width=$DEF_SCREEN_WIDTH   lang=$LANG
+    local width=$SCREEN_COLS   lang=$LANG
     local def_size=8  name=Terminus  ext=.psf
 
     local dir fdir
