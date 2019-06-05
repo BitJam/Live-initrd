@@ -283,8 +283,6 @@ main_wrapper() {
     confile bootsave     && LIVE_SCRIPTS="$LIVE_SCRIPTS live-bootsave"
     confile deb-install  && LIVE_SCRIPTS="$LIVE_SCRIPTS live-deb-install"
 
-    vmsg 7 'live scripts: %s' "$live_scripts"
-
     unset CMDLINE
     PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin
     run_init_scripts $NEW_ROOT $LIVE_SCRIPTS
