@@ -786,9 +786,8 @@ mk_swap_file() {
 }
 
 #------------------------------------------------------------------------------
-# Do a "dd" from /dev/zero with a progress bar
+# Do a "dd" from /dev/zero to a file with a progress bar
 #------------------------------------------------------------------------------
-
 prog_dd() {
     local dest=$1  cnt=$2  src=${3:-/dev/zero}  bs=${4:-1M}
     local err_file=/live/dd-copy-failed
