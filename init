@@ -722,8 +722,8 @@ read_late_cmdline_params() {
 
                   nousb2|noehci) NO_EHCI=true                         ;;
               private|private=*) FORCE_PASSWD=true                    ;;
-                          toram) TO_RAM=true                          ;;
-                      toram=all) TO_RAM=true ; TORAM_ALL=true         ;;
+                          toram) TO_RAM=true ; TORAM_ALL=true         ;;
+                      toram=min) TO_RAM=true                          ;;
                     toram=store) TO_RAM=true ; TORAM_STORE=true       ;;
 
         # Convenience short cuts from our menus
