@@ -4954,7 +4954,7 @@ _copy_to_ram() {
     local format2="%s: %10d k"
     vmsg 8 "$format" "$name" $sq_size_k
 
-    local extra_files=$EXTRA_FILES
+    local extra_files="$EXTRA_FILES $name.md5"
 
     local extra ex_full size_k
     if [ "$TORAM_ALL" ]; then
