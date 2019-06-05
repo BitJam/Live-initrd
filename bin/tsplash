@@ -938,11 +938,9 @@ test_prog_bar() {
         last_pct=$cur_pct
     done | text_progress
 
-    sleep 1.5
+    sleep $PROG_BAR_PAUSE
     clear_prog_bar
-    chvt 7
     last_progress
-    sleep 1
     return 0
 }
 
