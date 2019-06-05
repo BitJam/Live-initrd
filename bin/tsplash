@@ -243,8 +243,6 @@ do_redraw() {
 
     [ -n "$SHOW_BORDER" ] && box $SCREEN_BOX $lt_cyan
 
-    #log_it "welcome: $WELCOME_MSG"
-
     ctext "$WELCOME_Y" "" "$WELCOME_MSG" "$lt_cyan"
 
     show_progress $cnt
@@ -389,8 +387,6 @@ set_console_width() {
 
         test -e /dev/fb0 || break
 
-        #log_it "width $width"
-
         case $width in
             [1-9][0-9]|[1-9][0-9][0-9]) ;;
             off) break ;;
@@ -404,14 +400,10 @@ set_console_width() {
 
         # Don't try setting font if we can't find the framebuffer!
         local pixel_width=$(get_pixel_width) || return 1
-        #log_it "pixel_width $pixel_width"
 
         log_it 'Width of screen in pixels %s'  "$pixel_width"
         [ -z "$pixel_width" ] && break
         local cmd_size=$((pixel_width / width))
-
-        #log_it 'Try to set line length to %s'  "$width"
-        #log_it 'Using size %s'                 "$cmd_size"
 
         local size
         case $cmd_size in
@@ -441,8 +433,6 @@ set_console_width() {
         break
     done
 
-    #log_it "fdir $fdir"
-    #log_it "file $file"
     # If we didn't find a font, fall back to VGA16 so we still
     # get the right unicode chars for the chosen language
     if [ -z "$font" ]; then
@@ -889,7 +879,6 @@ bar_box() {
     local y1=$((PROG_BAR_Y - 1))
     local height=3
 
-    # log_it "box $x1 | $y1 | $width | $height"
     box $x1 $y1 $width $height $white
     [ -n "$title" ] && ctext $((y1 - 1 )) "" " $title " $white
 }
@@ -953,7 +942,7 @@ text_progress() {
     #printf "\e[u\e[$((max_x + 2))C$from_co|$nc_co\e[u"
     local cur_x last_x=$min_x  delta_x=$((max_x - min_x))
 
-    log_it "$min_x $max_x $width $delta_x"
+    #log_it "$min_x $max_x $width $delta_x"
 
     while read input; do
         case $input in
