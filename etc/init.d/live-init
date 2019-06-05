@@ -257,7 +257,7 @@ create_fstab() {
     # first see if we should add a swap file
     local swap_opts  remasterable  file=$SWAP_FILE
     test -e /live/config/remasterable && remasterable=true
-
+    test -e /live/config/did-toram    && NO_SWAP_FILE=true
     if [ -z "$NO_SWAP_FILE" -a -n "$remasterable" -a -w "$file" ]; then
         if file -b "$file" | grep -q "^data$"; then
             echo_live "Running %s on %s" "$(pquote mkswap)" "$(pquote $file)"
