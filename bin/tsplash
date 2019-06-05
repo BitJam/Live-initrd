@@ -78,7 +78,7 @@ main() {
          start)  do_start "$@" ; my_exit  0 ;;
     esac
 
-    echo -e "\n---------------------------" >> $LOG_FILE
+    echo -e "---------------------------" >> $LOG_FILE
     log_it 'cmd: %s' "$cmd $*"
 
     # Read back our configuration
