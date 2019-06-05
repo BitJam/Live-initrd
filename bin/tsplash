@@ -165,7 +165,7 @@ do_start() {
 
     printf  "[%8s] Started %s with '%s'\n" "$start_t" "$ME" "$param" >> $LOG_FILE
 
-    test -r $CONF_FILE && /live/bin/bash $CONF_FILE &>/dev/null && . $CONF_FILE
+    test -r $CONF_FILE && /live/bin/bash -n $CONF_FILE &>/dev/null && . $CONF_FILE
 
     # Read back what we stored when we started
     LANG=$(cat $LANG_FILE 2>/dev/null)
