@@ -60,6 +60,7 @@ USB_DIRTY_BYTES=20000000
 #------------------------------------------------------------------------------
 main() {
     local cmd=$1 ; shift
+    unset START_X
 
     PATH=$PATH:/live/bin
 
@@ -112,7 +113,8 @@ eval_cmd() {
              udev-end) udev_end            ;;
      prepare-consoles) do_final            ;;
 
-              start-x) echo "start X" >> $PROG_FILE
+              start-x) START_X=true
+                       echo "start X" >> $PROG_FILE
                        do_redraw
                        do_progress         ;;
 
@@ -314,6 +316,7 @@ get_seconds() {
 draw_nav_keys() {
 
     local  left_press=$(mk_key_str "see boot process" 'Alt-F1')
+    [ "$START_X" ] && left_press=$(mk_key_str "console login" 'Alt-F2')
     local right_press=$(mk_key_str "return here"      "Alt-F$TTY_NUM")
 
     left_text  $((SCREEN_BOTTOM))  "  $left_press"
@@ -742,6 +745,7 @@ mk_swap_file() {
     screen_init
     verbose_progress $cmd  $bold_co
 
+    #. Create <size> swap file
     bar_box "Create %s swap file" "$label"
 
     prog_dd "$file" "$size"
