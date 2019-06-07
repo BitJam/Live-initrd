@@ -903,13 +903,14 @@ test_prog_bar() {
 
     local cur_size=$base_size cur_pct last_pct=0
     while true; do
-        sleep 0.1
+        sleep 0.03
         cur_pct=$((cur_pct + 8))
+        [ $cur_pct -ge 600 ]       && exit
         [ $cur_pct -gt $last_pct ] || continue
         echo $cur_pct
         last_pct=$cur_pct
     done | text_progress
-
+    exit
     sleep $PROG_BAR_PAUSE
     clear_prog_bar
     last_progress
