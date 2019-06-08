@@ -103,11 +103,14 @@ eval_cmd() {
          redraw-clear) do_redraw_clear     ;;
                 clear) clear               ;;
              progress) do_progress "$@"    ;;
+                alert) do_alert    "$@"    ;;
+                 warn) do_warn     "$@"    ;;
 
       redraw-progress) do_redraw
                        do_progress "$@"    ;;
 
-       clear-progress) clear_progress      ;;
+       clear-progress) clear_progress "$@" ;;
+       clear-prog-bar) clear_prog_bar      ;;
 
             udev-rule) do_redraw           ;;
              udev-end) udev_end            ;;
@@ -210,6 +213,26 @@ do_progress() {
     screen_init
     show_progress
 }
+#------------------------------------------------------------------------------
+#
+#------------------------------------------------------------------------------
+do_alert() {
+    set_color
+    screen_init
+    clear_line $PROG_BAR_Y
+    ctext $PROG_BAR_Y "" "$*" $lt_cyan
+}
+
+#------------------------------------------------------------------------------
+#
+#------------------------------------------------------------------------------
+do_warn() {
+    set_color
+    screen_init
+    clear_line $PROG_BAR_Y
+    ctext $PROG_BAR_Y "" "$*" $bold_co
+}
+
 
 #------------------------------------------------------------------------------
 #
@@ -218,10 +241,11 @@ clear_progress() {
     local cmd=$1
     set_color
     screen_init
+    log_it "clear line $PROG_Y"
     clear_line $PROG_Y
     clear_line $PROG_Y2
     [ -z "$cmd" ] && return
-    ctext $PROG_Y "" "$cmd" $bold_co
+    ctext $PROG_Y2 "" "$cmd" $bold_co
 }
 
 #------------------------------------------------------------------------------
@@ -330,8 +354,6 @@ clear_line() {
     local y=$1
     printf "\e[$y;${SCREEN_X0}H%${SCREEN_WIDTH}s" ""
 }
-
-
 
 #------------------------------------------------------------------------------
 #
@@ -729,7 +751,7 @@ copy_toram() {
     local ret=$?
 
     sleep $PROG_BAR_PAUSE
-    clear_prog_bar
+    _clear_prog_bar
     last_progress
     log_it '%s done'" $cmd"
     my_exit $ret
@@ -752,7 +774,7 @@ mk_swap_file() {
     local ret=$?
 
     sleep $PROG_BAR_PAUSE
-    clear_prog_bar
+    _clear_prog_bar
     last_progress
     log_it '%s done'" $cmd"
     my_exit $ret
@@ -912,15 +934,20 @@ test_prog_bar() {
     done | text_progress
     exit
     sleep $PROG_BAR_PAUSE
-    clear_prog_bar
+    _clear_prog_bar
     last_progress
     return 0
 }
 
+clear_prog_bar() {
+    set_color
+    screen_init
+    _clear_prog_bar
+}
 #------------------------------------------------------------------------------
 #
 #------------------------------------------------------------------------------
-clear_prog_bar() {
+_clear_prog_bar() {
     local y  y0=$((PROG_BAR_Y - 3))
     for y in $(seq 1 4); do
         clear_line $((y + y0))

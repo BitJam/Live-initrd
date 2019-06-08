@@ -4733,7 +4733,7 @@ check_md5()
 
     vmsg 2 $tbar
     #. Check <md5> of files in <some> directory
-    vmsg_nc 1 "Check %s of files in %s directory. Please be patient ..." md5 "$(fq $dir)"
+    tsplash_alert_nc "Check %s of files in %s directory. Please be patient ..." md5 "$(fq $dir)"
 
     local file fname md5_file file_md5 true_md5 error
     for fname in $(ls $dir); do
@@ -4772,10 +4772,10 @@ check_md5()
     elif [ "$error" ]; then
         non_fatal "At least one %s checksum did not match" md5
     elif [ "$fcnt" = 1 ]; then
-        vmsg 1 "Success!  The file passed"
+        tsplash_alert "Success!  The file passed"
     else
         #. Success! All <count> file(s) passed
-        vmsg 1 "Success!  All %s files passed" $(nq $fcnt)
+        tsplash_alert "Success!  All %s files passed" $(nq $fcnt)
     fi
     vmsg 2 $tbar
 }
@@ -4842,7 +4842,6 @@ do_remaster() {
     local sqfile="$sqfile_path/$SQFILE_NAME"
     local old_file="$sqfile.old" new_file="$sqfile.new" bad_file="$sqfile.bad"
 
-
     if [ "$ROLLBACK" ]; then
         heading 'remaster %s' "$(cq rollback)"
 
@@ -4854,7 +4853,8 @@ do_remaster() {
             return 1
         fi
         msg $tbar
-        warn "Roll back file %s to %s" "$SQFILE_NAME.old" "$SQFILE_NAME"
+        #warn "Roll back file %s to %s" "$SQFILE_NAME.old" "$SQFILE_NAME"
+        tsplash_warn "Roll back file %s to %s" "$SQFILE_NAME.old" "$SQFILE_NAME"
         msg $tbar
 
         local file full
@@ -4891,7 +4891,7 @@ do_remaster() {
         return 2
     fi
     msg $tbar
-    warn "Remaster the file %s to %s" "$SQFILE_NAME.new" "$SQFILE_NAME"
+    tsplash_warn "Remaster the file %s to %s" "$SQFILE_NAME.new" "$SQFILE_NAME"
     msg $tbar
 
     local file full
@@ -6488,6 +6488,35 @@ tsplash_start() {
 tsplash_enabled()  { [ -n "$DO_TSPLASH" ]; return $?        ; }
 tsplash_off()      { chvt $MY_TTY                           ; }
 tsplash_progress() { tsplash_enabled && /live/bin/tell-tsplash progress "$*" ; }
+
+#------------------------------------------------------------------------------
+#
+#------------------------------------------------------------------------------
+tsplash_alert() {
+    vmsg 1  "$@"
+    tsplash_enabled || return
+    local fmt=$1 ; shift
+    /live/bin/tell-tsplash alert "$(printf "$m_co$fmt" "$@")"
+}
+
+tsplash_alert_nc() {
+    vmsg_nc 1  "$@"
+    tsplash_enabled || return
+    local fmt=$1 ; shift
+    /live/bin/tell-tsplash alert "$(printf "$fmt" "$@")"
+}
+
+
+#------------------------------------------------------------------------------
+#
+#------------------------------------------------------------------------------
+tsplash_warn() {
+    warn "$@"
+    tsplash_enabled || return
+    local fmt=$1 ; shift
+    /live/bin/tell-tsplash warn "$(printf "$warn_co$fmt" "$@")"
+}
+
 
 #------------------------------------------------------------------------------
 # Go back to the tsplash screen and reset the TSPLASH_CLEARED flag
