@@ -55,8 +55,9 @@ C_DOT="•"
 FONT_DIRS="/usr/share/consolefonts /live/locale/fonts"
 
 USB_DIRTY_BYTES=20000000
+
 #------------------------------------------------------------------------------
-#
+# The main event!
 #------------------------------------------------------------------------------
 main() {
     local cmd=$1 ; shift
@@ -92,7 +93,7 @@ main() {
 }
 
 #------------------------------------------------------------------------------
-#
+# This evaluates all commands except "start" which is a special case.
 #------------------------------------------------------------------------------
 eval_cmd() {
     local cmd=$1 ; shift
@@ -133,13 +134,18 @@ eval_cmd() {
     my_exit 0
 }
 
+#------------------------------------------------------------------------------
+# Clear the screen
+#------------------------------------------------------------------------------
 do_clear() {
     log_it clear
     clear
 }
 
 #------------------------------------------------------------------------------
-#
+# Do what needs to be done at the end of the udev init.d script:
+# Show "udev done" progress and redraw the screen (since the framebuffer may
+# have changed when udev ran)
 #------------------------------------------------------------------------------
 udev_end() {
     # Note: udev is the name of a program
@@ -148,7 +154,7 @@ udev_end() {
 }
 
 #------------------------------------------------------------------------------
-#
+# This is called from rc.local when we are not in runlevel 5.
 #------------------------------------------------------------------------------
 do_final() {
     echo -e "prepare consoles" >> $PROG_FILE
@@ -205,7 +211,7 @@ Config
 }
 
 #------------------------------------------------------------------------------
-#
+# Add a line to the progress file and draw/redraw the progress
 #------------------------------------------------------------------------------
 do_progress() {
     echo "$*" >> $PROG_FILE
@@ -213,18 +219,19 @@ do_progress() {
     screen_init
     show_progress
 }
+
 #------------------------------------------------------------------------------
-#
+# Put an "alert" message in the progress bar area (after clearing)
 #------------------------------------------------------------------------------
 do_alert() {
     set_color
     screen_init
     clear_line $PROG_BAR_Y
-    ctext $PROG_BAR_Y "" "$*" $lt_cyan
+    ctext $PROG_BAR_Y "" "$*"
 }
 
 #------------------------------------------------------------------------------
-#
+# Not used ATM
 #------------------------------------------------------------------------------
 do_warn() {
     set_color
@@ -233,9 +240,8 @@ do_warn() {
     ctext $PROG_BAR_Y "" "$*" $bold_co
 }
 
-
 #------------------------------------------------------------------------------
-#
+# Clear the progress dots and the verbose progress line
 #------------------------------------------------------------------------------
 clear_progress() {
     local cmd=$1
@@ -249,7 +255,7 @@ clear_progress() {
 }
 
 #------------------------------------------------------------------------------
-#
+# Redraw the screen then clear the dot progress
 #------------------------------------------------------------------------------
 do_redraw_clear() {
     do_redraw 0
@@ -257,7 +263,8 @@ do_redraw_clear() {
 }
 
 #------------------------------------------------------------------------------
-#
+# Draw/redraw the screen.  This is needed when we start and when we draw
+# on a new tty and also after the framebuffer changes
 #------------------------------------------------------------------------------
 do_redraw() {
     local cnt=$1
@@ -316,7 +323,9 @@ verbose_progress() {
 }
 
 #------------------------------------------------------------------------------
-#
+# Read in the variables from the initrrd-release file and then display the
+# wecome message.  Note that this is only called once by "start" and then
+# is cached.
 #------------------------------------------------------------------------------
 get_welcome_msg() {
     read_distro_release /etc/initrd-release
@@ -327,7 +336,7 @@ get_welcome_msg() {
 }
 
 #------------------------------------------------------------------------------
-#
+# Return the number of seconds since the kernel started
 #------------------------------------------------------------------------------
 get_seconds() {
     local msecs=${1:-$(cut -d" " -f22 /proc/self/stat)}
@@ -335,7 +344,8 @@ get_seconds() {
 }
 
 #------------------------------------------------------------------------------
-#
+# Draw the navigation help at the bottom of the screen
+# (a bit funky ATM re the START_X kludge)
 #------------------------------------------------------------------------------
 draw_nav_keys() {
 
@@ -356,7 +366,7 @@ clear_line() {
 }
 
 #------------------------------------------------------------------------------
-#
+# Make a string to show a specific key press
 #------------------------------------------------------------------------------
 mk_key() {
     local key=$1 c1=$lt_cyan c2=$lt_grey
@@ -369,7 +379,8 @@ mk_key_str() {
 }
 
 #------------------------------------------------------------------------------
-#
+# Read in a "distro release" file by making DISTRO_* variables based on the
+# variaables defined in the file
 #------------------------------------------------------------------------------
 read_distro_release() {
     local file=$1
@@ -377,7 +388,8 @@ read_distro_release() {
     eval $(sed -r -n 's/^\s*([A-Z0-9_]+=)/DISTRO_\1/p' $file)
 }
 #------------------------------------------------------------------------------
-#
+# Set the console font, based on langauge choose a size to make the screen
+# approximately $SCREEN_COLS characters wide
 #------------------------------------------------------------------------------
 set_console_width() {
     local width=$SCREEN_COLS   lang=$LANG
@@ -475,7 +487,8 @@ set_console_width() {
 }
 
 #------------------------------------------------------------------------------
-#
+# Get the width of the screen in pixels.
+# FIXME: should I default to 80 if there is no framebuffer?
 #------------------------------------------------------------------------------
 get_pixel_width() {
     local res=$(cat /sys/class/graphics/fb0/virtual_size 2>/dev/null)
@@ -483,6 +496,9 @@ get_pixel_width() {
     echo ${res%%,*}
 }
 
+#------------------------------------------------------------------------------
+# Current not used
+#------------------------------------------------------------------------------
 get_fbcondecor_width() {
     local theme=${1:-default}
     local res=$(cat /sys/class/graphics/fb0/virtual_size 2>/dev/null)
@@ -505,7 +521,7 @@ log_it() {
 }
 
 #------------------------------------------------------------------------------
-#
+# "fatal" errors
 #------------------------------------------------------------------------------
 fatal() {
     local fmt=$1 ; shift
@@ -513,6 +529,9 @@ fatal() {
     my_exit 2
 }
 
+#------------------------------------------------------------------------------
+# Other errors (which also cause us to exit)
+#------------------------------------------------------------------------------
 error() {
     local fmt=$1 ; shift
     printf "[%8s] Error: $fmt\n" "$(get_seconds)" "$@" >> $LOG_FILE
@@ -520,17 +539,13 @@ error() {
 }
 
 #------------------------------------------------------------------------------
-#
+# Convenience routines for coloring text inside of strings
 #------------------------------------------------------------------------------
-pq()      { echo "$hi_co$*$m_co"           ;}
-pqw()     { echo "$hi_co$*$m_co"           ;}
-#------------------------------------------------------------------------------
-#
-#------------------------------------------------------------------------------
+pq()      { echo "$hi_co$*$m_co"  ;}
+pqw()     { echo "$hi_co$*$m_co"  ;}
 
 #==============================================================================
 #=======  OLD CODE STARTS HERE ================================================
-
 
 #------------------------------------------------------------------------------
 # Create the geometry of the screen
@@ -572,7 +587,8 @@ screen_init() {
 }
 
 #------------------------------------------------------------------------------
-#
+# Print the main "welcome" message which ATM is the distro pretty name along
+# with the 32/64 bit architecture
 #------------------------------------------------------------------------------
 do_welcome() {
     local pretty_name=$1 version=$2  v_date=$3  arch
@@ -710,7 +726,7 @@ right_text() {
 }
 
 #------------------------------------------------------------------------------
-#
+# Print a "ruler" on the screen.  Currently not used
 #------------------------------------------------------------------------------
 cruler() {
     local i y midx
@@ -939,13 +955,18 @@ test_prog_bar() {
     return 0
 }
 
+#------------------------------------------------------------------------------
+# Clear the progress bar area of the screen.  Stand alone.
+#------------------------------------------------------------------------------
 clear_prog_bar() {
     set_color
     screen_init
     _clear_prog_bar
 }
+
 #------------------------------------------------------------------------------
-#
+# clear the progress bar area assuming set_colors and screen_init have already
+# been run
 #------------------------------------------------------------------------------
 _clear_prog_bar() {
     local y  y0=$((PROG_BAR_Y - 3))
@@ -1037,7 +1058,8 @@ label_any_size() {
 }
 
 #------------------------------------------------------------------------------
-#
+# Read the translation file based on the LANG variable
+# Note: the LANG gets read in from a file elsewhere
 #------------------------------------------------------------------------------
 read_xlat() {
     local prog=$1  lang=${2%%_*}
@@ -1065,11 +1087,13 @@ my_exit() {
 }
 
 #------------------------------------------------------------------------------
-#
+# The size of files in meg as reported by the du command
 #------------------------------------------------------------------------------
 du_size() { du -scm "$@" | awk 'END{ print $1}' ;}
+
 #------------------------------------------------------------------------------
-#
+# Set gobal color strings.  Lower-case because that makes the code more
+# readable.
 #------------------------------------------------------------------------------
 set_color() {
     local e=$(printf "\e")
