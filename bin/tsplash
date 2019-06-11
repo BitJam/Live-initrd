@@ -75,7 +75,6 @@ main() {
                 *) fatal "$ME can only be run in a virtual console %s" "$MY_TTY" ;;
     esac
 
-
     case $cmd in
          start)  do_start "$@" ; my_exit  0 ;;
     esac
@@ -179,6 +178,8 @@ do_start() {
 
     # Read back what we stored when we started
     LANG=$(cat $LANG_FILE 2>/dev/null)
+
+    echo "$TTY_NUM" > $TTY_NUM_FILE
 
     read_xlat $ME $LANG
 
