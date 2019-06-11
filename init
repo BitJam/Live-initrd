@@ -6507,13 +6507,37 @@ tsplash_start() {
 
     vmsg 6 "@ %s starting %s" "$(get_seconds)" "$(pq tsplash)"
 
+    # change the tty used in these 3 scripts
     sed -r -i "s/^(tty)=.*/\1=$TSPLASH_TTY/" /bin/tell-tsplash   /bin/tsplash-on
     sed -r -i "s/tty[0-9]+/tty$TSPLASH_TTY/" /bin/clear-tsplash
+
     openvt -s -c $TSPLASH_TTY tsplash start "$DO_TSPLASH"
 }
 
 tsplash_enabled()  { [ -n "$DO_TSPLASH" ]; return $?        ; }
-tsplash_off()      { chvt $MY_TTY                           ; }
+
+#------------------------------------------------------------------------------
+# Switch to the boot screen
+#------------------------------------------------------------------------------
+tsplash_off() {
+    tsplash_enabled || return
+    echo 'tsplash off' >> $MY_LOG
+    chvt $MY_TTY
+}
+
+#------------------------------------------------------------------------------
+# Go back to the tsplash screen and reset the TSPLASH_CLEARED flag
+#------------------------------------------------------------------------------
+tsplash_on() {
+    tsplash_enabled || return
+    echo 'tsplash on' >> $MY_LOG
+    chvt $TSPLASH_TTY
+    unset TSPLASH_CLEARED
+}
+
+#------------------------------------------------------------------------------
+# Advance the tsplash progress
+#------------------------------------------------------------------------------
 tsplash_progress() { tsplash_enabled && /live/bin/tell-tsplash progress "$*" ; }
 
 #------------------------------------------------------------------------------
@@ -6544,15 +6568,6 @@ tsplash_warn() {
     tsplash_enabled || return
     local fmt=$1 ; shift
     /live/bin/tell-tsplash alert "$(printf "$warn_co$fmt$nc_co" "$@")"
-}
-
-#------------------------------------------------------------------------------
-# Go back to the tsplash screen and reset the TSPLASH_CLEARED flag
-#------------------------------------------------------------------------------
-tsplash_on() {
-    tsplash_enabled || return
-    chvt $TSPLASH_TTY
-    unset TSPLASH_CLEARED
 }
 
 #------------------------------------------------------------------------------
