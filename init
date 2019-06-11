@@ -2861,7 +2861,7 @@ try_mount() {
     [ "$type" ] || return 1
     local opts=$rw,noatime
     local winopts=umask=000,dmask=002,fmask=113
-    local ntfsopts=force,rw,$winopts,uid=$USER_UID,gid=$USER_GID
+    local ntfsopts=recover,rw,$winopts,uid=$USER_UID,gid=$USER_GID
     local fatopts=$winopts,shortname=winnt,uid=$USER_UID,gid=$USER_GID
 
     case $type in
