@@ -183,14 +183,14 @@ do_start() {
 
     read_xlat $ME $LANG
 
-    if [ -n "$param" ]; then
-        [ -z "${param##*[ba]*}" ] && SHOW_BORDER=true
-        [ -z "${param##*[BA]*}" ] && SHOW_BORDER=
-        [ -z "${param##*[pa]*}" ] && VERBOSE_PROGRESS=true
-        [ -z "${param##*[PA]*}" ] && VERBOSE_PROGRESS=
-        [ -z "${param##*[na]*}" ] && SHOW_NAV=true
-        [ -z "${param##*[NA]*}" ] && SHOW_NAV=
-    fi
+    case $param in
+        *[ba]*) SHOW_BORDER=true      ;;
+        *[BA]*) SHOW_BORDER=          ;;
+        *[pa]*) VERBOSE_PROGRESS=true ;;
+        *[PA]*) VERBOSE_PROGRESS=     ;;
+        *[na]*) SHOW_NAV=true         ;;
+        *[NA]*) SHOW_NAV=             ;;
+    esac
 
     cat <<Config > $MY_CONF_FILE
 VERBOSE_PROGRESS=$VERBOSE_PROGRESS

@@ -146,30 +146,28 @@ do_start() {
         [ -f /etc/exports ] && grep -q '^[[:space:]]*[^#]*/' $export_files && DISABLE_NFS=
     fi
 
-    if [ -n "$disable_param" ]; then
-
-        # If the ## expression matches then the resulting string length is zero
-        [ -z "${disable_param##*[a]*}" ] &&    DISABLE_ACPID=true
-        [ -z "${disable_param##*[A]*}" ] &&     ENABLE_ACPID=true
-        [ -z "${disable_param##*[B]*}" ] && ENABLE_BOOTCLEAN=true
-        [ -z "${disable_param##*[c]*}" ] &&  DISABLE_CONNMAN=true
-        [ -z "${disable_param##*[d]*}" ] &&          NO_DBUS=true
-        [ -z "${disable_param##*[g]*}" ] &&      DISABLE_GPM=true
-        [ -z "${disable_param##*[i]*}" ] &&  DISABLE_IFPLUGD=true
-        [ -z "${disable_param##*[l]*}" ] &&             LEAN=true
-        [ -z "${disable_param##*[L]*}" ] &&    ENABLE_SYSLOG=true
-        [ -z "${disable_param##*[m]*}" ] &&             MEAN=true
-        [ -z "${disable_param##*[n]*}" ] &&      DISABLE_NFS=true
-        [ -z "${disable_param##*[n]*}" ] &&       NFS_REASON=n
-        [ -z "${disable_param##*[N]*}" ] &&      ENABLE_NTPD=true
-        [ -z "${disable_param##*[P]*}" ] &&       ENABLE_PAM=true
-        [ -z "${disable_param##*[S]*}" ] &&  ENABLE_PLYMOUTH=true
-        [ -z "${disable_param##*[v]*}" ] &&     DISABLE_VBOX=true
-        [ -z "${disable_param##*[V]*}" ] &&     ENABLE_FBDEV=true
-        [ -z "${disable_param##*[w]*}" ] &&             WICD=no
-        [ -z "${disable_param##*[W]*}" ] &&             WICD=yes
-        [ -z "${disable_param##*[x]*}" ] &&        XTRA_LEAN=true
-    fi
+    case $disable_param in
+        *[a]*)    DISABLE_ACPID=true  ;;
+        *[A]*)     ENABLE_ACPID=true  ;;
+        *[B]*) ENABLE_BOOTCLEAN=true  ;;
+        *[c]*)  DISABLE_CONNMAN=true  ;;
+        *[d]*)          NO_DBUS=true  ;;
+        *[g]*)      DISABLE_GPM=true  ;;
+        *[i]*)  DISABLE_IFPLUGD=true  ;;
+        *[l]*)             LEAN=true  ;;
+        *[L]*)    ENABLE_SYSLOG=true  ;;
+        *[m]*)             MEAN=true  ;;
+        *[n]*)      DISABLE_NFS=true  ;;
+        *[n]*)       NFS_REASON=n     ;;
+        *[N]*)      ENABLE_NTPD=true  ;;
+        *[P]*)       ENABLE_PAM=true  ;;
+        *[S]*)  ENABLE_PLYMOUTH=true  ;;
+        *[v]*)     DISABLE_VBOX=true  ;;
+        *[V]*)     ENABLE_FBDEV=true  ;;
+        *[w]*)             WICD=no    ;;
+        *[W]*)             WICD=yes   ;;
+        *[x]*)        XTRA_LEAN=true  ;;
+    esac
 
     #[ -n "$LEAN" -o -n "$MEAN" ] && : ${WICD:=no}
 
