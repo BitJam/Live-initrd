@@ -186,8 +186,8 @@ do_start() {
     if [ -n "$param" ]; then
         [ -z "${param##*[ba]*}" ] && SHOW_BORDER=true
         [ -z "${param##*[BA]*}" ] && SHOW_BORDER=
-        [ -z "${param##*[va]*}" ] && VERBOSE_PROGRESS=true
-        [ -z "${param##*[VA]*}" ] && VERBOSE_PROGRESS=
+        [ -z "${param##*[pa]*}" ] && VERBOSE_PROGRESS=true
+        [ -z "${param##*[PA]*}" ] && VERBOSE_PROGRESS=
         [ -z "${param##*[na]*}" ] && SHOW_NAV=true
         [ -z "${param##*[NA]*}" ] && SHOW_NAV=
     fi
