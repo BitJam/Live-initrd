@@ -4385,7 +4385,7 @@ tsplash_prog_copy() {
     if tsplash_enabled; then
         tsplash_wait copy_toram "$@"
     else
-        prog_cp "$@"
+        prog_copy "$@"
     fi
 }
 #------------------------------------------------------------------------------
