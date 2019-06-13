@@ -271,7 +271,8 @@ do_redraw_clear() {
 #------------------------------------------------------------------------------
 do_redraw() {
     local cnt=$1
-    log_it 'redraw on %s' "$(tty)"
+    local tty=$(tty)
+    log_it 'redraw on %s' "$tty"
     clear
     set_color
     set_console_width
@@ -282,6 +283,10 @@ do_redraw() {
     ctext "$WELCOME_Y" "" "$WELCOME_MSG" "$lt_cyan"
 
     show_progress $cnt
+
+    case $tty in
+        *tty7) [ "$NAV_7" ] && SHOW_NAV=true ;;
+    esac
     [ -n "$SHOW_NAV" ] && draw_nav_keys
 }
 
