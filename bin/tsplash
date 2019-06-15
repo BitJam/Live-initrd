@@ -878,6 +878,7 @@ prog_copy() {
     local dirty_ratio dirty_bytes
     read dirty_ratio < /proc/sys/vm/dirty_ratio
     read dirty_bytes < /proc/sys/vm/dirty_bytes
+    echo $USB_DIRTY_BYTES > /proc/sys/vm/dirty_bytes
 
     mkdir -p "$dest"
     rm -f $err_file
