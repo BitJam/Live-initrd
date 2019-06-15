@@ -737,8 +737,8 @@ read_late_cmdline_params() {
                  frugal_persist) set_frugal 'root!,home!'             ;;
                     frugal_root) set_frugal 'root!'                   ;;
                   frugal_static) set_frugal 'root!,home!,static'      ;;
-             frugal_static_root) set_frugal 'root!,home!,static'      ;;
-                  f_static_root) set_frugal 'root!,home!,static'      ;;
+             frugal_static_root) set_frugal 'root!,static'            ;;
+                  f_static_root) set_frugal 'root!,static'            ;;
                     frugal_home) set_frugal 'home!'                   ;;
                     frugal_only) set_frugal                           ;;
 
