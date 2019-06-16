@@ -352,7 +352,7 @@ main_wrapper() {
 
     #tsplash_progress init
 
-    tsplash_copy $NEW_ROOT
+    tsplash_copy_config $NEW_ROOT
 
     write_log_files $MY_LOG $NEW_ROOT/$LOG_FILE
     MY_LOG=$NEW_ROOT/$LOG_FILE.color
@@ -2111,7 +2111,6 @@ find_frugal_file() {
         DEFAULT_PERSIST_PATH=$SQFILE_PATH
         SQFILE_DIR=$(dirname $SQFILE_FULL)
         DEFAULT_DIR=$SQFILE_DIR
-
         return 0
 
     elif [ $ret -eq 40 ]; then
@@ -6596,7 +6595,7 @@ tsplash_wait() {
 # Copy the tsplash config to the "real" file system.  We need to do this as
 # last as possible, I think.  Perhaps we can improve this.
 #------------------------------------------------------------------------------
-tsplash_copy() {
+tsplash_copy_config() {
     tsplash_enabled || return
     local new_dir=$1
 
