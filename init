@@ -2102,7 +2102,7 @@ find_frugal_file() {
 
     if [ $ret -eq 0  -a -z "$FORCE_FRUGAL" ]; then
         #. Found existing <frugal> install
-        msg "Found existing %s install" frugal
+        tsplash_alert "Found existing %s install" frugal
         SQFILE_MP=$BOOT_MP
         SQFILE_DEV=$FOUND_DEV
 
