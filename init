@@ -2166,9 +2166,11 @@ find_frugal_file() {
     if  [ -z "$device" ]; then
 
         tsplash_clear
-        msg "Looking for partitions with at least %s free.  Please wait ..." "$(nq $(size_label_m $needed))"
-        select_device 'frugal' device $needed not_mounted || return 2
+        tsplash_alert "Looking for partitions with at least %s free.  Please wait ..." "$(nq $(size_label_m $needed))"
+        select_device 'frugal' device $needed not_mounted
         local ret=$?
+        tsplash_alert ""
+        [ $ret -eq 0 ] || return 2
         [ -z "$device" -o "$device" = "quit" ] && return 1
 
         [ "$LABEL_FRUGAL" ] && label_device $device "$FRUGAL_NAME-Frugal"
