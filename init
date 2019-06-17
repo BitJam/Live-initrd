@@ -2217,9 +2217,8 @@ find_frugal_file() {
 
         msg "copy %s to %s" $(pq $(size_label_m $actual)) $(pq $sqfile_dir/)
 
-        #if ! time_cmd copy_files_md5 $old_dir $sqfile_dir $FRUGAL_FILES; then
-        if ! prog_copy_md5 $sqfile_dir $old_dir $FRUGAL_FILES; then
-            warn "Copy failed.  Erasing partial copy"
+        if ! tsplash_prog_copy_md5 $sqfile_dir $old_dir $FRUGAL_FILES; then
+            tsplash_warn "Copy failed.  Erasing partial copy"
             log_cmd rm -f $sqfile_full
             return 40
         fi
