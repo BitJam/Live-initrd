@@ -4314,6 +4314,15 @@ prog_copy_md5() {
 }
 
 #------------------------------------------------------------------------------
+#
+#------------------------------------------------------------------------------
+tsplash_prog_copy_md5() {
+    local dest=$1  src=$2 ; shift 2
+    tsplash_prog_copy $dest $(find_md5_files $src "$@")
+}
+
+
+#------------------------------------------------------------------------------
 # prog_copy <dest> <src1> <src2> ...
 # Copy source files to destination directory and display a bar indicating the
 # progress.
@@ -6518,7 +6527,13 @@ tsplash_start() {
     openvt -s -c $TSPLASH_TTY tsplash start "$DO_TSPLASH"
 }
 
-tsplash_enabled()  { [ -n "$DO_TSPLASH" ]; return $?        ; }
+#------------------------------------------------------------------------------
+# Convenience routine
+#------------------------------------------------------------------------------
+tsplash_enabled()  {
+    [ -n "$DO_TSPLASH" ]
+    return $?
+}
 
 #------------------------------------------------------------------------------
 # Switch to the boot screen
@@ -6526,6 +6541,24 @@ tsplash_enabled()  { [ -n "$DO_TSPLASH" ]; return $?        ; }
 tsplash_off() {
     tsplash_enabled || return
     echo 'tsplash off' >> $MY_LOG
+    TSPLASH_OFF=true
+    chvt $MY_TTY
+}
+
+#------------------------------------------------------------------------------
+# Clear screen, wait briefly and then chvt back here.
+# Will only clear the screen once until we move back to the tsplash screen.
+#------------------------------------------------------------------------------
+tsplash_clear() {
+    tsplash_enabled || return
+    if [ -z "$TSPLASH_CLEARED" -a -z "$NO_CLEAR" ]; then
+        clear
+        echo 'tsplash clear' >> $MY_LOG
+        sleep .2
+        TSPLASH_CLEARED=true
+    fi
+
+    TSPLASH_OFF=true
     chvt $MY_TTY
 }
 
@@ -6533,7 +6566,9 @@ tsplash_off() {
 # Go back to the tsplash screen and reset the TSPLASH_CLEARED flag
 #------------------------------------------------------------------------------
 tsplash_on() {
-    tsplash_enabled || return
+    tsplash_enabled    || return
+    [ "$TSPLASH_OFF" ] || return
+    unset TSPLASH_OFF
     echo 'tsplash on' >> $MY_LOG
     chvt $TSPLASH_TTY
     unset TSPLASH_CLEARED
@@ -6575,21 +6610,8 @@ tsplash_warn() {
 }
 
 #------------------------------------------------------------------------------
-# Clear screen, wait briefly and then chvt back here.
-# Will only clear the screen once until we move back to the tsplash screen.
-#------------------------------------------------------------------------------
-tsplash_clear() {
-    tsplash_enabled || return
-    if [ -z "$TSPLASH_CLEARED" -a -z "$NO_CLEAR" ]; then
-        clear
-        sleep .2
-        TSPLASH_CLEARED=true
-    fi
-    chvt $MY_TTY
-}
-
-#------------------------------------------------------------------------------
-# Wait for tsplash to finish before moving on
+# Wait for the tsplash program to finish before moving on
+# We use this for progress bars
 #------------------------------------------------------------------------------
 tsplash_wait() {
     openvt -w -c $TSPLASH_TTY /live/bin/tsplash "$@"
