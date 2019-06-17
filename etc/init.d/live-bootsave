@@ -64,7 +64,7 @@ do_start() {
     BOOT_LOADER_MP=$BOOT_MP
 
     # Change to /live/bios if needed (changed the called scripts)
-    local uuid_file="$SQ_FILE_DIR/$BOOT_UUID_FNAME"
+    local uuid_file="$SQFILE_DIR/$BOOT_UUID_FNAME"
     if ! mount_boot_partition "$uuid_file"; then
         error "Could not mount the BIOS boot partition"
         exit 1
