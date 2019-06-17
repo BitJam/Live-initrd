@@ -95,16 +95,19 @@ do_stop() {
     done
     test -r $PERSIST_CONF && . $PERSIST_CONF
 
-    # We always need to chvt 1 now
+    # We always need to chvt 1 now in semi-auto mode
     case $AUTOSAVE_MODE in
-        2*) tsplash_clear; chvt 1 ;;
+        1*) tsplash_alert 'persist-save' ;;
+        2*) tsplash_clear; chvt 1        ;;
+         *) return                       ;;
     esac
+
     local p_config=/usr/local/bin/persist-config
     test -x $p_config && $p_config --cli --shutdown
 }
 
 #------------------------------------------------------------------------------
-#
+# Clear *this* screen then wait a tad an chvt back here
 #------------------------------------------------------------------------------
 tsplash_clear() {
     [ "$DO_TSPLASH" ] || return
@@ -114,7 +117,17 @@ tsplash_clear() {
 }
 
 #------------------------------------------------------------------------------
-#
+# Display a message on the tsplash screen
+#------------------------------------------------------------------------------
+tsplash_alert() {
+    [ "$DO_TSPLASH" ] || return
+    local tty_num=$(cat $TSPLASH_TTY_NUM_FILE 2>/dev/null)
+    [ -n "$tty_num" ] || return
+    /live/bin/tsplash alert "$*"
+}
+
+#------------------------------------------------------------------------------
+# Switch back to the tsplash screeen
 #------------------------------------------------------------------------------
 tsplash_on() {
     [ "$DO_TSPLASH" ] || return
