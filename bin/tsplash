@@ -238,7 +238,7 @@ _do_alert() {
     set_color
     screen_init
     clear_line $y
-    ctext $y "" "$*"
+    ctext $y "$*"
 }
 
 #------------------------------------------------------------------------------
@@ -248,7 +248,7 @@ do_warn() {
     set_color
     screen_init
     clear_line $PROG_BAR_Y
-    ctext $PROG_BAR_Y "" "$*" $bold_co
+    ctext $PROG_BAR_Y "$*" $bold_co
 }
 
 #------------------------------------------------------------------------------
@@ -262,7 +262,7 @@ clear_progress() {
     clear_line $PROG_Y
     clear_line $PROG_Y2
     [ -z "$cmd" ] && return
-    ctext $PROG_Y2 "" "$cmd" $bold_co
+    ctext $PROG_Y2 "$cmd" $bold_co
 }
 
 #------------------------------------------------------------------------------
@@ -289,10 +289,10 @@ do_redraw() {
     [ -n "$SHOW_BORDER" ] && box $SCREEN_BOX $lt_cyan
 
     if [ "$SHOW_KERNEL" ]; then
-        ctext "$((WELCOME_Y -2))" "" "$WELCOME_MSG" "$lt_cyan"
-        ctext "$WELCOME_Y"        "" "$(uname -r)"  "$nc_co"
+        ctext "$((WELCOME_Y -2))" "$WELCOME_MSG" "$lt_cyan"
+        ctext "$WELCOME_Y"        "$(uname -r)"  "$nc_co"
     else
-        ctext "$WELCOME_Y" "" "$WELCOME_MSG" "$lt_cyan"
+        ctext "$WELCOME_Y" "$WELCOME_MSG" "$lt_cyan"
     fi
 
     show_progress $cnt
@@ -340,7 +340,7 @@ last_progress() {
 verbose_progress() {
     local msg=$1  color=${2:-$lt_grey}  y2=$PROG_Y2
     clear_line $y2
-    ctext $y2 "" "$msg" $color
+    ctext $y2 "$msg" $color
 }
 
 #------------------------------------------------------------------------------
@@ -705,7 +705,9 @@ text_right() {
 }
 
 ctext() {
-    local y=$1 x0=${2:-$((RAW_SCREEN_WIDTH / 2))} msg=$3 color=$4
+    local y=$1  msg=$2  color=$3
+    local x0=$((RAW_SCREEN_WIDTH / 2))
+
     local len=$(str_len "$msg")
     local x=$((1 + x0 - len/2))
     printf "$color\e[$y;${x}H$msg"
@@ -944,7 +946,7 @@ bar_box() {
     local height=3
 
     box $x1 $y1 $width $height $white
-    [ -n "$title" ] && ctext $((y1 - 1 )) "" " $title " $white
+    [ -n "$title" ] && ctext $((y1 - 1 )) " $title " $white
 }
 
 #------------------------------------------------------------------------------
