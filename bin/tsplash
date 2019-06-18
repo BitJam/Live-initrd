@@ -102,9 +102,10 @@ eval_cmd() {
                redraw) do_redraw           ;;
          redraw-clear) do_redraw_clear     ;;
                 clear) clear               ;;
-             progress) do_progress "$@"    ;;
-                alert) do_alert    "$@"    ;;
-                 warn) do_warn     "$@"    ;;
+             progress) do_progress  "$@"   ;;
+                alert) _do_alert  0 "$@"   ;;
+               alert2) _do_alert  1 "$@"   ;;
+                 warn) do_warn      "$@"   ;;
 
       redraw-progress) do_redraw
                        do_progress "$@"    ;;
@@ -231,11 +232,13 @@ do_progress() {
 #------------------------------------------------------------------------------
 # Put an "alert" message in the progress bar area (after clearing)
 #------------------------------------------------------------------------------
-do_alert() {
+_do_alert() {
+    local yoff=$1 ; shift
+    local y=$(($PROG_BAR_Y + $yoff))
     set_color
     screen_init
-    clear_line $PROG_BAR_Y
-    ctext $PROG_BAR_Y "" "$*"
+    clear_line $y
+    ctext $y "" "$*"
 }
 
 #------------------------------------------------------------------------------
