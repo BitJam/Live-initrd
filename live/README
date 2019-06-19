@@ -405,22 +405,12 @@ breakpoint does the same thing as the "bash" breakpoint.
      4) after mounting boot device
      5) after mounting persistence device
      6) after mounting aufs
-     7) before prepare switch_root
+     7) after prepare switch_root
      8) before running live init.d scripts
      9) right before starting init
      e) On possibly fatal error
-     f) in frugal install
-     i) after init= chroot
-     m) before makefs
-     r) After resize homefs rsync
-     r) Before resize homefs rsync
-     t) After copy to ram
-     u) final umount
-     v) before check VID
-     x) before select device
     b8) Bash shell before running live init.d scripts
     b9) Bash shell before the system starts
-  bash) Bash shell before the system starts
 
     verb=*
 
