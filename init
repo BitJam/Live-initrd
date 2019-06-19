@@ -124,6 +124,8 @@ KMS_VIDEO_MODULES="amdgpu,analogix-anx78xx,ast,bochs-drm,ch7006,cirrus,gma500_gf
    MAX_ROOTFS_SIZE="40960"  # 40 GiB
    MIN_ROOTFS_SIZE="100"
 
+        SWAP_SIZES="200 250 300 400 500 750 1024 1536 2048 2560 3072 4096 5120 6144 8192 10240"
+
       LIVE_SCRIPTS="live-L10n live-init"
       LAST_BP_TIME=0
           NO_PLINK=""
@@ -747,6 +749,7 @@ read_late_cmdline_params() {
                         nostore) NO_STORE=true                        ;;
                         dostore) DO_STORE=true                        ;;
 
+                   mk_swap_file) SWAP_FILE_SIZE=choose                ;;
                  mk_swap_file=*) SWAP_FILE_SIZE=$value                ;;
         esac
     done
@@ -925,6 +928,7 @@ read_cmdline_params()
                       toram_all)  ;;
 
 
+                   mk_swap_file)  ;;
                  mk_swap_file=*)  ;;
 
         # Convenience short cuts from our menus
@@ -4474,19 +4478,30 @@ prog_dd() {
 # if needed since it is aleady in a chroot.
 #------------------------------------------------------------------------------
 make_swap_file() {
-    local file=$1  size=$(echo $2 | tr 'mg' 'MG')  raw_size=$2
-    [ -z "$size" ]  && return
+    local file=$1  swap_size=$(echo $2 | tr 'mg' 'MG')  raw_size=$2
+    [ -z "$swap_size" ]  && return
+
     if test -e "$file"; then
         warn "Swap file %s already  exists" "$(pqw $file)"
+        return
     fi
 
     local dir=$(dirname "$file")
     local free_space=$(free_space "$dir")
+
+    case $swap_size in
+        choose)  select_swap_file_size 'swap_size' $free_space $dir ;;
+    esac
+
+    [ "$swap_size" = "quit" ] && return 1
+
+    vmsg 1 "Swap file size %s" "$(nq_label_meg $swap_size)"
+
     local megs  factor=
-    case $size in
-        [0-9]*[0-9]) megs=${size%M} ; factor=1    ;;
-                 *M) megs=${size%M} ; factor=1    ;;
-                 *G) megs=${size%G} ; factor=1024 ;;
+    case $swap_size in
+        [0-9]*[0-9]) megs=${swap_size%M} ; factor=1    ;;
+                 *M) megs=${swap_size%M} ; factor=1    ;;
+                 *G) megs=${swap_size%G} ; factor=1024 ;;
     esac
 
     # msg "Freespace: $free_space"
@@ -4511,6 +4526,39 @@ make_swap_file() {
     else
         prog_dd "$file" "$megs"
     fi
+}
+
+#------------------------------------------------------------------------------
+#
+#------------------------------------------------------------------------------
+select_swap_file_size() {
+    local var=$1  free=$2  dir=$3  size  sizes
+    local title=$(printf "Please select size of %s file" $(pqw 'swap'))
+
+    local avail=$((free - MKFS_FREE_MARGIN))
+
+    local part_fstype=$(mntpnt_fstype $dir)  is_vfat
+    case $part_fstype in
+        vfat) is_vfat=true ;;
+    esac
+
+    # Set the maximum size for this menu
+    local max_size=$avail  min_size=0
+    [ -n "$is_vfat" -a "$max_size" -gt 4095 ] && max_size=4095
+    if [ "$base_file" = rootfs ]; then
+        [ "$max_size" -gt "$MAX_ROOTFS_SIZE" ] && max_size=$MAX_ROOTFS_SIZE
+        min_size=$MIN_ROOTFS_SIZE
+    fi
+
+    # Create a menu of sizes, stop when the sizes are too big
+    local size sizes
+    for size in $SWAP_SIZES; do
+        [ $size -gt $max_size ] && break
+        [ $size -lt $min_size ] && continue
+        sizes="$sizes $size"
+    done
+
+    size_menu $var "$title" "" $sizes
 }
 
 #------------------------------------------------------------------------------
