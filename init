@@ -360,7 +360,6 @@ main_wrapper() {
     [ "$NO_SAVE_LOGS" ] || copy_live_logs "$NEW_ROOT" "$LOG_DIR"
 
     breakpoint b9    "Bash shell right before starting init"
-    breakpoint bash  "Bash shell right before starting init"
 
     #free -m >> $MY_LOG
     echo 3 > /proc/sys/vm/drop_caches
