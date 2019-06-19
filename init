@@ -374,7 +374,7 @@ main_wrapper() {
 
         CHROOT_BIN=$FINAL_DIR/bin
         $SET_ARCH chroot $NEW_ROOT $CHROOT_BIN/setsid $CHROOT_BIN/cttyhack $INIT_PROG
-        breakpoint i "after init= chroot"
+        #breakpoint i "after init= chroot"
 
         MY_LOG=/dev/null
         safe_shutdown poweroff ask
@@ -626,7 +626,7 @@ main_core() {
 
     stop_hotplug
 
-    breakpoint 7 "before prepare switch_root"
+    #breakpoint 7 "before prepare switch_root"
 
     prepare_switch_root $NEW_ROOT $LIVE_DIR $FINAL_DIR
 
@@ -2194,7 +2194,7 @@ find_frugal_file() {
 
     [ "$FORCE_FRUGAL" ] && rm -rf $sqfile_dir
 
-    breakpoint f "in frugal install"
+    #breakpoint f "in frugal install"
 
     if [ -e $sqfile_full ]; then
         msg "Found existing %s install" frugal
@@ -3029,7 +3029,7 @@ do_fsck() {
 
     msg "check %s filesystem" "$(pq $name)"
 
-    breakpoint F "Before fsck"
+    #breakpoint F "Before fsck"
 
     vmsg 2 "fsck$white $dev"
     ld_path /sbin/e2fsck $opts $dev &> $fifo
@@ -3039,7 +3039,7 @@ do_fsck() {
 
     ld_path /sbin/tune2fs -C 1 $dev
 
-    breakpoint F "After fsck"
+    #breakpoint F "After fsck"
 
     case $ret in
 	    0) vmsg 1    "There were no errors on %s"            "$sdev" ; err=0 ;;
@@ -3527,7 +3527,7 @@ safe_shutdown() {
     set_path $LIVE_BIN
 
     final_umount && vmsg 1 "Unmount successful"
-    breakpoint u "final umount"
+    #breakpoint u "final umount"
     if [ "$ask" ]; then
         vmsgN 1 "Press %s to %s" "<$(bq "Enter")>" "$(hq $cmd)"
         read x
@@ -4746,7 +4746,7 @@ check_vid() {
     local sqfs_vid=$1  base=$2  fname=$3
 
     local vid_file=$base$VID_DIR/$fname
-    breakpoint v "before check VID"
+    #breakpoint v "before check VID"
 
     local rootfs_vid
     [ "$vid_file" ] && rootfs_vid=$(get_vid $vid_file)
@@ -5027,7 +5027,7 @@ copy_to_ram() {
         [ -d $toram_mp ]        && rmdir $toram_mp
         non_fatal "Copy to RAM failed"
     fi
-    breakpoint t "After copy to ram"
+    #breakpoint t "After copy to ram"
 }
 
 _copy_to_ram() {
@@ -5459,7 +5459,7 @@ _persist_makefs() {
 
     mount -o remount,rw $SQFILE_DEV 2>/dev/null
 
-    breakpoint m "before makefs"
+    #breakpoint m "before makefs"
 
     [ "$is_vfat" ] &&  warn "Warning: this can take several minutes per Gigabyte on a %s file system" $(pqw $part_fstype)
     if ! time_cmd makefs $full_file $fs_type $fs_size $part_fstype; then
@@ -5865,12 +5865,12 @@ copy_homefs() {
 
     msg "Copy home filesystem.  Please be patient ..."
 
-    breakpoint r "Before resize homefs rsync"
+    #breakpoint r "Before resize homefs rsync"
 
     time_cmd ld_path rsync -aq --delete $cur_home_mp/ $new_home_mp/
     local ret=$?
 
-    breakpoint r "After resize homefs rsync"
+    #breakpoint r "After resize homefs rsync"
 
     if [ "$ret" -ne 0 ]; then
         err "The %s program failed.  Will not resize %s" $(pqe rsync) $(pqe homefs)
