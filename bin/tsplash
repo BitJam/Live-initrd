@@ -33,7 +33,7 @@ SHOW_BORDER=true
 SHOW_NAV=true
 
 MAX_PROGRESS=7
-PROG_CHARS=5
+PROG_CHARS=4
 
 LOCALE_DIR=/live/locale
 CONF_DIR=/live/config
@@ -194,6 +194,7 @@ do_start() {
         [ -z "${param##*[NA]*}" ] && SHOW_NAV=
         [ -z "${param##*[ka]*}" ] && SHOW_KERNEL=true
         [ -z "${param##*[KA]*}" ] && SHOW_KERNEL=
+        [ -z "${param##*[I]*}"  ] && ASCII_ONLY=true
         [ -z "${param##*[w]*}"  ] && NAV_7=true
 
         [ -z "${param##*[W]*}"  ] && NAV_7=
@@ -314,10 +315,17 @@ show_progress() {
     local y=$PROG_Y
     local x=$PROG_X
 
+    local off_color=$dk_grey
+
+    if [ "$ASCII_ONLY" ]; then
+        C_DOT="o"
+        off_color=$nc_co
+    fi
+
     printf "$bold_co\e[$y;${x}H"
     for cnt in $(seq 1 $MAX_PROGRESS); do
-        [ $cnt -gt ${p_cnt:-0} ] && printf "$dk_grey"
-        printf "%-${PROG_CHARS}s" "$C_DOT"
+        [ $cnt -gt ${p_cnt:-0} ] && printf "$off_color"
+        printf "%-${PROG_CHARS}s$C_DOT" ""
     done
     printf "$nc_co"
 
@@ -574,6 +582,8 @@ pqw()     { echo "$hi_co$*$m_co"  ;}
 #------------------------------------------------------------------------------
 
 screen_init() {
+
+    test -e /dev/fb0 || ASCII_ONLY=true
 
     : ${SCREEN_BORDER:=1}
 
