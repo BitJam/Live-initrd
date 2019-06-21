@@ -463,17 +463,19 @@ legacy bootloader.  They are provided so you don't have to understand
 the more flexible "persist=*" and "frugal=*" parameters.  This first
 group enable persistence but not frugal:
 
-  persist_all       persist=root!,home         required root persistence, optional home
+  persist_all       persist=root!,home!        required root and home persistence
   persist_root      pesist=root!               required root persistence
-  persist_static    persist=root!,home,static  required static root persistence, optional home
+  persist_static    persist=root!,home!,static required home and static root persistence
   persist_home      persist=home!              required home persistence
+  p_static_root     persist=root!,static       required static root persistence
 
 This second group enable frugal and persistence:
 
-  frugal_persist    frugal=root!,home          required root persistence, optional home
+  frugal_persist    frugal=root!,home!         required root nad home persistence
   frugal_root       frugal=root!               required root persistence
-  frugal_static     frugal=root!,home,static   required static root persistence, optional home
+  frugal_static     frugal=root!,home!,static  required home and static root persistence
   frugal_home       frugal=home!               required home persistence
+  f_static_root     persist=root!,static       required static root persistence
   frugal_only       frugal                     no persistence
 
 
@@ -580,7 +582,6 @@ Remastering (live-usb Only)
 These two options affect remastering.  Normally, remastering is done
 automatically whenever there is a "linuxfs.new" file in the same directory as
 the "linuxfs" file.
-
 
     noremaster
 
