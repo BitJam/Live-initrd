@@ -291,9 +291,15 @@ do_redraw() {
 
     [ -n "$SHOW_BORDER" ] && box $SCREEN_BOX $lt_cyan
 
+    local arch
+    case $(uname -m) in
+          i686) arch=" 32-bit" ;;
+        x86_64) arch=" 64-bit" ;;
+    esac
+
     if [ "$SHOW_KERNEL" ]; then
         ctext "$((WELCOME_Y -2))" "$WELCOME_MSG" "$lt_cyan"
-        ctext "$WELCOME_Y"        "$(uname -r)"  "$nc_co"
+        ctext "$WELCOME_Y"        "$(uname -r) $arch"  "$nc_co"
     else
         ctext "$WELCOME_Y" "$WELCOME_MSG" "$lt_cyan"
     fi
@@ -363,7 +369,8 @@ get_welcome_msg() {
     : ${DISTRO_BUG_REPORT_URL:=$BUG_REPORT_URL}
     : ${DISTRO_NAME:=antiX}
     : ${DISTRO_PRETTY_NAME:=antiX-17 (generic)}
-    do_welcome "$DISTRO_PRETTY_NAME"
+    # do_welcome "$DISTRO_PRETTY_NAME"
+    echo "$DISTRO_PRETTY_NAME"
 }
 
 #------------------------------------------------------------------------------
