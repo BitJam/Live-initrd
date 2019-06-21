@@ -3165,7 +3165,7 @@ breakpoint() {
 
     trap "" $SIGNAL_LIST
 
-    tsplash_on
+    [ "$bp" != 'e' ] && tsplash_on
 
     bp_time_2=$(get_time)
 
