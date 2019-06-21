@@ -5482,6 +5482,8 @@ _persist_makefs() {
 
     do_fsck "new $file file" $full_file -p filefs || return 1
 
+    MADE_PERSIST_FILE=true
+
     eval $needed_var=\$needed
     eval $wanted_var=\$wanted
 
