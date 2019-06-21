@@ -2008,7 +2008,7 @@ find_device() {
     DEVICE_LIST=
 
     #. Look for <type> devices with <attribute X>
-    [ "$try" = 0 ] && msg "Look for %s device with %s" "$(fq $find_type)" "$type $(cq $value)"
+    [ "$try" = 0 ] && tsplash_alert "Look for %s device with %s" "$(fq $find_type)" "$type $(cq $value)"
 
     case $type in
         name) DEVICE_LIST=$(cleanse_dev  $value)  ; err_ret=1 ;;
