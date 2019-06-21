@@ -1012,6 +1012,7 @@ set_user_automount() {
 
 #------------------------------------------------------------------------------
 # Set delay before consoles automatically blank (is this still working?)
+# NOT USED
 #------------------------------------------------------------------------------
 set_console_blanking() {
     local blank=$1  conf_file=/etc/kbd/config
