@@ -534,14 +534,20 @@ main_core() {
     prepare_persistence
 
     mount_persist_device "$PERSIST_FILES" "$FROM_PERSIST"
-    tsplash_on
-
-    list_modules
 
     # Check for ehci warning
     dmesg | grep 'Warning.*ehci' >&2
 
+
+    if [ -n "$MADE_PERSIST_FILE" -a ! -e $SWAP_FILE ]; then
+        # FIXME check free space
+        YES_no "Create a live-usb swap file?" && : ${SWAP_FILE_SIZE:=choose}
+    fi
+
     make_swap_file "$SWAP_FILE"  "$SWAP_FILE_SIZE"
+
+    tsplash_on
+    list_modules
 
     breakpoint 5 "after mounting persistence device"
 
@@ -2099,9 +2105,9 @@ find_frugal_file() {
     local frugal_id=$1  bdir=$FRUGAL_DIR
     : ${bdir:=$FRUGAL_NAME-Frugal-$(uname -r)}
 
+    tsplash_alert "Search for %s partition ..." frugal
     local sqfile=$bdir/$SQFILE_NAME need_to_ask
     local device name=${frugal_id%%=*}  value=${frugal_id#*=}
-
     find_files frugal "$sqfile" "$BOOT_MP" "$frugal_id" "$FRUGAL_RETRY"
     local ret=$?
 
@@ -2163,15 +2169,13 @@ find_frugal_file() {
     local actual=$(file_usage_m $old_dir $FRUGAL_FILES)
 
     # Safety first!
-    local needed=${FRUGAL_NEEDED:=$((actual + 10))}
+    local needed=${FRUGAL_NEEDED:=$((actual + 100))}
 
     if  [ -z "$device" ]; then
 
-        tsplash_clear
         tsplash_alert "Looking for partitions with at least %s free.  Please wait ..." "$(nq $(size_label_m $needed))"
         select_device 'frugal' device $needed not_mounted
         local ret=$?
-        tsplash_alert ""
         [ $ret -eq 0 ] || return 2
         [ -z "$device" -o "$device" = "quit" ] && return 1
 
@@ -2219,7 +2223,7 @@ find_frugal_file() {
 
         msg "copy %s to %s" $(pq $(size_label_m $actual)) $(pq $sqfile_dir/)
 
-        if ! tsplash_prog_copy_md5 $sqfile_dir $old_dir $FRUGAL_FILES; then
+        if ! tsplash_prog_copy_md5 frugal_install $sqfile_dir $old_dir $FRUGAL_FILES; then
             tsplash_warn "Copy failed.  Erasing partial copy"
             log_cmd rm -f $sqfile_full
             return 40
@@ -3545,7 +3549,7 @@ non_fatal()  { _non_fatal "$(printf "$@")"                   ;}
 # Show last 10 lines of dmesg before the error message
 #------------------------------------------------------------------------------
 fatal_dmesg() {
-    tsplash_clear
+    tsplash_only_clear
     local lines=10
     printf 'Last %s lines of the dmesg output:\n' "$lines"
     printf "%s\n" "$rbar"
@@ -3964,6 +3968,8 @@ select_device() {
     local title_type=$1  var=$2  min_size=${3:-0} not_mounted=$4
     local title=$(printf "Please select %s device:" "$title_type")
 
+    tsplash_only_clear
+
     local cnt=1 cnt_lab rtype mp=/tmp/mnt
     local size_lab free free_lab
     local line pretty skip data display
@@ -4090,6 +4096,9 @@ Blkid
         display="${display}$(printf "The limiting factors are highlighted in %s" "$rev_video")\n"
         display="${display}$(printf "A hightlighted name means the device is already mounted")\n"
     fi
+
+    tsplash_off
+    tsplash_alert ""
 
     my_select_2 "$title" $var "0" "$data" "$display"
     echo -e "$display" >> $MY_LOG
@@ -4319,8 +4328,8 @@ prog_copy_md5() {
 #
 #------------------------------------------------------------------------------
 tsplash_prog_copy_md5() {
-    local dest=$1  src=$2 ; shift 2
-    tsplash_prog_copy $dest $(find_md5_files $src "$@")
+    local label=$1 dest=$2  src=$3 ; shift 3
+    tsplash_prog_copy "$label" $dest $(find_md5_files $src "$@")
 }
 
 
@@ -4397,8 +4406,9 @@ prog_copy() {
 # Use tsplash to do the copy if it is enabled.
 #------------------------------------------------------------------------------
 tsplash_prog_copy() {
+    local label=$1 ; shift
     if tsplash_enabled; then
-        tsplash_wait copy_toram "$@"
+        tsplash_wait "$label" "$@"
     else
         prog_copy "$@"
     fi
@@ -4557,6 +4567,7 @@ select_swap_file_size() {
         sizes="$sizes $size"
     done
 
+    tsplash_clear
     size_menu $var "$title" "" $sizes
 }
 
@@ -5114,7 +5125,7 @@ _copy_to_ram() {
 
     #if ! cp_file $orig $name $dest 2>&1; then
 
-    if ! tsplash_prog_copy $dest $from_list; then
+    if ! tsplash_prog_copy copy_toram $dest $from_list; then
         err "Copy failed.  Cannot do %s" $err_toram
         return 3
     fi
@@ -6609,6 +6620,18 @@ tsplash_clear() {
 }
 
 #------------------------------------------------------------------------------
+#
+#------------------------------------------------------------------------------
+tsplash_only_clear() {
+    tsplash_enabled || return
+    if [ -z "$TSPLASH_CLEARED" -a -z "$NO_CLEAR" ]; then
+        clear
+        echo 'tsplash clear' >> $MY_LOG
+        sleep .1
+        TSPLASH_CLEARED=true
+    fi
+}
+#------------------------------------------------------------------------------
 # Go back to the tsplash screen and reset the TSPLASH_CLEARED flag
 #------------------------------------------------------------------------------
 tsplash_on() {
@@ -6660,6 +6683,8 @@ tsplash_warn() {
 # We use this for progress bars
 #------------------------------------------------------------------------------
 tsplash_wait() {
+    # Yes I could do this iwth -s but that sometimes causes problems
+    chvt $TSPLASH_TTY
     openvt -w -c $TSPLASH_TTY /live/bin/tsplash "$@"
 }
 
