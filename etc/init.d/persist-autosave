@@ -121,9 +121,7 @@ tsplash_clear() {
 #------------------------------------------------------------------------------
 tsplash_alert() {
     [ "$DO_TSPLASH" ] || return
-    local tty_num=$(cat $TSPLASH_TTY_NUM_FILE 2>/dev/null)
-    [ -n "$tty_num" ] || return
-    /live/bin/tsplash alert "$*"
+    /live/bin/tell-tsplash alert "$*"
 }
 
 #------------------------------------------------------------------------------
