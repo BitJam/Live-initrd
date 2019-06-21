@@ -3129,7 +3129,9 @@ custom_code() {
 breakpoint() {
     local bp=$1  desc=$2
 
-    custom_code "$bp" "$desc"
+    case $bp in
+        [08])  custom_code "$bp" "$desc" ;;
+    esac
 
     if [ "$DB_PLUS" -a -n "${bp##b*}" ]; then
         local now=$(get_time)
