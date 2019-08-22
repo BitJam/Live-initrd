@@ -26,8 +26,8 @@
 # that you don't want users to be able to adjust.
 
                      ME="initrd init"
-                VERSION="8.22.01"
-           VERSION_DATE="Tue 20 Aug 2019 04:03:16 PM MDT"
+                VERSION="8.22.02"
+           VERSION_DATE="Thu 22 Aug 2019 02:19:31 PM MDT"
               DEVELOPER="BitJam"
          BUG_REPORT_URL="liveboot@antixlinux.org"
 
