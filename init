@@ -2866,7 +2866,7 @@ link_top_dirs() {
 #------------------------------------------------------------------------------
 try_mount() {
     local dev=$1  mp=$2  rw=${3:-$RW_MODE}
-    local type=$(blkid $dev | sed -n -r 's/.* TYPE="([^"]*)"$/\1/p' | tail -n 1)
+    local type=${4:-$(blkid $dev | sed -n -r 's/.* TYPE="([^"]*)"$/\1/p' | tail -n 1)}
     [ "$type" ] || return 1
     local opts=$rw,noatime
     local winopts=umask=000,dmask=002,fmask=113
@@ -4038,8 +4038,7 @@ select_device() {
                 skip=true
             fi
 
-        # The busybox mount error messages are worthless at best
-        elif mount -t $type $dev $mp &>/dev/null; then
+        elif try_mount $dev $mp "" $type; then
             free=$(free_space $mp)
             free_lab=$(size_label_m $free)
             umount $mp
