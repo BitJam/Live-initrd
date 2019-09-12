@@ -101,6 +101,9 @@ automount=off|amnt=off)                          AUTOMOUNT_OFF=true ;;
        live_swap=force)   FORCE_SWAP=true                           ;;
      live_swap=all-off)      NO_SWAP=true  ; NO_SWAP_FILE=true      ;;
 
+                nuke=*)  NUKE_MODS="$NUKE_MODS $NUKE_MODS"          ;;
+                nonuke)    NO_NUKE=true                             ;;
+
     esac
 done
 
@@ -205,8 +208,22 @@ do_start() {
 
         set_server_dpi ${CMD_SDPI:-$dpi}
 
-        make_xorg_conf "$XORG_ARGS" "$FOUND_VDRIVER" "$FOUND_KMS_DRIVER" "$NO_XORG"
+        # if xorg=save or xorg=vesa is used then we nuke all KMS modules for this system
 
+        local arg
+        for arg in ${XORG_ARGS//, /}; do
+            case $arg in
+                safe|vesa) [ -z "$NO_NUKE" ] && NUKE_MODS="$NUKE_MODS $(echo $FOUND_KMS_DRIVERS)" ; break ;;
+            esac
+        done
+
+        nuke_modules "$NUKE_MODS"
+
+        make_xorg_conf "$XORG_ARGS" "$FOUND_VDRIVER" "$FOUND_KMS_DRIVERS" "$NO_XORG"
+
+    # Still allow nuke= to work even if there is no X
+    else
+        nuke_modules_no_x "$NUKE_MODULES"
     fi
 
     # Find the "default" user.  This is usually "demo" but can vary on snapshots
@@ -554,6 +571,7 @@ fix_cache_apt_archive_partial() {
 #    1) a modified xorg.conf is found
 #    2) "noxorg" was specified
 #    3) any video driver was found (regardless of "nomodeset")
+#    NOTE: we can ammend this if we nuke the KMS drivers.
 #    4) we are in Virtual Box
 #------------------------------------------------------------------------------
 make_xorg_conf() {
@@ -881,6 +899,58 @@ blacklist_radeon() {
 
 blacklist radeon
 Blacklist_Radeon
+}
+
+#------------------------------------------------------------------------------
+# Find KMS drivers for this hardware if we are going to nuke them
+# This way we don't run the exensive video detection twice
+#------------------------------------------------------------------------------
+nuke_modules_no_x() {
+    locaal modules=${*//,/ }
+    case " $modules " in
+         " KMS ") detect_any_video_driver ;;
+    esac
+    nuke_modules "$@"
+}
+
+#------------------------------------------------------------------------------
+# Remove modules out from under /lib/modules/$(uname -r) so the cannot be
+# loaded.
+#------------------------------------------------------------------------------
+nuke_modules() {
+    local module modules
+    # Convert commas to spaces then expand abbreviations
+    for module in ${*//,/ }; do
+        case $module in
+            ALL-KMS) module= $(kms_modules)              ;;
+                KMS) module="$(echo $FOUND_KMS_DRIVERS)" ;;
+        esac
+        modules="$modules $module"
+    done
+
+    local expr="-name"
+    # Convert - and _ to a regular expression and build find arguments
+    for module in $(echo $modules | sed "s/[_-]/[_-]/g"); do
+        expr="$expr${expr:+ -o -name} $module.ko"
+    done
+
+    #echo "$expr"
+    local dir="/lib/modules/$(uname -r)"
+
+    local file  dest  name found
+    while read file; do
+        name=$(basename "$file")
+        found="$found${found:+ }$name"
+        dest=$dir-nuked/${file#$dir/}
+        mkdir -p $(dirname "$dest")
+        mv "$file" "$dest"
+    done <<Nuke_Loop
+$(find "$dir/" $expr)
+Nuke_Loop
+
+    [ -n "$found" ] || return
+    echo_live "Nuked %s" "$(pquote $found)"
+    depmod
 }
 
 #------------------------------------------------------------------------------
