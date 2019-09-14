@@ -209,11 +209,13 @@ do_start() {
         set_server_dpi ${CMD_SDPI:-$dpi}
 
         # if xorg=save or xorg=vesa is used then we nuke all KMS modules for this system
-
         local arg
         for arg in ${XORG_ARGS//, /}; do
             case $arg in
-                safe|vesa) [ -z "$NO_NUKE" ] && NUKE_MODS="$NUKE_MODS $(echo $FOUND_KMS_DRIVERS)" ; break ;;
+                safe|vesa)  [ -n "$NO_NUKE" ] && break
+                            NUKE_MODS="$NUKE_MODS $(echo $FOUND_KMS_DRIVERS)"
+                            NUKED_KMS=true
+                            break ;;
             esac
         done
 
@@ -575,7 +577,7 @@ fix_cache_apt_archive_partial() {
 #    4) we are in Virtual Box
 #------------------------------------------------------------------------------
 make_xorg_conf() {
-    local args=$1  found_vdriver=$2  found_kms_driver=$3  no_xorg=$4
+    local args=$1  found_vdriver=$2  found_kms_drivers=$3  no_xorg=$5
     local safe_mode xorg_conf=/etc/X11/xorg.conf
 
     case ,$args, in
@@ -595,10 +597,10 @@ make_xorg_conf() {
     [ "$found_vdriver" ]           && no_default=true
     [ -e /live/config/virtualbox ] && no_default=true
 
-    if [ -z "$NO_MODESET" -a -n "$found_kms_driver" -a -n "$safe_mode" ]; then
+    if [ -z "$NUKED_KMS" -a -n "$found_kms_drivers" -a -n "$safe_mode" ]; then
         #. Note: KMS means "kernel mode switching"
         #. Disabling safe mode because of KMS <video-driver> video hardware
-        echo_live "Disabling safe mode because of KMS %s video hardware" "$(pquote $found_kms_driver)"
+        echo_live "Disabling safe mode because of KMS %s video hardware" "$(pquote $found_kms_drivers)"
         args=$(echo $args | sed "s/\<safe\>//g")
         safe_mode=
     fi
@@ -824,7 +826,7 @@ detect_any_video_driver() {
 # Create a regular expression for all modules that depend on drm.ko
 #------------------------------------------------------------------------------
 kms_modules_regex() {
-    kms_modules | -e "s/[_-]/[_-]/"  \
+    kms_modules | sed -e "s/[_-]/[_-]/"  \
         | tr '\n' '|' | sed "s/|$//"
 }
 
@@ -836,7 +838,7 @@ kms_modules() {
         | sed -e "s/:.*//"  \
         -e "s|.*/||"        \
         -e "s/\.ko$//"      \
-        | grep -v-e  "^drm" -e "^ttm$" \
+        | grep -v -e "^drm" -e "^ttm$" \
         | sort
 }
 
@@ -903,12 +905,13 @@ Blacklist_Radeon
 
 #------------------------------------------------------------------------------
 # Find KMS drivers for this hardware if we are going to nuke them
-# This way we don't run the exensive video detection twice
+# This way we don't run the exensive video detection twice.  This
+# should create the FOUND_KMS_DRIVERS variable.
 #------------------------------------------------------------------------------
 nuke_modules_no_x() {
     locaal modules=${*//,/ }
     case " $modules " in
-         " KMS ") detect_any_video_driver ;;
+         " KMS ") detect_any_video_driver ; NUKED_KMS=true ;;
     esac
     nuke_modules "$@"
 }
