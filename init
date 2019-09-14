@@ -604,7 +604,7 @@ main_core() {
     [ "$DO_AUTO_LOGIN" ] && auto_login   "$AUTO_LOGIN_PROG" "$AUTO_LOGIN_TERMS" "$NEW_ROOT"
     [ "$DO_FANCY"      ] && fancy_prompt "$FANCY_PROMPT" "$NEW_ROOT"
     [ "$DB_PLUS"       ] && page_updown_keys "$NEW_ROOT"
-    tsplash_enabled && [ -z "$CMD_MY_TTY$TTY1_ON" ] && disable_tty1 "$NEW_ROOT"
+    [ "$TTY1_OFF"      ] && disable_tty1 "$NEW_ROOT"
 
     # FIXME: do this after copy_xtra for easy testing (for now) (????)
     PROC_CMDLINE=$(cat /live/config/proc-cmdline)
@@ -793,7 +793,7 @@ read_cmdline_params()
                       splasht=*) DO_TSPLASH=$value                               ;;
                        st_tty=*) TSPLASH_TTY=$value                              ;;
                       console=*) CMD_MY_TTY=${value#tty}                         ;;
-                         tty1on) TTY1_ON=true                                    ;;
+                        tty1off) TTY1_OFF=true                                    ;;
                       CONSOLE=*) CMD_MY_TTY=${value#tty}                         ;;
                        poweroff) poweroff -f -n                                  ;;
                          reboot) reboot -f -n                                    ;;
@@ -952,6 +952,10 @@ read_cmdline_params()
                     frugal_only)  ;;
                         nostore)  ;;
                         dostore)  ;;
+
+        # Used in the live-init script to remove modules
+                         nonuke)  ;;
+                         nuke=*)  ;;
 
         #----- Some known codes -------------------------
 
@@ -5897,9 +5901,8 @@ copy_homefs() {
     return 0
 }
 
-
 #------------------------------------------------------------------------------
-#
+# Disable login on tty1
 #------------------------------------------------------------------------------
 disable_tty1() {
     local dir=$1
@@ -5907,7 +5910,7 @@ disable_tty1() {
 }
 
 #------------------------------------------------------------------------------
-#
+# Automatically log in on given set of virtual consoles
 #------------------------------------------------------------------------------
 auto_login() {
     local dir file full prog=$1  terms=$2 root=$3
