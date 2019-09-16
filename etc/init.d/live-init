@@ -931,10 +931,10 @@ nuke_modules() {
         modules="$modules $module"
     done
 
-    local expr="-name"
+    local expr
     # Convert - and _ to a regular expression and build find arguments
     for module in $(echo $modules | sed "s/[_-]/[_-]/g"); do
-        expr="$expr${expr:+ -o -name} $module.ko"
+        expr="$expr${expr:+ -o} -name $module.ko"
     done
 
     #echo "$expr"
