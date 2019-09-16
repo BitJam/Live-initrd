@@ -4531,6 +4531,7 @@ make_swap_file() {
         return
     fi
 
+    #. Creating <size> swap file at <filename>.  Please be patient ...
     msg "Creating %s swap file at %s.  Please be patient ..." "$(pq $raw_size)" "$(pq $file)"
 
     if tsplash_enabled; then
