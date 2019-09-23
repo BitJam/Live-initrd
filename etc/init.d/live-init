@@ -922,6 +922,8 @@ nuke_modules_no_x() {
 #------------------------------------------------------------------------------
 nuke_modules() {
     local module modules
+    [ ${#*} -gt 0 ] || return
+
     # Convert commas to spaces then expand abbreviations
     for module in ${*//,/ }; do
         case $module in
