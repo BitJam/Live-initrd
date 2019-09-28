@@ -953,10 +953,6 @@ read_cmdline_params()
                         nostore)  ;;
                         dostore)  ;;
 
-        # Used in the live-init script to remove modules
-                         nonuke)  ;;
-                         nuke=*)  ;;
-
         #----- Some known codes -------------------------
 
         [sS1-6]|BOOT_IMAGE=*);;
