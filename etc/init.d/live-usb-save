@@ -34,6 +34,7 @@ MSTATE_FILES="# File: machine-state-files
 /etc/udev/rules.d/*-persistent-net.rules
 # /etc/X11/xorg.conf
 /etc/X11/xorg.conf.d/*
+/lib/modprobe.d/i915-invert.conf
 /var/lib/alsa/asound.state
 /var/lib/connman/*
 /var/lib/connman/*/*
