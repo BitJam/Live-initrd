@@ -37,7 +37,7 @@
           PERSIST_RETRY=10
     FAILSAFE_BOOT_RETRY=30
 
-    DISABLE_SERVICES_OPTS="[aABcdgkilLmnNPrsSvVwWxY]+"
+    DISABLE_SERVICES_OPTS="[aABcdFgkilLmnNPrsSvVwWxY]+"
 
            RW_MODE="ro"
             PRINTK=0
