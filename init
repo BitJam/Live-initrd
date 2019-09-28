@@ -1552,7 +1552,7 @@ coldplug_modules() {
     #    | xargs modprobe -a -q -b 2>/dev/null
 
     find /sys/devices -name modalias -print0 | xargs -0 sort -u \
-        | xargs modprobe -a -q -b 2>/dev/null
+        | tr '\n' '\0' | xargs -0 modprobe -a -q -b 2>/dev/null
     return
 
     # local alias_file alias
