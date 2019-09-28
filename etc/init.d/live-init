@@ -52,6 +52,8 @@ SPLASH_PROGRAMS="/sbin/splash-all /sbin/splash-term /usr/local/bin/splash-select
 
 SWAP_FILE="/live/boot-dev/swap-file"
 
+I915_INVERT_FILE=/lib/modprobe.d/i915-invert.conf
+
 #-jbb For debugging
 : ${CMDLINE:=$(cat /live/config/proc-cmdline /live/config/cmdline /live/config/cmdline2)}
 for param in $CMDLINE; do
@@ -100,6 +102,9 @@ automount=off|amnt=off)                          AUTOMOUNT_OFF=true ;;
          live_swap=off)      NO_SWAP=true                           ;;
        live_swap=force)   FORCE_SWAP=true                           ;;
      live_swap=all-off)      NO_SWAP=true  ; NO_SWAP_FILE=true      ;;
+
+           i915_invert)     I915_INVERT=true                        ;;
+        no_i915_invert)  NO_I915_INVERT=true                        ;;
 
     esac
 done
@@ -186,6 +191,14 @@ do_start() {
     fi
 
     [ "$ENABLE_I915_POWER_SAVE" ] && enable_i915_power_save $I915_POWER_SAVE_FILE
+
+    if [ "$I915_INVERT" ] ; then
+        do_i915_invert $I915_INVERT_FILE
+
+    elif [ "$NO_I915_INVERT" -a -e "$I915_INVERT_FILE" ] ; then
+        echo live "Removing %s" "$(pquote $I915_INVERT_FILE)"
+        rm -r $I915_INVERT_FILE
+    fi
 
     fix_cache_apt_archive_partial
 
@@ -767,6 +780,26 @@ skylake_flicker_fix() {
 
 options i915 enable_rc6=0
 Skylake_Fix
+}
+
+
+#------------------------------------------------------------------------------
+# Create modprobe.d file for inverting i915 video
+#------------------------------------------------------------------------------
+do_i915_invert() {
+    local file=$1
+    echo_live "Creating file %s" $(pquote $file)
+    cat > $file <<I915_Invert
+#-----------------------------------------------------------------------------
+# Invert video on some i915 hardware
+# file: $file
+
+# This file was created by the antiX/MX live system because of the
+# "i915_invert" boot parameter.
+#-----------------------------------------------------------------------------
+
+options i915 invert_brightness=1
+I915_Invert
 }
 
 #------------------------------------------------------------------------------

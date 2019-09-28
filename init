@@ -953,6 +953,9 @@ read_cmdline_params()
                         nostore)  ;;
                         dostore)  ;;
 
+                    i915_invert)  ;;
+                 no_i915_invert)  ;;
+
         #----- Some known codes -------------------------
 
         [sS1-6]|BOOT_IMAGE=*);;
