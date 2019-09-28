@@ -196,7 +196,7 @@ do_start() {
         do_i915_invert $I915_INVERT_FILE
 
     elif [ "$NO_I915_INVERT" -a -e "$I915_INVERT_FILE" ] ; then
-        echo live "Removing %s" "$(pquote $I915_INVERT_FILE)"
+        echo_live "Removing %s" "$(pquote $I915_INVERT_FILE)"
         rm -r $I915_INVERT_FILE
     fi
 
@@ -789,7 +789,8 @@ Skylake_Fix
 do_i915_invert() {
     local file=$1
     echo_live "Creating file %s" $(pquote $file)
-    cat > $file <<I915_Invert
+    mkdir -p "$(dirnaem "$file")"
+    cat > "$file" <<I915_Invert
 #-----------------------------------------------------------------------------
 # Invert video on some i915 hardware
 # file: $file
