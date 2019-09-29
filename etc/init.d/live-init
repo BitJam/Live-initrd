@@ -789,12 +789,12 @@ Skylake_Fix
 do_i915_invert() {
     local file=$1
     echo_live "Creating file %s" $(pquote $file)
-    mkdir -p "$(dirnaem "$file")"
+    mkdir -p "$(dirname "$file")"
     cat > "$file" <<I915_Invert
 #-----------------------------------------------------------------------------
 # Invert video on some i915 hardware
 # file: $file
-
+#
 # This file was created by the antiX/MX live system because of the
 # "i915_invert" boot parameter.
 #-----------------------------------------------------------------------------

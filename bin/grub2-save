@@ -185,6 +185,7 @@ gather_params() {
            md5|checkmd5|checkfs)          ;;
               automount|mount=*)          ;;
                     noautomount)          ;;
+     i915_invert|no_i915_invert)          ;;
                         fstab=*)          ;;
                       hwclock=*)          ;;
                       desktop=*)          ;;
