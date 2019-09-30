@@ -110,7 +110,6 @@ automount=off|amnt=off)                          AUTOMOUNT_OFF=true ;;
 
                 nuke=*)  NUKE_MODS="$NUKE_MODS $value"              ;;
                 nonuke)  NO_NUKE=true                               ;;
-
     esac
 done
 
@@ -312,7 +311,6 @@ do_start() {
     set_default_desktop    "$CMD_DESKTOP"      $DEF_USER $USER_HOME
     set_desktop_theme      "$DESK_THEME"       $DEF_USER $USER_HOME
     set_user_dpi           "${CMD_UDPI:-$dpi}" $DEF_USER $USER_HOME
-    set_user_desktop_delay "$DESKTOP_DELAY"    $DEF_USER $USER_HOME
     if [ -n "$user_automount" ]; then
         set_user_automount "$DEF_USER" "$USER_HOME" "$AUTOMOUNT" "$AUTOMOUNT_OFF" 'create'
     else
@@ -1170,26 +1168,6 @@ set_user_dpi() {
     add_or_edit "^[ !]*Xft.dpi:" "Xft.dpi: $dpi" $home/.Xresources $user create
 
     scale_conky "$dpi" "$user" $home
-}
-
-#------------------------------------------------------------------------------
-# Set the desktop delay used by desktop-session.  Hopefully, this code is no
-# longer needed.
-#------------------------------------------------------------------------------
-set_user_desktop_delay() {
-    local delay=$1  user=$2  home=$3
-    [ ${#delay} -gt 0 ] || return
-
-    local ds_conf=$home/.desktop-session/desktop-session.conf
-    test -e $ds_conf || return
-    local bad=$(echo $delay | sed -r 's/^([0-9]+(\.[0-9]*)?|.[0-9]+)//')
-
-    if [ ${#bad} -gt 0 ]; then
-        error 'Bad desktop delay parameter %s' $(pquote $delay)
-        return
-    fi
-    echo_live 'Setting desktop delay to %s' $(pquote $delay)
-    su -c "sed -r -i 's/^\s*(STARTUP_DELAY=).*/\1$delay/' $ds_conf" $user
 }
 
 #------------------------------------------------------------------------------
