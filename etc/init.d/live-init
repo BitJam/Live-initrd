@@ -54,6 +54,10 @@ SWAP_FILE="/live/boot-dev/swap-file"
 
 I915_INVERT_FILE=/lib/modprobe.d/i915-invert.conf
 
+DEFAULT_VDRIVER="vesa"
+UEFI_VDRIVER="fbdev"
+
+
 #-jbb For debugging
 : ${CMDLINE:=$(cat /live/config/proc-cmdline /live/config/cmdline /live/config/cmdline2)}
 for param in $CMDLINE; do
@@ -79,6 +83,8 @@ for param in $CMDLINE; do
              xorg=safe)   XORG_ARGS=safe${XORG_ARGS:+,}$XORG_ARGS   ;;
                 xorg=*)   XORG_ARGS=$XORG_ARGS${XORG_ARGS:+,}$value ;;
                 noxorg)   NO_XORG=true                              ;;
+          BOOT_IMAGE=*)   UEFI_BOOT=true
+                          DEFAULT_VDRIVER=$UEFI_VDRIVER             ;;
 
 automount=off|amnt=off)                          AUTOMOUNT_OFF=true ;;
            noautomount)                          AUTOMOUNT_OFF=true ;;
