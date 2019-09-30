@@ -291,8 +291,7 @@ hw_kms_modules() {
 # Create a regular expression for all modules that depend on drm.ko
 #------------------------------------------------------------------------------
 kms_modules_regex() {
-    all_kms_modules | sed -e "s/[_-]/[_-]/"  \
-        | tr '\n' '|' | sed "s/|$//"
+    all_kms_modules | sed -e "s/[_-]/[_-]/" | cat -s | tr '\n' '|' | sed "s/|$//"
 }
 
 #------------------------------------------------------------------------------
@@ -303,7 +302,7 @@ all_kms_modules() {
         | sed -e "s/:.*//"  \
         -e "s|.*/||"        \
         -e "s/\.ko$//"      \
-        | grep -v "^drm$"   \
+        | grep -v -E "^(drm|drm_kms_helper|ttm)$"   \
         | sort -u
 }
 
