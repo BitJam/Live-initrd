@@ -112,6 +112,9 @@ automount=off|amnt=off)                          AUTOMOUNT_OFF=true ;;
            i915_invert)     I915_INVERT=true                        ;;
         no_i915_invert)  NO_I915_INVERT=true                        ;;
 
+                nuke=*)  NUKE_MODS="$NUKE_MODS $value"              ;;
+                nonuke)  NO_NUKE=true                               ;;
+
     esac
 done
 
@@ -215,7 +218,10 @@ do_start() {
     #==========================================================================
 
     # Undo previous nuking (this is the slow way)
-    test -d "/lib/modules/$(uname -r)-nuked" && nuke-modules --undo
+    # We also perform the manual nuke here
+    if [ -d "/lib/modules/$(uname -r)-nuked" -o -n "$NUKE_MODS" ]; then
+        nuke-modules --update $NUKE_MODS
+    fi
 
     if [ -n "$HAVE_X" ]; then
 
@@ -1069,7 +1075,7 @@ no_mode_set_lines() {
 # Acutally remove these modules from the trree
 #------------------------------------------------------------------------------
 nuke_modules() {
-    [ -z "$*" ] && return
+    [ -z "$*" -o -n "$NO_NUKE" ] && return
     nuke-modules $*
 }
 

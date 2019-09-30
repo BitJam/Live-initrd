@@ -956,6 +956,9 @@ read_cmdline_params()
                     i915_invert)  ;;
                  no_i915_invert)  ;;
 
+                         nuke=*)  ;;
+                         nonuke)  ;;
+
         #----- Some known codes -------------------------
 
         [sS1-6]|BOOT_IMAGE=*);;
@@ -2035,7 +2038,6 @@ find_device() {
     general_device_error "$find_type" "$type" "$value"
     return $err_ret
 }
-
 
 #------------------------------------------------------------------------------
 # Create a grub entry file that can be added to a grub.cfg for booting into
