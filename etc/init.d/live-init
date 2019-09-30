@@ -217,7 +217,7 @@ do_start() {
     # Undo previous nuking (this is the slow way)
     test -d "/lib/modules/$(uname -r)-nuked" && nuke-modules --undo
 
-    if [ -n "$HAVE_X" -o -n "$XORG_ARGS" ]; then
+    if [ -n "$HAVE_X" ]; then
 
         # Parse the xorg= parameters.  Ignore resolutions
         local param
@@ -260,6 +260,8 @@ do_start() {
             make_xorg $XORG_DRIVER
         fi
 
+    elif [ -n "$XORG_ARGS" ]; then
+        live_echo "Could not find X server.  Ignoring xorg arguments."
     fi
 
     # End of new safe video code
