@@ -203,6 +203,12 @@ do_start() {
         rm -r $I915_INVERT_FILE
     fi
 
+    if [ "$FIX_SKYLAKE" ]; then
+        skylake_flicker_fix $SKYLAKE_FLICKER_FILE
+    else
+        rm -f $SKYLAKE_FLICKER_FILE
+    fi
+
     fix_cache_apt_archive_partial
 
     #==========================================================================
@@ -667,12 +673,6 @@ make_xorg_conf() {
     fi
 
     local ARGS_OUT=$args
-
-    if [ "$FIX_SKYLAKE" ]; then
-        skylake_flicker_fix $SKYLAKE_FLICKER_FILE
-    else
-        rm -f $SKYLAKE_FLICKER_FILE
-    fi
 
     [ "$FOUND_i915" -a -z "$no_xorg" ] && fix_intel $args
     args=$ARGS_OUT
