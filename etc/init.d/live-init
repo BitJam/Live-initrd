@@ -1160,27 +1160,6 @@ set_console_blanking() {
 }
 
 #------------------------------------------------------------------------------
-# Disable ipv6 so ipv4 networking starts *much* faster
-# Does not solve the network delay problem, NOT USED
-#------------------------------------------------------------------------------
-disable_ipv6() {
-    local file=/etc/sysctl.d/disable-ipv6.conf  msg="Added by $DISTRO live initrd"
-    test -e $file && return
-    mkdir -p $(dirname $file)
-    cat > $file << Disable_Ipv6
-
-###################################################################
-# $msg
-# disable ipv6 networking to avoid long network delays
-#
-
-net.ipv6.conf.all.disable_ipv6 = 1
-net.ipv6.conf.default.disable_ipv6 = 1
-net.ipv6.conf.lo.disable_ipv6 = 1
-Disable_Ipv6
-}
-
-#------------------------------------------------------------------------------
 # Write the /etc/issue file (which gets displayed at console login) according
 # to what this distro is and what programs (cli-installer antiX-cli-cc) are
 # available.
