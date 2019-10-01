@@ -21,8 +21,9 @@ test -e "/live/bin/make-fstab" && MAKE_FSTAB="/live/bin/make-fstab"
  FOUND_VDRIVER=
  VERSION_FILES="/etc/antix-version /live/boot-dev/version"
 
-OTHER_VIDEO_MODULES="i810|mga|r128|savage|sis|sis[_-]agp|tdfx|via|via[_-]agp"
-SISIMEDIA_K_DRIVERS="sis|sis[_-]agp"
+  NON_KMS_REGEX="i810|sis[_-]agp|via[_-]agp"
+SISIMEDIA_REGEX="sis[_-]agp"
+
 XORG_DRIVER_DIR="/usr/lib/xorg/modules/drivers"
 
 #See: https://en.wikipedia.org/wiki/List_of_Intel_graphics_processing_units
@@ -871,7 +872,7 @@ NOT_USED_detect_kms_driver() {
 #------------------------------------------------------------------------------
 detect_sisimedia_driver() {
     local video_modules=$1  xorg_driver=sisimedia
-    echo "$video_modules" | egrep -q "^($SISIMEDIA_K_DRIVERS)$" || return
+    echo "$video_modules" | egrep -q "^($SISIMEDIA_REGEX)$" || return
     #. Found <type> kernel modules ...
     echo_live "Found %s kernel modules ..." sis
     have_X_driver $xorg_driver || return
