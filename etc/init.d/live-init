@@ -35,6 +35,7 @@ UXA_PCI_ID="0042|0046|1132|1240|2562|2572|2582|258a|2592|2772|2776|2782
 
 SKYLAKE_FLICKER_FILE="/etc/modprobe.d/skylake-flicker-fix.conf"
 I915_POWER_SAVE_FILE="/etc/modprobe.d/i915-power-saving.conf"
+    I915_INVERT_FILE="/lib/modprobe.d/i915-invert.conf"
 
 AUTOMOUNT_CMD="/usr/local/bin/automount-antix"
 
@@ -43,17 +44,14 @@ NETWORK_IF_FILE="/etc/network/interfaces"
 LIVE_MNT_DIR="/media"
 SPLASH_PROGRAMS="/sbin/splash-all /sbin/splash-term /usr/local/bin/splash-select /etc/udev/rules.d/*-fbcondecor.rules"
 
-
 SWAP_FILE="/live/boot-dev/swap-file"
-
-I915_INVERT_FILE=/lib/modprobe.d/i915-invert.conf
 
 DEFAULT_VDRIVER="vesa"
 UEFI_VDRIVER="fbdev"
 
-
-#-jbb For debugging
+#-jbb For testing can set CMDLINE=xxx in environment
 : ${CMDLINE:=$(cat /live/config/proc-cmdline /live/config/cmdline /live/config/cmdline2)}
+
 for param in $CMDLINE; do
     value=${param#*=}
     case "$param" in
@@ -70,7 +68,6 @@ for param in $CMDLINE; do
               mirror=*)   CMD_MIRROR=$value                         ;;
 
               failsafe)   XORG_ARGS=safe${XORG_ARGS:+,}$XORG_ARGS   ;;
-             xorg=safe)   XORG_ARGS=safe${XORG_ARGS:+,}$XORG_ARGS   ;;
                 xorg=*)   XORG_ARGS=$XORG_ARGS${XORG_ARGS:+,}$value ;;
                 noxorg)   NO_XORG=true                              ;;
           BOOT_IMAGE=*)   UEFI_BOOT=true
@@ -86,7 +83,6 @@ automount=off|amnt=off)                          AUTOMOUNT_OFF=true ;;
            desktheme=*)    DESK_THEME=$value                        ;;
                 norepo)       NO_REPO=true                          ;;
               norepo=*)   IGNORE_REPO=$value                        ;;
-           deskdelay=*) DESKTOP_DELAY=$value                        ;;
              nomodeset)    NO_MODESET=true    ; VBOX_DECOR=true     ;;
             fontsize=*)     FONT_SIZE=$value                        ;;
         skylakeflicker)   FIX_SKYLAKE=true                          ;;
