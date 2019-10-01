@@ -727,7 +727,7 @@ do_safe_video() {
             nuke_list="$nuke_list $mod"
         fi
     done
-
+    [ -n "$nuke_list" ] && video_tweak "Nuke modules $nuke_list"
     nuke_modules     $nuke_list
     no_mode_set_mods $no_mode_set
 }
@@ -836,7 +836,7 @@ have_X_driver() {
 #------------------------------------------------------------------------------
 # Let people know if this is special hardware
 #------------------------------------------------------------------------------
-video_tweak() { echo "$*" >> $VIDEO_TWEAK_FILE ; }
+video_tweak() { echo "$*" >> $VIDEO_TWEAKS_FILE ; }
 
 #------------------------------------------------------------------------------
 # A simple wrapper for make-xorg-conf
