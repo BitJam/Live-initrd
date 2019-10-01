@@ -21,8 +21,7 @@ test -e "/live/bin/make-fstab" && MAKE_FSTAB="/live/bin/make-fstab"
  FOUND_VDRIVER=
  VERSION_FILES="/etc/antix-version /live/boot-dev/version"
 
-  NON_KMS_REGEX="i810|sis[_-]agp|via[_-]agp"
-SISIMEDIA_REGEX="sis[_-]agp"
+  NON_KMS_MODULES_REGEX="i810|sis[_-]agp|via[_-]agp"
 
 XORG_DRIVER_DIR="/usr/lib/xorg/modules/drivers"
 
@@ -49,6 +48,8 @@ SWAP_FILE="/live/boot-dev/swap-file"
 
 DEFAULT_VDRIVER="vesa"
 UEFI_VDRIVER="fbdev"
+
+VIDEO_TWEAK_FILE="/live/config/tweak-video"
 
 #-jbb For testing can set CMDLINE=xxx in environment
 : ${CMDLINE:=$(cat /live/config/proc-cmdline /live/config/cmdline /live/config/cmdline2)}
@@ -232,42 +233,31 @@ do_start() {
 
         echo_live "Scanning for hardware specific video modules ..."
 
-        local hw_kms_modules=$(hw_kms_modules)
+        # We use this twice so calcuation it once
+        KMS_MODULES_REGEX=$(kms_modules_regex)
+
+        local hw_video_modules=$(hw_video_modules)
+        local hw_kms_modules=$(hw_kms_modules "$hw_video_modules")
+
         if [ "$hw_kms_modules" ]; then
             #. Found <KMS> video module(s) <module-name(s)>
             echo_live "Found %s video module(s) %s" KMS "$(pquote $(echo $hw_kms_modules))"
 
-            if [ "$SAFE_VIDEO" ] ; then
-                do_safe_video "$NUKE_VIDEO" "$hw_kms_modules"
-                make_xorg $XORG_DRIVER
+            # May set XORG_DRIVER
+            detect_uxa_hardware "$hw_kms_modules"
 
-            elif [ "$XORG_DRIVER" ]; then
-                make_xorg $XORG_DRIVER
-            fi
+            [ "$SAFE_VIDEO" ] && do_safe_video "$NUKE_VIDEO" "$hw_kms_modules"
 
-            case $hw_kms_modules in
-                *i915*) FOUND_i915=true
-            esac
+        elif [ "$hw_video_modules" ]; then
+            echo_live "Found %s video module(s) %s" "non-KMS" "$(pquote $(echo $hw_video_modules))"
 
-        else
-            make_xorg $XORG_DRIVER
+            # May set XORG_DRIVER
+            detect_sisimedia_driver "$hw_video_modules"
         fi
 
-    elif [ -n "$XORG_ARGS" ]; then
-        live_echo "Could not find X server.  Ignoring xorg arguments."
-    fi
+        [ "$SAFE_VIDEO" -o -n "$XORG_DRIVER" ] && make_xorg $XORG_DRIVER
 
-    # End of new safe video code
-    #==========================================================================
-    #==========================================================================
-
-    # Only do X stuff on systems that seem to have X
-    if  [ "$HAVE_X" ]; then
-
-        #-sv KMS_VIDEO_MODULES_REGEX=$(kms_video_modules_regex)
-        #-sv ALL_VIDEO_MODULES="$KMS_VIDEO_MODULES_REGEX|$OTHER_VIDEO_MODULES"
-        #-sv detect_any_video_driver
-
+        # Old cruft
         if [ ${#FONT_SIZE} -gt 0 ]; then
             font_size_to_dpi $FONT_SIZE
             dpi=$DPI_OUT
@@ -278,8 +268,13 @@ do_start() {
 
         set_server_dpi ${CMD_SDPI:-$dpi}
 
-        #-sv make_xorg_conf "$XORG_ARGS" "$FOUND_VDRIVER" "$FOUND_KMS_DRIVER" "$NO_XORG"
+    elif [ -n "$XORG_ARGS" ]; then
+        live_echo "Could not find X server.  Ignoring xorg arguments."
     fi
+
+    # End of new safe video code
+    #==========================================================================
+    #==========================================================================
 
     # Find the "default" user.  This is usually "demo" but can vary on snapshots
     # and such.  First check the default user for SLiM and lightdm.  Then get
@@ -702,24 +697,6 @@ Xorg_xorg_conf
 }
 
 #------------------------------------------------------------------------------
-# Tweak the acceleration for i915 graphics drivers.   This works around bugs
-# in the driver.
-#------------------------------------------------------------------------------
-fix_intel() {
-    local args=$1
-
-    local arch=$(uname -m)
-    if [ $arch = x86_64 ]; then
-        if need_uxa; then
-            #. Forcing <acceleration-type> acceleration on <cpu-type>
-            echo_live "Forcing %s acceleration on %s" $(pquote uxa) $(pquote pre-sandybridge)
-            args=uxa${args:+,}$args
-        fi
-    fi
-    ARGS_OUT=$args
-}
-
-#------------------------------------------------------------------------------
 # Is there a VIA Chrome video chip?
 #------------------------------------------------------------------------------
 is_chrome_gpu() {
@@ -741,16 +718,6 @@ have_X_driver() {
 have_chrome_gpu_and_driver() {
     is_chrome_gpu && have_X_driver openchrome && return 0
     return 1
-}
-
-#------------------------------------------------------------------------------
-# Which Intel cpus need to use uxa acceleration
-#------------------------------------------------------------------------------
-need_uxa() {
-    local pci_id_regex=$(echo $UXA_PCI_ID | tr '\n' '|')
-
-    lspci -n | cut -d" " -f3 | egrep -q "^8086:(${pci_id_regex%|})"
-    return $?
 }
 
 #------------------------------------------------------------------------------
@@ -866,26 +833,6 @@ NOT_USED_detect_kms_driver() {
     FOUND_VDRIVER=true
 }
 
-#------------------------------------------------------------------------------
-# Detect hardware support for sisimedia driver.  If it is found then set xorg
-# boot param so we create an xorg.conf file that uses that driver
-#------------------------------------------------------------------------------
-detect_sisimedia_driver() {
-    local video_modules=$1  xorg_driver=sisimedia
-    echo "$video_modules" | egrep -q "^($SISIMEDIA_REGEX)$" || return
-    #. Found <type> kernel modules ...
-    echo_live "Found %s kernel modules ..." sis
-    have_X_driver $xorg_driver || return
-    #. Found <driver-name> video driver
-    echo_live "Found %s video driver" $xorg_driver
-
-    # Add "default" only if there is no previous XORG_ARGS
-    # Always add the "sisimedia" driver
-    # But both come *before* the orignal XORG_ARGS so they get over-ridden
-    # by the xorg= cheat.
-    XORG_ARGS="${XORG_ARGS:-default,$xorg_driver}"
-}
-
 #==============================================================================
 #==============================================================================
 # More new safe video code
@@ -893,21 +840,29 @@ detect_sisimedia_driver() {
 #==============================================================================
 
 #------------------------------------------------------------------------------
+# Find kms drivers for this hardware plus hard-coded non-kms video drivers
+#------------------------------------------------------------------------------
+hw_video_modules() {
+   local video_modules_regex="$KMS_MODULES_REGEX|$NON_KMS_MODULES_REGEX"
+
+    find /sys/devices -name modalias -print0 | xargs -0 sort -u \
+        | tr '\n' '\0' | xargs -0 modprobe -a -D -q 2>/dev/null | sort -u \
+        | sed -n -r "s/^insmod [^ ]*\/($video_modules_regex)\.ko.*/\1/p"
+}
+
+#------------------------------------------------------------------------------
 # List all KMS modules that can be used by the hardware
 #------------------------------------------------------------------------------
 hw_kms_modules() {
-    local kms_modules_regex=$(kms_modules_regex)
-    find /sys/devices -name modalias -print0 | xargs -0 sort -u \
-        | tr '\n' '\0' | xargs -0 modprobe -a -D -q 2>/dev/null | sort -u \
-        | sed -n -r "s/^insmod [^ ]*\/($kms_modules_regex)\.ko.*/\1/p"
+    local hw_modules=$1
+    echo "$hw_modules" | grep -E "($KMS_MODULES_REGEX)"
 }
 
 #------------------------------------------------------------------------------
 # Create a regular expression for all modules that depend on drm.ko
 #------------------------------------------------------------------------------
 kms_modules_regex() {
-    all_kms_modules | sed -e "s/[_-]/[_-]/"  \
-        | tr '\n' '|' | sed "s/|$//"
+    all_kms_modules | sed -e "s/[_-]/[_-]/"  | tr '\n' '|' | sed "s/|$//"
 }
 
 #------------------------------------------------------------------------------
@@ -982,6 +937,55 @@ nuke_modules() {
     [ -z "$*" -o -n "$NO_NUKE" ] && return
     nuke-modules $*
 }
+
+#------------------------------------------------------------------------------
+# Tweak the acceleration for i915 graphics drivers.   This works around bugs
+# in the driver.
+#------------------------------------------------------------------------------
+detect_uxa_hardware()  {
+    local video_modules=$1
+    case $video_modules in *i915*) ;; *) return ;; esac
+
+    [ "$(uname -m)" =  x86_64 ] || return
+
+    local pci_id_regex=$(echo $UXA_PCI_ID | tr '\n' '|')
+    lspci -n | cut -d" " -f3 | egrep -q "^8086:(${pci_id_regex%|})" || return
+
+    have_X_driver intel || return
+
+    video_tweak "pre-sandybridge UXA acceleration"
+
+    #. Forcing <acceleration-type> acceleration on <cpu-type>
+    echo_live "Forcing %s acceleration on %s" $(pquote uxa) $(pquote pre-sandybridge)
+
+    : ${XORG_DRIVER:=uxa}
+}
+
+#------------------------------------------------------------------------------
+# Detect hardware support for sisimedia driver.  If it is found then set xorg
+# boot param so we create an xorg.conf file that uses that driver
+#------------------------------------------------------------------------------
+detect_sisimedia_driver() {
+    local video_modules=$1  sisi_driver=sisimedia
+    case $video_modules in *sis[_-]apg*) ;; *) return ;; esac
+
+    #. Found <type> kernel modules ...
+    echo_live "Found %s kernel modules ..." sis-agp
+
+    have_X_driver $sisi_driver || return
+    #. Found <driver-name> video driver
+    echo_live "Found %s video driver" $sisi_driver
+
+    video_tweak "Use sismedia xorg driver"
+
+    # Use the "sisimedia" driver unless another was specified
+    : ${XORG_DRIVER:=$sisi_driver}
+}
+
+#------------------------------------------------------------------------------
+# Let people know if this is special hardware
+#------------------------------------------------------------------------------
+video_tweak() { echo "$*" >> $VIDEO_TWEAK_FILE ; }
 
 #------------------------------------------------------------------------------
 # A simple wrapper for make-xorg-conf
