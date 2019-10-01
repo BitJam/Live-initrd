@@ -51,6 +51,12 @@ UEFI_VDRIVER="fbdev"
 
 VIDEO_TWEAKS_FILE="/live/config/video-tweaks"
 
+if test -d /live/config/uefi; then
+    UEFI_BOOT=true
+    DEFAULT_VDRIVER=$UEFI_VDRIVER
+fi
+
+
 #-jbb For testing can set CMDLINE=xxx in environment
 : ${CMDLINE:=$(cat /live/config/proc-cmdline /live/config/cmdline /live/config/cmdline2)}
 
@@ -72,9 +78,6 @@ for param in $CMDLINE; do
               failsafe)   XORG_ARGS=safe${XORG_ARGS:+,}$XORG_ARGS   ;;
                 xorg=*)   XORG_ARGS=$XORG_ARGS${XORG_ARGS:+,}$value ;;
                 noxorg)   NO_XORG=true                              ;;
-          BOOT_IMAGE=*)   UEFI_BOOT=true
-                          DEFAULT_VDRIVER=$UEFI_VDRIVER             ;;
-
 automount=off|amnt=off)                          AUTOMOUNT_OFF=true ;;
            noautomount)                          AUTOMOUNT_OFF=true ;;
         automount|amnt)                              AUTOMOUNT=true ;;
