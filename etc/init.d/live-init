@@ -230,6 +230,25 @@ do_start() {
             echo_live "Removing previous auto-generated %s file" $(pquote xorg.conf)
             rm -f $xorg
         fi
+        test -f $xorg && NO_XORG=true
+
+       # Old cruft
+        if [ ${#FONT_SIZE} -gt 0 ]; then
+            font_size_to_dpi $FONT_SIZE
+            dpi=$DPI_OUT
+        elif [ ${#CMD_DPI} -gt 0 ]; then
+            check_dpi $CMD_DPI
+            dpi=$DPI_OUT
+        fi
+        set_server_dpi ${CMD_SDPI:-$dpi}
+
+    elif [ -n "$XORG_ARGS" ]; then
+        # People should not set xorg= if there is not X installed
+        live_echo "Could not find X server.  Ignoring xorg arguments."
+    fi
+
+    # Don't bother with any of these if we aren't making an xorg.conf file
+    if [ -n "$HAVE_X" -a -z "$NO_XORG" ]; then
 
         echo_live "Scanning for hardware specific video modules ..."
 
@@ -250,40 +269,29 @@ do_start() {
 
         elif [ "$hw_video_modules" ]; then
             echo_live "Found %s video module(s) %s" "non-KMS" "$(pquote $(echo $hw_video_modules))"
-
+            video_tweak "non-kms video driver: $(echo $hw_video_modules)"
             # May set XORG_DRIVER
             detect_sisimedia_driver "$hw_video_modules"
 
         else
             # We get here if there is no hardware specific video driver so we want to
             # create a default xorg.conf file to avoid fbdev in Legacy boot mode
+            video_tweak "No kernel video driver"
 
-            if have_chrome_gpu_and_driver; then
-                echo_live "Letting X server default to using %s driver" "$(pquote openchrome)"
-            elif test -e /live/config/virtualbox; then
-                echo_live "No defaul xorg on Virtual Box"
-            else
-                echo_live "Forcing X-Windows to use default mode"
-                XORG_DRIVER=$DEFAULT_VDRIVER
+            if [ -z "$XORG_DRIVER" ]; then
+                if have_chrome_gpu_and_driver; then
+                    echo_live "Letting X server default to %s driver" "$(pquote openchrome)"
+                elif test -e /live/config/virtualbox; then
+                    echo_live "No default %s in Virtual Box" "$(pquote xorg.conf)"
+                elif [ -z "$XORG_DRIVER" ]; then
+                    echo_live "Forcing X server to use %s driver" "$(pquote $DEFAULT_DRIVER)"
+                    XORG_DRIVER=$DEFAULT_VDRIVER
+                fi
             fi
         fi
 
         [ "$SAFE_VIDEO" -o -n "$XORG_DRIVER" ] && make_xorg $XORG_DRIVER
 
-        # Old cruft
-        if [ ${#FONT_SIZE} -gt 0 ]; then
-            font_size_to_dpi $FONT_SIZE
-            dpi=$DPI_OUT
-        elif [ ${#CMD_DPI} -gt 0 ]; then
-            check_dpi $CMD_DPI
-            dpi=$DPI_OUT
-        fi
-        set_server_dpi ${CMD_SDPI:-$dpi}
-
-
-    elif [ -n "$XORG_ARGS" ]; then
-        # People should not set xorg= if there is not X installed
-        live_echo "Could not find X server.  Ignoring xorg arguments."
     fi
 
     # End of new safe video code
@@ -834,14 +842,9 @@ video_tweak() { echo "$*" >> $VIDEO_TWEAK_FILE ; }
 # A simple wrapper for make-xorg-conf
 #------------------------------------------------------------------------------
 make_xorg() {
-    [ "$NO_XORG" ] && return
-
     local xorg=/etc/X11/xorg.conf  driver=${1:-$DEFAULT_VDRIVER}
 
-    #Don't over-write a preserved xorg.conf file
-    test -e $xorg && return
-
-    #. Configuring <xorg.conf> file with <arguments to xorg= cheat>
+    #. Configuring <xorg.conf> file with <driver>
     echo_live "Configuring %s file with %s" $(pquote $xorg) $(pquote $driver)
     backup_file $xorg
     /sbin/make-xorg-conf --output=$xorg $driver
