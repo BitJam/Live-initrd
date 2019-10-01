@@ -17,7 +17,6 @@ export PATH=/sbin:/usr/sbin:/bin:/usr/bin:/usr/local/bin:/live/bin
 MAKE_FSTAB="make-fstab"
 test -e "/live/bin/make-fstab" && MAKE_FSTAB="/live/bin/make-fstab"
 
-  XSESSION_DIR=/usr/share/xsessions
      AUTOMOUNT=
  FOUND_VDRIVER=
  VERSION_FILES="/etc/antix-version /live/boot-dev/version"
