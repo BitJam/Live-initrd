@@ -95,7 +95,6 @@ automount=off|amnt=off)                          AUTOMOUNT_OFF=true ;;
            deskdelay=*) DESKTOP_DELAY=$value                        ;;
              nomodeset)    NO_MODESET=true    ; VBOX_DECOR=true     ;;
             fontsize=*)     FONT_SIZE=$value                        ;;
-             vtblank=*)      VT_BLANK=$value                        ;;
         skylakeflicker)   FIX_SKYLAKE=true                          ;;
                  issue)   FORCE_ISSUE=true                          ;;
              vboxdecor)    VBOX_DECOR=true                          ;;
@@ -179,9 +178,6 @@ do_start() {
     # Always create keyboard file in non-persistent system even with no X
     # Unless NO_LOAD_KEYS
     [ -z "$NO_LOAD_KEYS" ] && set_keyboard
-
-    test -e /live/config/virtualbox && : ${VT_BLANK:=0}
-    #[ ${#VT_BLANK} -gt 0 ] && set_console_blanking $VT_BLANK
 
     if [ -e /live/config/virtualbox -a -z "$VBOX_DECOR" ]; then
         echo_live "Disabling splash (fbcondecor) inside of Virtual Box"
@@ -1143,20 +1139,6 @@ set_user_automount() {
         [ -n "$create" ] && echo_live "Automount disabled"
         add_or_edit "^automount=" 'automount=FALSE' "$file" "$user" "$create"
     fi
-}
-
-#------------------------------------------------------------------------------
-# Set delay before consoles automatically blank (is this still working?)
-# NOT USED
-#------------------------------------------------------------------------------
-set_console_blanking() {
-    local blank=$1  conf_file=/etc/kbd/config
-    [ ${#blank} -gt 0 ] || return
-
-    echo_live "Setting console blanking timeout to %s minute(s)" "$(pquote $blank)"
-    setterm --blank $blank
-    test -w $conf_file || return
-    sed -ri "s/^(BLANK_TIME=).*/\1$blank/" $conf_file
 }
 
 #------------------------------------------------------------------------------
