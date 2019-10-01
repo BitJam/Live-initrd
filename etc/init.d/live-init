@@ -49,7 +49,7 @@ SWAP_FILE="/live/boot-dev/swap-file"
 DEFAULT_VDRIVER="vesa"
 UEFI_VDRIVER="fbdev"
 
-VIDEO_TWEAK_FILE="/live/config/tweak-video"
+VIDEO_TWEAKS_FILE="/live/config/video-tweaks"
 
 #-jbb For testing can set CMDLINE=xxx in environment
 : ${CMDLINE:=$(cat /live/config/proc-cmdline /live/config/cmdline /live/config/cmdline2)}
