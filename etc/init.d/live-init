@@ -18,8 +18,6 @@ MAKE_FSTAB="make-fstab"
 test -e "/live/bin/make-fstab" && MAKE_FSTAB="/live/bin/make-fstab"
 
   XSESSION_DIR=/usr/share/xsessions
-      MENU_WMs="fluxbox icewm jwm"
-      FF_PREFS="/etc/skel/.mozilla/firefox/*/prefs.js"
      AUTOMOUNT=
  FOUND_VDRIVER=
  VERSION_FILES="/etc/antix-version /live/boot-dev/version"
