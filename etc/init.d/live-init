@@ -666,8 +666,7 @@ make_xorg_conf() {
         args=default${args:+,}$args
     fi
 
-    local IS_SKYLAKE ARGS_OUT=$args
-    [ "$FOUND_i915" ] && is_skylake && IS_SKYLAKE=true
+    local ARGS_OUT=$args
 
     if [ "$FIX_SKYLAKE" ]; then
         skylake_flicker_fix $SKYLAKE_FLICKER_FILE
@@ -734,25 +733,8 @@ fix_intel() {
             #. Forcing <driver-name> driver on <cpu-type>
             echo_live "Forcing %s driver on %s" $(pquote modesetting) $(pquote broadwell)
         fi
-
-    elif [ $arch = i686 ]; then
-        if [ "$IS_SKYLAKE" -a -z "$NO_MODESET" ]; then
-            #. Forcing <driver-name> driver on <cpu-type>
-            echo_live "Forcing %s driver on %s" $(pquote modesetting) $(pquote skylake)
-            args=modesetting${args:+,}$args
-        fi
     fi
-
     ARGS_OUT=$args
-}
-
-#------------------------------------------------------------------------------
-# Is this an Intel skylake cpu?
-#------------------------------------------------------------------------------
-is_skylake() {
-    # See recent pci.ids from http://pci-ids.ucw.cz/
-    lspci -n | cut -d" " -f3 | egrep -q "^8086:($SKYLAKE_PCI_ID)"
-    return $?
 }
 
 #------------------------------------------------------------------------------
