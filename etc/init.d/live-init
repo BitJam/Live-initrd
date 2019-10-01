@@ -36,9 +36,6 @@ UXA_PCI_ID="0042|0046|1132|1240|2562|2572|2582|258a|2592|2772|2776|2782
 2e12|2e13|2e22|2e23|2e32|2e33|2e42|2e43|2e92|2e93|3577|3582
 358e|7121|7123|7125|7800|a001|a002|a011|a012"
 
-  SKYLAKE_PCI_ID="19[0-5]"
-BROADWELL_PCI_ID="1616|1612|161e|1626|162b|1622"  # The more powerful broadwell
-
 SKYLAKE_FLICKER_FILE="/etc/modprobe.d/skylake-flicker-fix.conf"
 I915_POWER_SAVE_FILE="/etc/modprobe.d/i915-power-saving.conf"
 
@@ -719,15 +716,10 @@ fix_intel() {
 
     local arch=$(uname -m)
     if [ $arch = x86_64 ]; then
-
         if need_uxa; then
             #. Forcing <acceleration-type> acceleration on <cpu-type>
             echo_live "Forcing %s acceleration on %s" $(pquote uxa) $(pquote pre-sandybridge)
             args=uxa${args:+,}$args
-
-        elif is_broadwell; then
-            #. Forcing <driver-name> driver on <cpu-type>
-            echo_live "Forcing %s driver on %s" $(pquote modesetting) $(pquote broadwell)
         fi
     fi
     ARGS_OUT=$args
@@ -755,13 +747,6 @@ have_X_driver() {
 have_chrome_gpu_and_driver() {
     is_chrome_gpu && have_X_driver openchrome && return 0
     return 1
-}
-#------------------------------------------------------------------------------
-# Is this an Intel broadwell cpu?
-#------------------------------------------------------------------------------
-is_broadwell() {
-    lspci -n | cut -d" " -f3 | egrep -q "^8086:($BROADWELL_PCI_ID)"
-    return $?
 }
 
 #------------------------------------------------------------------------------
