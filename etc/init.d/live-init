@@ -225,7 +225,7 @@ do_start() {
         local param
         for param in ${XORG_ARGS//,/ }; do
             case $param in
-                vesa|safe) SAFE_VIDEO=true                      ;;
+                     safe) SAFE_VIDEO=true                      ;;
                      nuke) SAFE_VIDEO=true ; NUKE_VIDEO=true    ;;
             *[0-9]x[0-9]*)                                      ;;
                         *) XORG_DRIVER=$param                   ;;
@@ -943,9 +943,9 @@ all_kms_modules() {
         | sort -u
 }
 
-
 #------------------------------------------------------------------------------
-#
+# For every given module either set modeset=0 or nuke it if it does not have
+# a modeset= option.
 #------------------------------------------------------------------------------
 do_safe_video() {
     local nuke_mode=$1  mod_list=$2
