@@ -150,6 +150,9 @@ do_update() {
 #------------------------------------------------------------------------------
 find_modules() {
     local from_dir=$1  find_expr=$2
+
+    test -d "$from_dir" || return
+
     if [ -z "$find_expr" ]; then
         find "$from_dir/"  -type f -name "*.ko" -printf "%f\n"
     else
@@ -175,7 +178,9 @@ undo_modules() {
 }
 
 #------------------------------------------------------------------------------
-#
+# Move files from under one directory to the same location nnder a different
+# directory.  If undo is set then we will move ALL modules if none are in
+# the list and we will also remove empty directories.
 #------------------------------------------------------------------------------
 move_modules() {
     local from_dir=$1  to_dir=$2 modules=$3  undo=$4
