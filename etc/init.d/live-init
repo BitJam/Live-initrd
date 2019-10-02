@@ -284,13 +284,13 @@ do_start() {
             # create a default xorg.conf file to avoid fbdev in Legacy boot mode
             video_tweak "No kernel video driver"
 
-            if [ -z "$XORG_DRIVER" ]; then
+            if [ -z "$XORG_DRIVER" -a -z "$SAFE_VIDEO" ]; then
                 if have_chrome_gpu_and_driver; then
                     echo_live "Letting X server default to %s driver" "$(pquote openchrome)"
                 elif test -e /live/config/virtualbox; then
                     echo_live "No default %s in Virtual Box" "$(pquote xorg.conf)"
                 elif [ -z "$XORG_DRIVER" ]; then
-                    echo_live "Forcing X server to use %s driver" "$(pquote $DEFAULT_DRIVER)"
+                    echo_live "Forcing X server to use %s driver" "$(pquote $DEFAULT_VDRIVER)"
                     XORG_DRIVER=$DEFAULT_VDRIVER
                 fi
             fi
