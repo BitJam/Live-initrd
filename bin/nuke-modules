@@ -277,8 +277,8 @@ bash_set_minus() {
 #------------------------------------------------------------------------------
 set_minus() {
     local a=$1  b=$2 temp_file=$(tempfile minus-XXXXXX)
-    echo "$b" | tr -s ' '  '\n' | cat -s | sort > $temp_file
-    echo "$a" | tr -s ' '  '\n' | cat -s | sort | comm -23 - $temp_file
+    echo "$b" | tr -s ' '  '\n' | sed "/^$/d" | sort > $temp_file
+    echo "$a" | tr -s ' '  '\n' | sed "/^$/d" | sort | comm -23 - $temp_file
     rm $temp_file
 }
 
@@ -296,7 +296,7 @@ hw_kms_modules() {
 # Create a regular expression for all modules that depend on drm.ko
 #------------------------------------------------------------------------------
 kms_modules_regex() {
-    all_kms_modules | sed -e "s/[_-]/[_-]/" | cat -s | tr '\n' '|' | sed "s/|$//"
+    all_kms_modules | sed -e "s/[_-]/[_-]/" | sed "/^$/d" | tr '\n' '|' | sed "s/|$//"
 }
 
 #------------------------------------------------------------------------------
