@@ -277,7 +277,7 @@ do_start() {
             echo_live "Found %s video module(s) %s" "non-KMS" "$(pquote $(echo $hw_video_modules))"
             video_tweak "non-kms video driver: $(echo $hw_video_modules)"
             # May set XORG_DRIVER
-            detect_sisimedia_driver "$hw_video_modules"
+            [ -z "$SAFE_VIDEO" ] && detect_sisimedia_driver "$hw_video_modules"
 
         else
             # We get here if there is no hardware specific video driver so we want to
@@ -812,13 +812,13 @@ detect_sisimedia_driver() {
     case $video_modules in *sis[_-]apg*) ;; *) return ;; esac
 
     #. Found <type> kernel modules ...
-    echo_live "Found %s kernel modules ..." sis-agp
+    echo_live "Found %s kernel modules ..." sis-apg
 
     have_X_driver $sisi_driver || return
     #. Found <driver-name> video driver
     echo_live "Found %s video driver" $sisi_driver
 
-    video_tweak "Use sismedia xorg driver"
+    video_tweak "Use $sisi_driver xorg driver"
 
     # Use the "sisimedia" driver unless another was specified
     : ${XORG_DRIVER:=$sisi_driver}
