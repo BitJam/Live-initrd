@@ -50,6 +50,7 @@ DEFAULT_VDRIVER="vesa"
 UEFI_VDRIVER="fbdev"
 
 VIDEO_TWEAKS_FILE="/live/config/video-tweaks"
+XORG_BUS_ID_FILE="/etc/X11/xorg-bus-id"
 
 if test -d /live/config/uefi; then
     UEFI_BOOT=true
@@ -248,13 +249,15 @@ do_start() {
             case $param in
                      safe) SAFE_VIDEO=true                      ;;
                      nuke) SAFE_VIDEO=true ; NUKE_VIDEO=true    ;;
-                  busid=*) XORG_BUS_ID=busid=${param#*=}        ;;
+                  busid=*) XORG_BUS_ID=${param#*=}              ;;
             *[0-9]x[0-9]*)                                      ;;
                         *) XORG_DRIVER=$param                   ;;
             esac
         done
 
-        echo_live "Scanning for hardware specific video modules ..."
+        remember_xorg_bus_id "$XORG_BUS_ID_FILE"
+
+       echo_live "Scanning for hardware specific video modules ..."
 
         # We use this twice so calcuation it once
         KMS_MODULES_REGEX=$(kms_modules_regex)
@@ -847,6 +850,30 @@ have_X_driver() {
 #------------------------------------------------------------------------------
 video_tweak() { echo "$*" >> $VIDEO_TWEAKS_FILE ; }
 
+
+#------------------------------------------------------------------------------
+# Save the xorg bus-id (for card selection in a machine-state file
+#------------------------------------------------------------------------------
+remember_xorg_bus_id() {
+    local file=$1  bus_id=$XORG_BUS_ID
+    if [ -z "$bus_id" ]; then
+        if test -r $file; then
+            bus_id=$(cat $file 2>/dev/null)
+            [ -n "$bus_id" ] && echo_live "Restore xorg bus-id %s from file %s" "$(pquote $bus_id)" "$(pquote $file)"
+        fi
+
+    elif [ -r $file ]; then
+        local new_id=$(cat $file 2>/dev/null)
+        if [ "$bus_id" != "$new_id" ]; then
+            echo "$bus_id" > $file
+            echo_live "Upate xorg bus-id to %s in file %s" "$(pquote $bus_id)" "$(pquote $file)"
+        fi
+    else
+        echo_live "Save xorg bus-id %s in file %s" "$(pquote $bus_id)" "$(pquote $file)"
+    fi
+    XORG_BUS_ID=$bus_id
+}
+
 #------------------------------------------------------------------------------
 # A simple wrapper for make-xorg-conf
 #------------------------------------------------------------------------------
@@ -855,8 +882,10 @@ make_xorg() {
 
     [ -z "$*" ] && return
 
+    bus_id=${bus_id:+busid=$bus_id}
+
     #. Configuring <xorg.conf> file with <driver>
-    echo_live "Configuring %s file with %s" "$(pquote $file)" "$(pquote "$*")"
+    echo_live "Configuring %s file with %s" "$(pquote $file)" "$(pquote $driver $bus_id)"
 
     backup_file $file
     /sbin/make-xorg-conf --output=$file $driver $bus_id
