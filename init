@@ -151,6 +151,10 @@ KMS_VIDEO_MODULES="amdgpu,analogix-anx78xx,ast,bochs-drm,ch7006,cirrus,gma500_gf
        TSPLASH_TTY=10
             MY_TTY=1
 
+# could be "off" "on" or "force"
+VCARD_MENU_DEFAULT="on"
+
+
     #           HUP INT QUIT SEGV TERM
     SIGNAL_LIST="1   2   3    11   15"
 
@@ -274,6 +278,8 @@ main_wrapper() {
     # remove_from_runlevel lightdm 3
 
     # Try running live-usb-save first so it can restore an xorg.conf machine-state file
+    # We run live-vcard-menu 2nd, right after live-usb-save
+    confife vcard-menu   && LIVE_SCRIPTS="live-vcard-menu $LIVE_SCRIPTS"
     confile remasterable && LIVE_SCRIPTS="live-usb-save $LIVE_SCRIPTS"
     confile hwclock      && LIVE_SCRIPTS="$LIVE_SCRIPTS live-hwclock"
     confile persist-root force-passwd && LIVE_SCRIPTS="$LIVE_SCRIPTS persist-password"
@@ -608,6 +614,13 @@ main_core() {
 
     # FIXME: do this after copy_xtra for easy testing (for now) (????)
     PROC_CMDLINE=$(cat /live/config/proc-cmdline)
+
+    case $VCARD_MENU in
+             off) ;;
+        on|force) echo $VCARD_MENU > /live/config/vcard-menu                        ;;
+               *) warn "Unexpected %s value %s" "$(pqw vcard_menu)" "$(VCARD_MENU)" ;;
+    esac
+
     [ "$DO_MENUS" ] && do_late_menus
     echo "$PROC_CMDLINE" > /live/config/proc-cmdline
 
@@ -784,8 +797,9 @@ read_cmdline_params()
         case $param in
                            aufs) WANT_UNIONFS=aufs                               ;;
                       overlayfs) WANT_UNIONFS=overlay                            ;;
-                          menus) DO_MENUS=${MENUS_LIST:-cltopfs}                 ;;
+                          menus) DO_MENUS=${MENUS_LIST:-cltopfsv}                ;;
                         menus=*) DO_MENUS=$DO_MENUS$value                        ;;
+                     vcard_menu) VCARD_MENU=$value                               ;;
             rootdelay=*|delay=*) small_int COLDPLUG_DELAY $param                 ;;
                          splash) SPLASH_PARAM=v                                  ;;
                        splash=*) SPLASH_PARAM=$value                             ;;
@@ -989,6 +1003,12 @@ read_cmdline_params()
     case $CMD_VGA in
         ask+save) GFX_SAVE=both ; BOOT_SAVE=true ;;
     esac
+
+    # Enable vcard menu from menus=*v* unless it was set explicitly
+    if [ -n "$DO_MENUS" -a -z "${DO_MENUS##*v*}" ]; then
+        : ${VCARD_MENU:=on}
+    fi
+    : ${VCARD_MENU:=$VCARD_MENU_DEFAULT}
 }
 
 #------------------------------------------------------------------------------
