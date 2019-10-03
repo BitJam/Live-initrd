@@ -791,9 +791,8 @@ read_cmdline_params()
                        splash=*) SPLASH_PARAM=$value                             ;;
                         splasht) DO_TSPLASH=Z                                    ;;
                       splasht=*) DO_TSPLASH=$value                               ;;
-                       st_tty=*) TSPLASH_TTY=$value                              ;;
                       console=*) CMD_MY_TTY=${value#tty}                         ;;
-                        tty1off) TTY1_OFF=true                                    ;;
+                        tty1off) TTY1_OFF=true                                   ;;
                       CONSOLE=*) CMD_MY_TTY=${value#tty}                         ;;
                        poweroff) poweroff -f -n                                  ;;
                          reboot) reboot -f -n                                    ;;
@@ -990,13 +989,6 @@ read_cmdline_params()
     case $CMD_VGA in
         ask+save) GFX_SAVE=both ; BOOT_SAVE=true ;;
     esac
-
-    local p
-    for p in ${SPLASH_PARAM//,/ }; do
-        case $p in
-            x|tx) DO_TSPLASH=true ;;
-        esac
-    done
 }
 
 #------------------------------------------------------------------------------
