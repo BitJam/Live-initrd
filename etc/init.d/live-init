@@ -870,6 +870,7 @@ remember_xorg_bus_id() {
         fi
     else
         echo_live "Save xorg bus-id %s in file %s" "$(pquote $bus_id)" "$(pquote $file)"
+        echo "$bus_id" > $file
     fi
     XORG_BUS_ID=$bus_id
 }
