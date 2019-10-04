@@ -13,7 +13,9 @@
 ### END INIT INFO
 
 
-export PATH=/sbin:/usr/sbin:/bin:/usr/bin:/usr/local/bin
+export PATH=/sbin:/usr/sbin:/bin:/usr/bin:/usr/local/bin:/live/bin
+
+test -d /live/config/tsplash && DO_TSPLASH=true
 
 vcard_conf_file=/live/config/vcard-menu
 XORG_BUS_ID_FILE="/etc/X11/xorg-bus-id"
@@ -27,7 +29,6 @@ main() {
             *)  echo "Usage: $0 {start|stop}" ;  exit 1 ;;
     esac
 }
-
 
 do_start() {
 
@@ -70,15 +71,18 @@ do_start() {
     # Don't run menu if we already created a valid xorg-bus-id file
     ! force && [ -n "$XORG_BUS_ID" ] && return
 
-    video_card_menu "$lspci_graphics"
+    set_colors
+    video_card_menu "$LSPCI_GRAPHICS"
 
     [ -z "$NEW_BUS_ID" ] && return
-
-    echo_live  "Using bus id %s" "$(pquote $NEW_BUS_ID)"
+    local new_card=$(get_card "$NEW_BUS_ID")
 
     # Don't use the same bus-id as before (?????)
     [ "$NEW_BUS_ID" = "$XORG_BUS_ID" ] && return
-    
+
+    [ "$DO_TSPLASH" ] && /live/bin/tell-tsplash alert "$(printf "Using card %s" "$new_card")"
+    echo_live  "Using card %s" "$(pquote $new_card)"
+
     # Send it as a cmdline parameter to live-init
     echo "xorg=busid=$NEW_BUS_ID" >> /live/config/cmdline2
 }
@@ -104,14 +108,18 @@ video_card_menu() {
         cnt=$((cnt + 1))
         # echo "id: $id   text: $text"
     done<<Lspci_nn
-$(munge_lspci "$lspci_graphics")
+$(munge_lspci "$LSPCI_GRAPHICS")
 Lspci_nn
 
     data="${data}0:quit\n"
     disp="$disp$(printf "$disp_fmt" "0" "quit")\n"
 
+    [ "$DO_TSPLASH" ] && tsplash_clear
+
     local new_bus_id  title="Please select a video card to use"
     my_select_2 "$title" new_bus_id "0" "$data" "$disp"
+
+    [ "$DO_TSPLASH" ] && tsplash-on
 
     if [ "$new_bus_id" = "quit" ]; then
         say "Not selecting a video card"
@@ -280,6 +288,17 @@ set_colors() {
       hi_co=$white
        m_co=$nc_co
      num_co=$white
+}
+
+tsplash_clear() {
+    [ "$DO_TSPLASH" ] || return
+
+    if [ -z "$TSPLASH_CLEARED" ]; then
+        clear
+        sleep .2
+        TSPLASH_CLEARED=true
+    fi
+    chvt 1
 }
 
 force() { [ "$FORCE" ] ; return $?; }
