@@ -44,11 +44,11 @@ do_start() {
                *) echo_live "Uknown vcard_menu mode %s" "$mode"
                   return ;;
     esac
-    
+
     echo_script "Video card selection menu" $0
 
-    local lspci_graphics=$(lspci_graphics)
-    local card_cnt=$(echo "$lspci_graphics" | wc -l)
+    local LSPCI_GRAPHICS=$(lspci_graphics)
+    local card_cnt=$(echo "$LSPCI_GRAPHICS" | wc -l)
 
     case $card_cnt in
         0) echo_live "No video cards found" ; return ;;
@@ -58,7 +58,7 @@ do_start() {
     local card_id  bus_id=$(cat $XORG_BUS_ID_FILE 2>/dev/null)
 
     if [ -n "$bus_id" ]; then
-        id_card=$(echo "$lspci_graphics" | sed -n "s/^$bus_id //p")
+        id_card=$(get_card "$bus_id")
 
         if [ -z "$id_card" ]; then
             echo_live "Found bus-id %s but did not find associated card" "$(pquote $bus_id)"
@@ -91,8 +91,7 @@ do_start() {
 # Select a video card bus_id based on the names
 #------------------------------------------------------------------------------
 video_card_menu() {
-    local lspci_graphics=$(lspci_graphics)
-    local card_cnt=$(echo "$lspci_graphics" | wc -l)
+    local card_cnt=$(echo "$LSPCI_GRAPHICS" | wc -l)
 
     case $card_cnt in
         0) say "No video cards found"      ; return ;;
@@ -132,11 +131,22 @@ Lspci_nn
 # Remove class description, horten some of the text, and removed the pci-id
 #------------------------------------------------------------------------------
 munge_lspci() {
-    echo "$1" | sed -r -n "s/^([0-9a-f:.]+) [^:]+: /\1 /pi"  \
-        | sed -r -e "s/Advanced Micro Devices, Inc\./AMD/" \
+    echo "$1" | sed -r -n "s/^([0-9a-f:.]+) [^:]+: /\1 /pi"  | shorten_lspci
+ }
+
+shorten_lspci() {
+    sed -r -e "s/Advanced Micro Devices, Inc\./AMD/" \
         -e "s/ \[AMD\/ATI\]//" -e "s/\[AMD\]//" \
         -e "s/(NVIDIA|Intel) Corporation/\1/" \
         -e "s/ \[[0-9a-f]{4}:[0-9a-f]{4}\]//i"
+}
+
+#------------------------------------------------------------------------------
+# Find the text description of a pci card based on the bus id
+#------------------------------------------------------------------------------
+get_card() {
+    local bus_id=$1
+    echo "$LSPCI_GRAPHICS" | sed -n "s/^$bus_id //p" | shorten_lspci
 }
 
 #------------------------------------------------------------------------------
