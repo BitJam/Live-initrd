@@ -37,8 +37,8 @@ do_start() {
     local mode=$(cat $vcard_conf_file 2>/dev/null)
     # sanity check
     case $mode in
-          ""|off) return        ;;
-              on)               ;;
+          ""|off) return         ;;
+              on)                ;;
            force) FORCE=true     ;;
                *) echo_live "Uknown vcard_menu mode %s" "$mode"
                   return ;;
