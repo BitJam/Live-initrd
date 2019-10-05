@@ -21,6 +21,9 @@ vcard_conf_file=/live/config/vcard-menu
 XORG_BUS_ID_FILE="/etc/X11/xorg-bus-id"
 
 . /live/lib/live-init-utils.sh
+start_init_logging
+# FIXME: load_translation
+
 
 main() {
     case $1 in
@@ -31,9 +34,6 @@ main() {
 }
 
 do_start() {
-
-    start_init_logging
-    # FIXME: load_translation
 
     local mode=$(cat $vcard_conf_file 2>/dev/null)
     # sanity check
