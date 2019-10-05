@@ -77,10 +77,11 @@ do_start() {
     [ -z "$NEW_BUS_ID" ] && return
     local new_card=$(get_card "$NEW_BUS_ID")
 
+    # Don't use the same bus-id as before (?????)
+    [ "$NEW_BUS_ID" = "$XORG_BUS_ID" ] && return
+
     [ "$DO_TSPLASH" ] && /live/bin/tell-tsplash alert "$(printf "Using card %s" "$new_card")"
     echo_live  "Using card %s" "$(pquote $new_card)"
-
-    [ "$NEW_BUS_ID" = "$XORG_BUS_ID" ] && return
 
     # Send it as a cmdline parameter to live-init
     echo "xorg=busid=$NEW_BUS_ID" >> /live/config/cmdline2
@@ -117,8 +118,6 @@ Lspci_nn
     local new_bus_id  title="Please select a video card to use"
     my_select_2 "$title" new_bus_id "0" "$data" "$disp"
 
-    echo
-
     [ "$DO_TSPLASH" ] && tsplash-on
 
     if [ "$new_bus_id" = "quit" ]; then
@@ -147,8 +146,7 @@ shorten_lspci() {
 #------------------------------------------------------------------------------
 get_card() {
     local bus_id=$1
-    echo "$LSPCI_GRAPHICS" | sed -n "s/^$bus_id //p" \
-        | sed -r "s/^[^:]*: //" | shorten_lspci
+    echo "$LSPCI_GRAPHICS" | sed -n "s/^$bus_id //p" | shorten_lspci
 }
 
 #------------------------------------------------------------------------------
