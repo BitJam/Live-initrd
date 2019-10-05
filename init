@@ -6014,8 +6014,9 @@ copy_xtra() {
     msgN 'Copy xtra file(s) to:'
     for  dir in $list; do
         [ -d "$xtra_dir/$dir" ] || continue
-        msgN " $from_co/$dir"
-        cp -a $xtra_dir/$dir $NEW_ROOT/
+        #msgN " $from_co/$dir"
+        msg " $from_co/$dir"
+        log_cmd cp -a $xtra_dir/$dir $NEW_ROOT/
     done
     msg
 
