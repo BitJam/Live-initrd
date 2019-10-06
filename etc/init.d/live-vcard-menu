@@ -24,6 +24,7 @@ XORG_BUS_ID_FILE="/etc/X11/xorg-bus-id"
 start_init_logging
 # FIXME: load_translation
 
+bar80="--------------------------------------------------------------------------------"
 
 main() {
     case $1 in
@@ -41,8 +42,9 @@ do_start() {
           ""|off) return         ;;
               on)                ;;
            force) FORCE=true     ;;
-               *) echo_live "Uknown vcard_menu mode %s" "$mode"
-                  return ;;
+
+               *) echo_live "Uknown vcard_menu mode %s" "$(pquote "$mode")"
+                          return ;;
     esac
 
     echo_script "Video card selection menu" $0
@@ -63,22 +65,48 @@ do_start() {
         if [ -z "$id_card" ]; then
             echo_live "Found bus-id %s but did not find associated card" "$(pquote $bus_id)"
         else
-            echo_live "Currently selected card: %s" "$(pquote "$id_card")"
+            echo_live "Currently selected video card"
+            echo_live '  %s' "$(pquote "$id_card")"
+
             XORG_BUS_ID=$bus_id
         fi
     fi
 
     # Don't run menu if we already created a valid xorg-bus-id file
     ! force && [ -n "$XORG_BUS_ID" ] && return
-
     set_colors
+
+    echo
+    [ "$DO_TSPLASH" ] && tsplash_clear
+    echo "$m_co$bar80$nc_co"
+
     video_card_menu "$LSPCI_GRAPHICS"
 
-    [ -z "$NEW_BUS_ID" ] && return
     local new_card=$(get_card "$NEW_BUS_ID")
+    if [ -n "$new_card" ]; then
+        echo_live "Newly selected video card"
+        echo_live '  %s' "$(pquote "$new_card")"
+    fi
 
-    [ "$DO_TSPLASH" ] && /live/bin/tell-tsplash alert "$(printf "Using card %s" "$new_card")"
-    echo_live  "Using card %s" "$(pquote $new_card)"
+    #. the "Enter" key
+    local enter="Enter"
+
+    #. Press <Enter> to continue
+    local prompt=$(printf "Press <%s> to continue" "$(cq "$enter")")
+
+    printf "$m_co%s$nc_co" "$prompt"
+
+    local xxx
+    read xxx
+
+    echo
+    echo "$m_co$bar80$nc_co"
+    echo
+
+    if [ "$DO_TSPLASH" ]; then
+        #/live/bin/tell-tsplash alert "$(printf "Using card %s" "$new_card")"
+        tsplash-on
+    fi
 
     [ "$NEW_BUS_ID" = "$XORG_BUS_ID" ] && return
 
@@ -112,12 +140,8 @@ Lspci_nn
     data="${data}0:quit\n"
     disp="$disp$(printf "$disp_fmt" "0" "quit")\n"
 
-    [ "$DO_TSPLASH" ] && tsplash_clear
-
     local new_bus_id  title="Please select a video card to use"
     my_select_2 "$title" new_bus_id "0" "$data" "$disp"
-
-    [ "$DO_TSPLASH" ] && tsplash-on
 
     if [ "$new_bus_id" = "quit" ]; then
         say "Not selecting a video card"
@@ -170,8 +194,8 @@ lspci_graphics() {
 #  "data" is $:value.  Display is whatever gets displayed
 #------------------------------------------------------------------------------
 my_select_2() {
-    local title=$1  var=$2  default=$3  data=$4  display=$5
-    local def_prompt=$(printf "Press <%s> for the default selection" "$(cq "enter")")
+    local title=$1  var=$2  default=$3  data=$4  display=$5  enter="Enter"
+    local def_prompt=$(printf "Press <%s> for the default selection" "$(cq "$enter")")
 
     local val input err_msg
     while [ -z "$val" ]; do
@@ -272,7 +296,7 @@ vmsg_nc() {
 
 say() {
     local fmt=$1 ; shift
-    printf "$fmt\n" "$@"
+    printf "$m_co$fmt$nc_co\n" "$@"
 }
 
 set_colors() {
