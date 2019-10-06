@@ -127,7 +127,7 @@ Lspci_nn
 }
 
 #------------------------------------------------------------------------------
-# Remove class description, horten some of the text, and removed the pci-id
+# Remove class description, shorten some of the text, and removed the pci-id
 #------------------------------------------------------------------------------
 munge_lspci() {
     echo "$1" | sed -r -n "s/^([0-9a-f:.]+) [^:]+: /\1 /pi"  | shorten_lspci
@@ -155,10 +155,10 @@ get_card() {
 #------------------------------------------------------------------------------
 lspci_graphics() {
     #lspci "$@"
-    lspci -d::0300 "$@"
-    lspci -d::0301 "$@"
-    lspci -d::0302 "$@"
-    lspci -d::0390 "$@"
+    lspci -D -d::0300 "$@"
+    lspci -D -d::0301 "$@"
+    lspci -D -d::0302 "$@"
+    lspci -D -d::0390 "$@"
 }
 
 #==============================================================================
