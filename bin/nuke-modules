@@ -264,22 +264,25 @@ compact_list() {
 }
 
 #------------------------------------------------------------------------------
-# This is easier with Bash process redirection or bash hashes
-#------------------------------------------------------------------------------
-bash_set_minus() {
-    local a=$1  b=$2
-    comm -12  <(echo "$a" | sort ) <(echo "$b" | sort -u)
-}
-
-#------------------------------------------------------------------------------
 # Lines in the first argument that aren't in the second.  First convert spaces
 # to newlines.
 #------------------------------------------------------------------------------
-set_minus() {
+old_set_minus() {
     local a=$1  b=$2 temp_file=$(tempfile minus-XXXXXX)
     echo "$b" | tr -s ' '  '\n' | sed "/^$/d" | sort > $temp_file
     echo "$a" | tr -s ' '  '\n' | sed "/^$/d" | sort | comm -23 - $temp_file
     rm $temp_file
+}
+
+
+#------------------------------------------------------------------------------
+# Uses grep but no tempfile or comm.
+#------------------------------------------------------------------------------
+set_minus() {
+    local a=$1  b=$2
+    local regex=$(echo "$b" | tr -s '\n '  '|'  )
+    echo "$regex"
+    echo "$a" | grep -vE "^(${regex%|})$"
 }
 
 #------------------------------------------------------------------------------
