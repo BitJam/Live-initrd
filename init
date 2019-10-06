@@ -6004,21 +6004,18 @@ copy_xtra() {
 
     if [ -e $tarball ]; then
         msg 'Unpack xtra tarball'
-        gunzip -c $tarball | tar x -C $NEW_ROOT/
+        gunzip -c "$tarball" | tar x -C $NEW_ROOT/
     fi
 
     [ -d "$xtra_dir" ] || return
+
     local list=$(ls $xtra_dir)
     [ -n "$list" ] || return
 
-    msgN 'Copy xtra file(s) to:'
-    for  dir in $list; do
-        [ -d "$xtra_dir/$dir" ] || continue
-        #msgN " $from_co/$dir"
-        msg " $from_co/$dir"
-        log_cmd cp -a $xtra_dir/$dir $NEW_ROOT/
-    done
-    msg
+    msg 'Copy xtra file(s) to: %s' "$(fq $list)"
+
+    # Use tar because cp stumbles on some symlinks in target directory
+    (cd "$xtra_dir" && tar cf - *) | tar x -C "$NEW_ROOT"
 
      # Create a symlink to the /antiX/xtra directory if it exists
     local r_dir="$NEW_ROOT/root"
