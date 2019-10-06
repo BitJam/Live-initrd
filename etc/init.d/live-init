@@ -270,7 +270,8 @@ do_start() {
             echo_live "Found %s video module(s) %s" KMS "$(pquote $(echo $hw_kms_modules))"
 
             if [ "$SAFE_VIDEO" ]; then
-                do_safe_video "$NUKE_VIDEO" "$hw_kms_modules"
+                # If "nomodeset" was given then let's rely on it to work properly
+                [ -z "$NO_MODESET" ] && do_safe_video "$NUKE_VIDEO" "$hw_kms_modules"
             else
                 # May set XORG_DRIVER
                 detect_uxa_hardware "$hw_kms_modules"
