@@ -6242,9 +6242,7 @@ Initrd_Out
     [ "$DID_TORAM" ] && [ "$(stat -c %t $SQFILE_DEV)" = b ] \
         && echo "BOOT_DEV=$SQFILE_DEV" > $dir/toram-eject
 
-    [ -d /sys/class/power_supply ] \
-        && grep -q Battery /sys/class/power_supply/*/type 2>/dev/null \
-        && touch $dir/laptop
+    is_laptop && touch $dir/laptop
 
     local f full
     for f in version $MADE_BY_FILE; do
@@ -6269,6 +6267,21 @@ update_store_file() {
     elif [ "$enable" ]; then
         rm -f $no_store_file
     fi
+}
+
+
+#------------------------------------------------------------------------------
+# Is this a laptop?  For the first test see:
+# https://superuser.com/questions/877677/programatically-determine-if-an-script-is-being-executed-on-laptop-or-desktop/877796
+#------------------------------------------------------------------------------
+is_laptop() {
+    local chassis=$(cat /sys/class/dmi/id/chassis_type 2>/dev/null)
+    case $chassis in
+        9|10|14) return 0 ;;
+    esac
+
+    grep -q Battery /sys/class/power_supply/*/type 2>/dev/null
+    return $?
 }
 
 #------------------------------------------------------------------------------
