@@ -6280,7 +6280,7 @@ is_laptop() {
         9|10|14) return 0 ;;
     esac
 
-    grep -q Battery /sys/class/power_supply/*/type 2>/dev/null
+    grep -q Battery /sys/class/power_supply/BAT*/type 2>/dev/null
     return $?
 }
 
