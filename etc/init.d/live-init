@@ -891,6 +891,8 @@ make_xorg() {
 
     backup_file $file
     /sbin/make-xorg-conf --output=$file $driver $bus_id
+    sync
+    sleep 1  # *** sigh ***
 }
 
 # End of new safe video code
