@@ -49,17 +49,14 @@ do_start() {
 
     echo_script "Video card selection menu" $0
 
-    local LSPCI_GRAPHICS=$(lspci_graphics)
+    local LSPCI_GRAPHICS=$(lspci_graphics -nn)
     local card_cnt=$(echo "$LSPCI_GRAPHICS" | wc -l)
-
-    case $card_cnt in
-        0) echo_live "No video cards found" ; return ;;
-        1) force || return                           ;;
-    esac
+    local intel_cnt=$(echo "$LSPCI_GRAPHICS" | grep " \[8086:" |  wc -l)
+    echo_live "Found %s Graphics devices"        "$(pquote $card_cnt)"
+    echo_live "found %s Intel Graphics devices"  "$(pquote  $intel_cnt)"
 
     local card_id  bus_id=$(cat $XORG_BUS_ID_FILE 2>/dev/null)
-
-    if [ -n "$bus_id" ]; then
+    if false && [ -n "$bus_id" ]; then
         id_card=$(get_card "$bus_id")
 
         if [ -z "$id_card" ]; then
@@ -70,6 +67,23 @@ do_start() {
 
             XORG_BUS_ID=$bus_id
         fi
+    fi
+
+    if ! force; then
+        if [ $card_cnt -lt 1 ]; then
+            echo_live "No video cards found"
+            return 0
+        fi
+
+        if [ $intel_cnt -eq 1 -a $card_cnt -gt 1 ]; then
+            echo_live "Default to using Intel card"
+            local intel_id=$(echo "$LSPCI_GRAPHICS" | grep " \[8086:" | cut -d" " -f1)
+            get_card $intel_id
+            echo_live FIXME
+        fi
+    else
+
+        echo_live "Graphics Card Menu forced"
     fi
 
     # Don't run menu if we already created a valid xorg-bus-id file
@@ -155,7 +169,7 @@ Lspci_nn
 #------------------------------------------------------------------------------
 munge_lspci() {
     echo "$1" | sed -r -n "s/^([0-9a-f:.]+) [^:]+: /\1 /pi"  | shorten_lspci
- }
+}
 
 shorten_lspci() {
     sed -r -e "s/Advanced Micro Devices, Inc\./AMD/" \
@@ -179,6 +193,12 @@ get_card() {
 #------------------------------------------------------------------------------
 lspci_graphics() {
     #lspci "$@"
+    local test=/live/test/lspci-nn
+    if test -e $test; then
+        cat $test
+        return
+    fi
+
     lspci -D -d::0300 "$@"
     lspci -D -d::0301 "$@"
     lspci -D -d::0302 "$@"
@@ -224,7 +244,7 @@ my_select_2() {
             err_msg=$(printf "The number <%s> is out of range" "$(pqe $input)")
             continue
         fi
-
+        echo $input >> $INIT_LOG_FILE
         eval $var=\$val
         break
     done
