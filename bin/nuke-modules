@@ -274,14 +274,12 @@ old_set_minus() {
     rm $temp_file
 }
 
-
 #------------------------------------------------------------------------------
 # Uses grep but no tempfile or comm.
 #------------------------------------------------------------------------------
 set_minus() {
     local a=$1  b=$2
     local regex=$(echo "$b" | tr -s '\n '  '|'  )
-    echo "$regex"
     echo "$a" | grep -vE "^(${regex%|})$"
 }
 
