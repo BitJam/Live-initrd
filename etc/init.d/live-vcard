@@ -387,7 +387,7 @@ check_switcheroo() {
         umount=true
     fi
 
-    test -d $debug_dir/switcheroo
+    test -d $debug_dir/vgaswitcheroo
     local ret=$?
     [ "$umount" ] && umount $debug_dir
     return $ret
