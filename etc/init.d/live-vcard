@@ -61,12 +61,12 @@ do_start() {
     echo_plural "$intel_cnt" "Found %s Intel Video device" "Found %s Intel Video devices"
 
     if [ $intel_cnt -eq 1 -a $card_cnt -gt 1 ]; then
-        if check_switcheroo; then
-            echo_live "Detected Hybrid Graphics"
+        #if check_switcheroo; then
+            echo_live "Detected possible Hybrid Graphics"
             IS_HYBRID=true
-        else
-            echo_live "Switcheroo not found"
-        fi
+        #else
+        #    echo_live "Switcheroo not found"
+        #fi
     fi
 
     local id_card  bus_id=$(cat $XORG_BUS_ID_FILE 2>/dev/null)
