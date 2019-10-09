@@ -138,7 +138,7 @@ do_start() {
         else
             echo_live "Newly selected video card"
             echo_live '  %s' "$(pquote "$new_card")"
-            write_bus_id $bus_id
+            setting_bus_id $bus_id
         fi
     fi
 
@@ -387,10 +387,10 @@ check_switcheroo() {
 #------------------------------------------------------------------------------
 #
 #------------------------------------------------------------------------------
-write_bus_id() {
-    local bus_id=$1  file=$XORG_BUS_ID_FILE
-    echo_live "Writing %s to file %s" "$(pquote $bus_id)" "$(pquote $file)"
-    echo $bus_id > $file
+setting_bus_id() {
+    local bus_id=$1
+    echo_live "Setting Xorg bus-id to  %s" "$(pquote $bus_id)"
+    echo "xorg=busid=$bus_id" >> /live/config/cmdline2
 }
 #------------------------------------------------------------------------------
 #
