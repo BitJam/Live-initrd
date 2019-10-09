@@ -96,8 +96,8 @@ do_start() {
             disable_non_intel
             return 0
 
-        elif [ $card_cnt -lt 1 ]; then
-            echo_live "No video cards found"
+        elif [ $card_cnt -lt 2 ]; then
+            echo_live "Less than two video cards found"
             return 0
 
         elif [ -n "$XORG_BUS_ID" ]; then
