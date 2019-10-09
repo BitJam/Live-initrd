@@ -87,6 +87,7 @@ do_start() {
     if [ "$DO_CLEAR" ]; then
         clear_bus_id
         clear_disable
+        return 0
 
     elif force; then
         echo_live "Video Card Menu forced"
