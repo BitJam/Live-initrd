@@ -140,6 +140,7 @@ do_start() {
             echo_live "Newly selected video card"
             echo_live '  %s' "$(pquote "$new_card")"
             setting_bus_id $bus_id
+            disable_other_drivers "$bus_id"
         fi
     fi
 
@@ -261,9 +262,16 @@ lspci_graphics() {
 # Disable modeset for non-intel video drivers
 #------------------------------------------------------------------------------
 disable_non_intel() {
-    local intel_id=$(echo "$LSPCI_GRAPHICS" | grep " \[8086:" | cut -d" " -f1)
+    disable_other_drivers "$(echo "$LSPCI_GRAPHICS" | grep " \[8086:" | cut -d" " -f1)"
+}
 
-    find_other_graphics_drivers "$intel_id"
+#------------------------------------------------------------------------------
+#
+#------------------------------------------------------------------------------
+disable_other_drivers() {
+    my_id=$1
+
+    find_other_graphics_drivers "$my_id"
     local to_disable=$(set_minus "$OTHER_DRIVERS" "$MY_DRIVERS")
     # echo "my drivers:"
     # echo "$MY_DRIVERS"
