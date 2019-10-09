@@ -57,8 +57,8 @@ do_start() {
     local LSPCI_GRAPHICS=$(lspci_graphics -nn)
     local card_cnt=$(echo "$LSPCI_GRAPHICS" | wc -l)
     local intel_cnt=$(echo "$LSPCI_GRAPHICS" | grep " \[8086:" |  wc -l)
-    echo_plural "$card_cnt"  "Found %s Graphics device"       "Found %s Graphics devices"
-    echo_plural "$intel_cnt" "Found %s Intel Graphics device" "Found %s Intel Graphics devices"
+    echo_plural "$card_cnt"  "Found %s Video device"       "Found %s Video devices"
+    echo_plural "$intel_cnt" "Found %s Intel Video device" "Found %s Intel Video devices"
 
     if [ $intel_cnt -eq 1 -a $card_cnt -gt 1 ]; then
         if check_switcheroo; then
