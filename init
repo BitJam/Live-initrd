@@ -151,9 +151,8 @@ KMS_VIDEO_MODULES="amdgpu,analogix-anx78xx,ast,bochs-drm,ch7006,cirrus,gma500_gf
        TSPLASH_TTY=10
             MY_TTY=1
 
-# could be "off" "on" or "force"
-VCARD_DEFAULT="on"
-
+# could be "off" "on" "menu" or "clear"
+VCARD_CMD_DEFAULT="on"
 
     #           HUP INT QUIT SEGV TERM
     SIGNAL_LIST="1   2   3    11   15"
@@ -279,7 +278,7 @@ main_wrapper() {
 
     # Try running live-usb-save first so it can restore an xorg.conf machine-state file
     # We run live-vcard 2nd, right after live-usb-save
-    confile vcard        && LIVE_SCRIPTS="live-vcard    $LIVE_SCRIPTS"
+    confile vcard-cmd    && LIVE_SCRIPTS="live-vcard    $LIVE_SCRIPTS"
     confile remasterable && LIVE_SCRIPTS="live-usb-save $LIVE_SCRIPTS"
     confile hwclock      && LIVE_SCRIPTS="$LIVE_SCRIPTS live-hwclock"
     confile persist-root force-passwd && LIVE_SCRIPTS="$LIVE_SCRIPTS persist-password"
@@ -615,10 +614,10 @@ main_core() {
     # FIXME: do this after copy_xtra for easy testing (for now) (????)
     PROC_CMDLINE=$(cat /live/config/proc-cmdline)
 
-    case $VCARD in
-             off) ;;
-        on|force) echo $VCARD > /live/config/vcard                        ;;
-               *) warn "Unexpected %s value %s" "$(pqw vcard)" "$(VCARD)" ;;
+    case $VCARD_CMD in
+                  off)                                                             ;;
+        on|menu|clear) echo $VCARD_CMD > /live/config/vcard-cmd                    ;;
+                    *) warn "Unexpected %s value %s" "$(pqw vcard)" "$(VCARD_CMD)" ;;
     esac
 
     [ "$DO_MENUS" ] && do_late_menus
@@ -799,7 +798,7 @@ read_cmdline_params()
                       overlayfs) WANT_UNIONFS=overlay                            ;;
                           menus) DO_MENUS=${MENUS_LIST:-cltopfsv}                ;;
                         menus=*) DO_MENUS=$DO_MENUS$value                        ;;
-                        vcard=*) VCARD=$value                                    ;;
+                        vcard=*) VCARD_CMD=$value                                ;;
             rootdelay=*|delay=*) small_int COLDPLUG_DELAY $param                 ;;
                          splash) SPLASH_PARAM=v                                  ;;
                        splash=*) SPLASH_PARAM=$value                             ;;
@@ -1006,9 +1005,9 @@ read_cmdline_params()
 
     # Enable vcard menu from menus=*v* unless it was set explicitly
     if [ -n "$DO_MENUS" -a -z "${DO_MENUS##*v*}" ]; then
-        : ${VCARD:=on}
+        : ${VCARD_CMD:=on}
     fi
-    : ${VCARD:=$VCARD_DEFAULT}
+    : ${VCARD_CMD:=$VCARD_CMD_DEFAULT}
 }
 
 #------------------------------------------------------------------------------
