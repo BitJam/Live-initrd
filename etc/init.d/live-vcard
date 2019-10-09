@@ -1,14 +1,14 @@
 #!/live/bin/sh
 
 ### BEGIN INIT INFO
-# Provides:         live-vcard-menu
+# Provides:         live-vcard
 # Required-Start:
 # Required-Stop:
 # Should-Start:
 # Should-Stop:
 # Default-Start:     S
 # Default-Stop:
-# Short-Description: present menu to select a video card
+# Short-Description: select a video card
 # Description:       present menu to select a video card
 ### END INIT INFO
 
@@ -17,8 +17,10 @@ export PATH=/sbin:/usr/sbin:/bin:/usr/bin:/usr/local/bin:/live/bin
 
 test -d /live/config/tsplash && DO_TSPLASH=true
 
-vcard_conf_file=/live/config/vcard-menu
+ vcard_conf_file="/live/config/vcard-cmd"
 XORG_BUS_ID_FILE="/etc/X11/xorg-bus-id"
+    DISABLE_FILE="/lib/modprobe.d/video-card-disable.conf"
+    #DISABLE_FILE="/live/test/video-card-disable.conf"
 
 . /live/lib/live-init-utils.sh
 start_init_logging
@@ -36,70 +38,107 @@ main() {
 
 do_start() {
 
-    local mode=$(cat $vcard_conf_file 2>/dev/null)
-    # sanity check
-    case $mode in
-          ""|off) return         ;;
-              on)                ;;
-           force) FORCE=true     ;;
+    # allow easier testing
+    : ${VCARD_MODE:=$(cat $vcard_conf_file 2>/dev/null)}
 
-               *) echo_live "Uknown vcard_menu mode %s" "$(pquote "$mode")"
-                          return ;;
+    # sanity check
+    case $VCARD_MODE in
+          ""|off) return           ;;
+              on)                  ;;
+            menu) DO_FORCE=true    ;;
+           clear) DO_CLEAR=true    ;;
+               *) echo_live "Uknown vcard mode %s" "$(pquote "$VCARD_MODE")"
+                  return           ;;
     esac
 
-    echo_script "Video card selection menu" $0
+    tsplash_only_clear
+    echo_script "Video card selection" $0
 
     local LSPCI_GRAPHICS=$(lspci_graphics -nn)
     local card_cnt=$(echo "$LSPCI_GRAPHICS" | wc -l)
     local intel_cnt=$(echo "$LSPCI_GRAPHICS" | grep " \[8086:" |  wc -l)
-    echo_live "Found %s Graphics devices"        "$(pquote $card_cnt)"
-    echo_live "found %s Intel Graphics devices"  "$(pquote  $intel_cnt)"
+    echo_plural "$card_cnt"  "Found %s Graphics device"       "Found %s Graphics devices"
+    echo_plural "$intel_cnt" "Found %s Intel Graphics device" "Found %s Intel Graphics devices"
 
-    local card_id  bus_id=$(cat $XORG_BUS_ID_FILE 2>/dev/null)
-    if false && [ -n "$bus_id" ]; then
+    if [ $intel_cnt -eq 1 -a $card_cnt -gt 1 ]; then
+        if check_switcheroo; then
+            echo_live "Detected Hybrid Graphics"
+            IS_HYBRID=true
+        else
+            echo_live "Switcheroo not found"
+        fi
+    fi
+
+    local id_card  bus_id=$(cat $XORG_BUS_ID_FILE 2>/dev/null)
+
+    if [ -n "$bus_id" ]; then
         id_card=$(get_card "$bus_id")
 
         if [ -z "$id_card" ]; then
-            echo_live "Found bus-id %s but did not find associated card" "$(pquote $bus_id)"
+            echo_live "Found stored bus-id %s but did not find associated card" "$(pquote $bus_id)"
+            clear_bus_id
         else
             echo_live "Currently selected video card"
             echo_live '  %s' "$(pquote "$id_card")"
-
             XORG_BUS_ID=$bus_id
         fi
     fi
 
-    if ! force; then
-        if [ $card_cnt -lt 1 ]; then
+    if [ "$DO_CLEAR" ]; then
+        clear_bus_id
+        clear_disable
+
+    elif force; then
+        echo_live "Video Card Menu forced"
+
+    else
+        if [ "$IS_HYBRID" ]; then
+            disable_non_intel
+            return 0
+
+        elif [ $card_cnt -lt 1 ]; then
             echo_live "No video cards found"
             return 0
-        fi
 
-        if [ $intel_cnt -eq 1 -a $card_cnt -gt 1 ]; then
-            echo_live "Default to using Intel card"
-            local intel_id=$(echo "$LSPCI_GRAPHICS" | grep " \[8086:" | cut -d" " -f1)
-            get_card $intel_id
-            echo_live FIXME
-        fi
-    else
+        elif [ -n "$XORG_BUS_ID" ]; then
+            echo_live "Found existing bus-id file"
+            return 0
 
-        echo_live "Graphics Card Menu forced"
+        elif [ -e "DISABLE_FILE" ]; then
+            echo_live "Found existing disable drivers file"
+            return 0
+        fi
     fi
 
-    # Don't run menu if we already created a valid xorg-bus-id file
-    ! force && [ -n "$XORG_BUS_ID" ] && return
     set_colors
 
     echo
-    [ "$DO_TSPLASH" ] && tsplash_clear
+    tsplash_clear
+
     echo "$m_co$bar80$nc_co"
 
     video_card_menu "$LSPCI_GRAPHICS"
 
-    local new_card=$(get_card "$NEW_BUS_ID")
-    if [ -n "$new_card" ]; then
-        echo_live "Newly selected video card"
-        echo_live '  %s' "$(pquote "$new_card")"
+    bus_id=
+    case $NEW_BUS_ID in
+        quit)  say "Not selecting a video card"                     ;;
+        delete:$XORG_BUS_ID_FILE) clear_bus_id                      ;;
+        delete:$DISABLE_FILE)     clear_disable                     ;;
+        delete-all)               clear_bus_id ; clear_disable      ;;
+            [0-9]*) bus_id=$NEW_BUS_ID                              ;;
+                 *) fatal "internal menu error on %s" "$NEW_BUS_ID" ;;
+    esac
+
+    if [ -n "$bus_id" ]; then
+        local new_card=$(get_card "$bus_id")
+
+        if [ -z "$new_card" ]; then
+            echo_live "Cound not find card with bus-id %s" "$(pquote $bus_id)"
+        else
+            echo_live "Newly selected video card"
+            echo_live '  %s' "$(pquote "$new_card")"
+            write_bus_id $bus_id
+        fi
     fi
 
     #. the "Enter" key
@@ -113,31 +152,20 @@ do_start() {
     local xxx
     read xxx
 
-    echo
+    echo >> $INIT_LOG_FILE
     echo "$m_co$bar80$nc_co"
     echo
 
-    if [ "$DO_TSPLASH" ]; then
+    if tsplash_enabled; then
         #/live/bin/tell-tsplash alert "$(printf "Using card %s" "$new_card")"
         tsplash-on
     fi
-
-    [ "$NEW_BUS_ID" = "$XORG_BUS_ID" ] && return
-
-    # Send it as a cmdline parameter to live-init
-    echo "xorg=busid=$NEW_BUS_ID" >> /live/config/cmdline2
 }
 
 #------------------------------------------------------------------------------
 # Select a video card bus_id based on the names
 #------------------------------------------------------------------------------
 video_card_menu() {
-    local card_cnt=$(echo "$LSPCI_GRAPHICS" | wc -l)
-
-    case $card_cnt in
-        0) say "No video cards found"      ; return ;;
-        #1) say "Only one video card found" ; return ;;
-    esac
 
     local disp_fmt="$green %2s)$m_co %s$nc_co"
     local cnt=1  bus_id  text  data  disp
@@ -151,16 +179,32 @@ video_card_menu() {
 $(munge_lspci "$LSPCI_GRAPHICS")
 Lspci_nn
 
+    local file bold_fmt="$green %%2s)${yellow} %s$nc_co"
+    local del_fmt=$(printf "$bold_fmt"       "Delete file %s")
+    local del_all_fmt=$(printf "$bold_fmt"   "Delete all %s files")
+    local quit_fmt=$(printf "$bold_fmt"      "Quit")
+
+    local found_cnt=0
+    for file in $DISABLE_FILE $XORG_BUS_ID_FILE; do
+        test -e $file || continue
+        data="${data}$cnt:delete:$file\n"
+        disp="$disp$(printf "$del_fmt" "$cnt" "$(pq "$file")")\n"
+        cnt=$((cnt + 1))
+        found_cnt=$((found_cnt + 1))
+    done
+
+    if [ $found_cnt -gt 1 ]; then
+        data="${data}$cnt:delete-all\n"
+        disp="$disp$(printf "$del_all_fmt" "$cnt" "$(pq "$found_cnt")")\n"
+        cnt=$((cnt + 1))
+    fi
+
     data="${data}0:quit\n"
-    disp="$disp$(printf "$disp_fmt" "0" "quit")\n"
+    disp="$disp$(printf "$quit_fmt" "0")\n"
 
     local new_bus_id  title="Please select a video card to use"
     my_select_2 "$title" new_bus_id "0" "$data" "$disp"
 
-    if [ "$new_bus_id" = "quit" ]; then
-        say "Not selecting a video card"
-        return
-    fi
     NEW_BUS_ID=$new_bus_id
 }
 
@@ -193,9 +237,15 @@ get_card() {
 #------------------------------------------------------------------------------
 lspci_graphics() {
     #lspci "$@"
-    local test=/live/test/lspci-nn
-    if test -e $test; then
-        cat $test
+    local file  dir=/live/test
+    case $1 in
+        -nn) file=$dir/lspci-nn ;;
+    -nk|-kn) file=$dir/lspci-nk ;;
+    esac
+
+    if [ -n "$file" ] && test -e $file; then
+        echo "found $file" > /dev/null
+        cat $file
         return
     fi
 
@@ -204,6 +254,159 @@ lspci_graphics() {
     lspci -D -d::0302 "$@"
     lspci -D -d::0390 "$@"
 }
+
+#------------------------------------------------------------------------------
+# Disable modeset for non-intel video drivers
+#------------------------------------------------------------------------------
+disable_non_intel() {
+    local intel_id=$(echo "$LSPCI_GRAPHICS" | grep " \[8086:" | cut -d" " -f1)
+
+    find_other_graphics_drivers "$intel_id"
+    local to_disable=$(set_minus "$OTHER_DRIVERS" "$MY_DRIVERS")
+    # echo "my drivers:"
+    # echo "$MY_DRIVERS"
+    # echo "     other:"
+    # echo "$OTHER_DRIVERS"
+
+    if [ -z "$to_disable" ]; then
+        echo_live "Did not find any other video drivers to disable"
+        return
+    fi
+    disable_drivers "$to_disable"
+}
+
+#------------------------------------------------------------------------------
+# Uses grep but no tempfile or comm.
+#------------------------------------------------------------------------------
+set_minus() {
+    local a=$1  b=$2
+    local regex=$(echo "$b" | tr -s '\n '  '|'  )
+    echo "$a" | grep -vE "^(${regex%|})$"
+}
+
+#------------------------------------------------------------------------------
+# Find graphics drivers for all devices except the one given.
+#------------------------------------------------------------------------------
+find_other_graphics_drivers() {
+    local my_id=$1  line id  prev_id  drivers my_drivers
+    unset MY_DRIVERS  OTHER_DRIVERS
+
+    while read line; do
+        [ -z "$line" ] && continue
+
+        # If the line starts with a digit ...
+        if [ -z "${line##[0-9]*}" ]; then
+            id=$(echo "$line" | cut -d" " -f1)
+            [ -z "$id" ] && continue
+            if [ -z "$prev_id" ]; then
+                prev_id=$id
+                continue
+            fi
+
+            add_drivers "$my_id" "$prev_id" "$drivers"
+
+            prev_id=$id
+            drivers=
+
+        else
+            d=$(echo "$line" | sed -n -r "s/^(Kernel driver in use|Kernel modules): //p")
+            [ -n "$d" ] && drivers="$drivers$d\n"
+        fi
+    done<<Lspci_k
+$(lspci_graphics -nk)
+Lspci_k
+
+    if [ -n "$prev_id" -a -n "$drivers" ]; then
+        add_drivers "$my_id" "$prev_id" "$drivers"
+    fi
+    OTHER_DRIVERS=$(echo -e "$OTHER_DRIVERS" | tr -s ', ' '\n' | sort -u)
+       MY_DRIVERS=$(echo -e "$MY_DRIVERS"    | tr -s ', ' '\n' | sort -u)
+}
+
+#------------------------------------------------------------------------------
+#
+#------------------------------------------------------------------------------
+add_drivers() {
+    local my_id=$1  prev_id=$2  drivers=$(echo "$3" | tr -s ', ' '\n')
+    #echo "$my_id  $prev_id"
+    if [ "$prev_id" = "$my_id" ]; then
+        MY_DRIVERS="$my_drivers$drivers\n"
+    else
+        OTHER_DRIVERS="$other_drivers$drivers\n"
+    fi
+}
+
+#------------------------------------------------------------------------------
+# create file to disable modesetting for the listed modules
+#------------------------------------------------------------------------------
+disable_drivers() {
+    local file="$DISABLE_FILE"
+    [ -z "$*" ] && return
+
+    echo_live "disabling modeset for %s" "$(pquote $*)"
+    echo_live "%s in file %s" "..." "$(pquote "$file")"
+    cat > $file <<No_Mode_Set
+#-----------------------------------------------------------------------------
+# file: $file
+# disble modesetting for the following modules
+#-----------------------------------------------------------------------------
+
+$(no_mode_set_lines $*)
+No_Mode_Set
+}
+
+#------------------------------------------------------------------------------
+# Helper for making the no-mode-set.conf file above
+#------------------------------------------------------------------------------
+no_mode_set_lines() {
+    local mod
+    for mod; do
+        echo "options $mod modeset=0"
+    done
+}
+
+#------------------------------------------------------------------------------
+# See if switcheroo is available to detech hybrid graphics
+#------------------------------------------------------------------------------
+check_switcheroo() {
+    #return 0
+    local umount  debug_dir="/sys/kernel/debug"
+    if ! mountpoint -q "$debug_dir"; then
+        mount -t debugfs debugfs "$debug_dir"
+        mountpoint -q "$debug_dir" || return 1
+        umount=true
+    fi
+
+    test -d $debug_dir/switcheroo
+    local ret=$?
+    [ "$umount" ] && umount $debug_dir
+    return $ret
+}
+
+#------------------------------------------------------------------------------
+#
+#------------------------------------------------------------------------------
+write_bus_id() {
+    local bus_id=$1  file=$XORG_BUS_ID_FILE
+    echo_live "Writing %s to file %s" "$(pquote $bus_id)" "$(pquote $file)"
+    echo $bus_id > $file
+}
+#------------------------------------------------------------------------------
+#
+#------------------------------------------------------------------------------
+clear_bus_id()  { clear_file "$XORG_BUS_ID_FILE" "bus-id"; }
+clear_disable() { clear_file "$DISABLE_FILE"     "disable drivers"; }
+
+#------------------------------------------------------------------------------
+#
+#------------------------------------------------------------------------------
+clear_file() {
+    local file=$1  type=$2
+    test -f "$file" || return
+    echo_live "Clearing %s file %s" "$(pquote $type)"  "$(pquote "$file")"
+    rm -f  "$file"
+}
+
 
 #==============================================================================
 # Code below taken from select-device-2 test script
@@ -250,6 +453,17 @@ my_select_2() {
     done
 }
 
+
+#------------------------------------------------------------------------------
+#
+#------------------------------------------------------------------------------
+echo_plural() {
+    local cnt=$1
+    case $cnt in
+        1) echo_live "$2" "$(pquote $cnt)" ;;
+        *) echo_live "$3" "$(pquote $cnt)" ;;
+    esac
+}
 
 db_msg() { vmsg 5 "${green}db+:$hi_co $@" ;}
 err()    { vmsg 1 "$err_co$@"             ;}
@@ -344,8 +558,11 @@ set_colors() {
      num_co=$white
 }
 
+#------------------------------------------------------------------------------
+#
+#------------------------------------------------------------------------------
 tsplash_clear() {
-    [ "$DO_TSPLASH" ] || return
+    tsplash_enabled || return
 
     if [ -z "$TSPLASH_CLEARED" ]; then
         clear
@@ -355,7 +572,21 @@ tsplash_clear() {
     chvt 1
 }
 
-force() { [ "$FORCE" ] ; return $?; }
+#------------------------------------------------------------------------------
+#
+#------------------------------------------------------------------------------
+tsplash_only_clear() {
+    tsplash_enabled || return
+    if [ -z "$TSPLASH_CLEARED" -a -z "$NO_CLEAR" ]; then
+        clear
+        echo 'tsplash clear' >> $MY_LOG
+        sleep .1
+        TSPLASH_CLEARED=true
+    fi
+}
+
+tsplash_enabled() { [ "$DO_TSPLASH" ] ; return $?; }
+force()           { [ "$DO_FORCE"   ] ; return $?; }
 
 main "$@" 2>&1 | tee -a $INIT_LOG_FILE
 
