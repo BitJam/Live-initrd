@@ -496,7 +496,6 @@ vmsg() {
     msg=$(printf "$m_co$fmt$nc_co" "$@")
 
     [ "$level" -le "$VERBOSE" ] && printf "$msg\n"
-    echo -e "$msg" >> $MY_LOG
     return 0
 }
 
@@ -513,7 +512,6 @@ vmsgN() {
     msg=$(printf "$m_co$fmt$nc_co" "$@")
 
     [ "$level" -le "$VERBOSE" ] && printf "$msg"
-    echo -ne "$msg" >> $MY_LOG
     return 0
 }
 
@@ -579,7 +577,6 @@ tsplash_only_clear() {
     tsplash_enabled || return
     if [ -z "$TSPLASH_CLEARED" -a -z "$NO_CLEAR" ]; then
         clear
-        echo 'tsplash clear' >> $MY_LOG
         sleep .1
         TSPLASH_CLEARED=true
     fi
