@@ -95,6 +95,7 @@ do_start() {
     else
         if [ "$IS_HYBRID" ]; then
             disable_non_intel
+            clear_bus_id
             return 0
 
         elif [ $card_cnt -lt 2 ]; then
