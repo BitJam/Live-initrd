@@ -150,9 +150,7 @@ KMS_VIDEO_MODULES="amdgpu,analogix-anx78xx,ast,bochs-drm,ch7006,cirrus,gma500_gf
 
        TSPLASH_TTY=10
             MY_TTY=1
-
-# could be "off" "on" "menu" or "clear"
-VCARD_CMD_DEFAULT="on"
+   VCARD_CONF_FILE="/live/config/vcard-cmd"
 
     #           HUP INT QUIT SEGV TERM
     SIGNAL_LIST="1   2   3    11   15"
@@ -614,11 +612,7 @@ main_core() {
     # FIXME: do this after copy_xtra for easy testing (for now) (????)
     PROC_CMDLINE=$(cat /live/config/proc-cmdline)
 
-    case $VCARD_CMD in
-                  off)                                                             ;;
-        on|menu|clear) echo $VCARD_CMD > /live/config/vcard-cmd                    ;;
-                    *) warn "Unexpected %s value %s" "$(pqw vcard)" "$(VCARD_CMD)" ;;
-    esac
+    prep_vcard $VCARD_CMD
 
     [ "$DO_MENUS" ] && do_late_menus
     echo "$PROC_CMDLINE" > /live/config/proc-cmdline
@@ -1002,12 +996,6 @@ read_cmdline_params()
     case $CMD_VGA in
         ask+save) GFX_SAVE=both ; BOOT_SAVE=true ;;
     esac
-
-    # Enable vcard menu from menus=*v* unless it was set explicitly
-    if [ -n "$DO_MENUS" -a -z "${DO_MENUS##*v*}" ]; then
-        : ${VCARD_CMD:=on}
-    fi
-    : ${VCARD_CMD:=$VCARD_CMD_DEFAULT}
 }
 
 #------------------------------------------------------------------------------
@@ -6021,6 +6009,25 @@ copy_xtra() {
 
     test -e $r_dir/xtra && return
     test -d $r_dir && test -d $x_dir && log_cmd ln -s $x_dir $r_dir/xtra
+}
+
+#------------------------------------------------------------------------------
+#
+#------------------------------------------------------------------------------
+prep_vcard() {
+    local vcard_cmd=$1  file=$VCARD_CONF_FILE
+    local vcard_cnt=$(lspci | grep "Class 03" | wc -l)
+    case $vcard_cnt in
+        0) msg "Found no video display devices"                    ;;
+        1) msg "Found one video display device"                    ;;
+        *) msg "Found %s video display devices" "$(nq $vcard_cnt)" ;;
+    esac
+
+    case $vcard_cmd in
+                   on|"") [ $vcard_cnt -gt 1 ] && touch $file                         ;;
+          off|menu|clear) echo $vcard_cmd > $file                                     ;;
+                       *) warn "Unexpected %s value %s" "$(pqw vcard)" "$(vcard_cmd)" ;;
+    esac
 }
 
 #------------------------------------------------------------------------------
