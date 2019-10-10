@@ -575,6 +575,7 @@ extra_cmdline_params() {
             nouveau.modeset=0) continue ;;
                  mk_swap_file) continue ;;
                mk_swap_file=*) continue ;;
+                      vcard=*) continue ;;
         esac
         case " $ALL_MENU_PARAMS " in
             *" ${param%%=*} "*) ;;

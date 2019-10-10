@@ -191,6 +191,7 @@ gather_params() {
                       desktop=*)          ;;
                    mk_swap_file)          ;;
                  mk_swap_file=*)          ;;
+                        vcard=*)          ;;
                               *) out=$out${out:+ }$p ;;
         esac
     done
