@@ -17,10 +17,14 @@ export PATH=/sbin:/usr/sbin:/bin:/usr/bin:/usr/local/bin:/live/bin
 
 test -d /live/config/tsplash && DO_TSPLASH=true
 
- vcard_conf_file="/live/config/vcard-cmd"
+ VCARD_CONF_FILE="/live/config/vcard-cmd"
 XORG_BUS_ID_FILE="/etc/X11/xorg-bus-id"
     DISABLE_FILE="/lib/modprobe.d/video-card-disable.conf"
     #DISABLE_FILE="/live/test/video-card-disable.conf"
+VIDEO_TWEAKS_FILE="/live/config/video-tweaks"
+
+# Save machine-state file from previous boots
+  VCARD_MODE_FILE="/var/lib/live-mstate/vcard-mode"
 
 . /live/lib/live-init-utils.sh
 start_init_logging
@@ -37,22 +41,31 @@ main() {
 }
 
 do_start() {
+    # for testing
 
-    # allow easier testing
-    : ${VCARD_MODE:=$(cat $vcard_conf_file 2>/dev/null)}
+    local vcard_mode=${VCARD_MODE:-$(cat $VCARD_CONF_FILE 2>/dev/null)}
 
-    # sanity check
-    case $VCARD_MODE in
-          ""|off) return           ;;
-              on)                  ;;
-            menu) DO_FORCE=true    ;;
-           clear) DO_CLEAR=true    ;;
-               *) echo_live "Uknown vcard mode %s" "$(pquote "$VCARD_MODE")"
-                  return           ;;
-    esac
+    # Default to saved command
+    local saved_mode=$(cat $VCARD_MODE_FILE 2>/dev/null)
+    : ${vcard_mode:=$saved_mode}
+
+    # Then default to "on"
+    : ${vcard_mode:=on}
 
     tsplash_only_clear
     echo_script "Video card selection" $0
+
+    save_vcard_mode "$vcard_mode" "$saved_mode"
+
+    # sanity check
+    case $vcard_mode in
+             off) return           ;;
+              on)                  ;;
+            menu) DO_FORCE=true    ;;
+           clear) DO_CLEAR=true    ;;
+               *) echo_live "Uknown vcard mode %s" "$(pquote "$vcard_mode")"
+                  return           ;;
+    esac
 
     local LSPCI_GRAPHICS=$(lspci_graphics -nn)
     local card_cnt=$(echo "$LSPCI_GRAPHICS" | wc -l)
@@ -60,9 +73,10 @@ do_start() {
     echo_plural "$card_cnt"  "Found %s Video device"       "Found %s Video devices"
     echo_plural "$intel_cnt" "Found %s Intel Video device" "Found %s Intel Video devices"
 
-    if [ $intel_cnt -eq 1 -a $card_cnt -gt 1 ]; then
+    if [ $intel_cnt -eq 1 -a $card_cnt -eq 2 ]; then
         #if check_switcheroo; then
             echo_live "Detected possible Hybrid Graphics"
+            video_tweak "Detected possible Hybrid Graphics"
             IS_HYBRID=true
         #else
         #    echo_live "Switcheroo not found"
@@ -374,6 +388,33 @@ no_mode_set_lines() {
         echo "options $mod modeset=0"
     done
 }
+
+
+#------------------------------------------------------------------------------
+#  Save the vcard=xxxx mode but only if it's "off" (for now)
+#------------------------------------------------------------------------------
+save_vcard_mode() {
+    local vcard_mode=$1  saved_mode=$2  file=$VCARD_MODE_FILE  new_save
+    [ "$vcard_mode" = "$saved_mode" ] && return
+
+    case $vcard_mode in
+        off) new_save=$vcard_mode ;;
+    esac
+    if [ -n "$new_save" ]; then
+        echo_live "Saving vcard mode %s in %s" "$(pquote $new_save)" "$(pquote $file)"
+        mkdir -p $(dirname $file)
+        echo $new_save > $file
+    else
+        echo_live "Removing file %s" "$(pquote $file)"
+        rm -f $file
+    fi
+}
+
+
+#------------------------------------------------------------------------------
+# Let people know if this is special hardware
+#------------------------------------------------------------------------------
+video_tweak() { echo "$*" >> $VIDEO_TWEAKS_FILE ; }
 
 #------------------------------------------------------------------------------
 # See if switcheroo is available to detech hybrid graphics
