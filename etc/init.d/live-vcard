@@ -207,7 +207,7 @@ Lspci_nn
     local file bold_fmt="$green %%2s)${yellow} %s$nc_co"
     local del_fmt=$(printf "$bold_fmt"       "Delete file %s")
     local del_all_fmt=$(printf "$bold_fmt"   "Delete all %s files")
-    local quit_fmt=$(printf "$bold_fmt"      "Quit")
+    local quit_fmt=$(printf "$bold_fmt"      "Quit/disable")
 
     local found_cnt=0
     for file in $DISABLE_FILE $XORG_BUS_ID_FILE; do
