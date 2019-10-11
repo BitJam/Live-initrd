@@ -56,6 +56,7 @@ do_start() {
     echo_script "Video card selection" $0
 
     save_vcard_mode "$vcard_mode" "$saved_mode"
+    saved_mode=$vcard_mode
 
     # sanity check
     case $vcard_mode in
@@ -144,6 +145,13 @@ do_start() {
             [0-9]*) bus_id=$NEW_BUS_ID                              ;;
                  *) fatal "internal menu error on %s" "$NEW_BUS_ID" ;;
     esac
+
+    # If the choose delete or quit/disable then remember that decision by
+    # setting the rememebered state to "off"
+    case $NEW_BUS_ID in
+        quit|delete:*) save_vcard_mode 'off' "$saved_mode" ;;
+    esac
+
 
     if [ -n "$bus_id" ]; then
         local new_card=$(get_card "$bus_id")
