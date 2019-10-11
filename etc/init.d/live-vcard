@@ -262,14 +262,14 @@ get_card() {
 #------------------------------------------------------------------------------
 lspci_graphics() {
     #lspci "$@"
-    local file  dir=/live/test
+    local file  dir=/live/boot-dev/test
     case $1 in
         -nn) file=$dir/lspci-nn ;;
     -nk|-kn) file=$dir/lspci-nk ;;
     esac
 
     if [ -n "$file" ] && test -e $file; then
-        echo "found $file" > /dev/null
+        #echo "found $file" >&2
         cat $file
         return
     fi
