@@ -6026,9 +6026,14 @@ copy_xtra() {
         msg 'Copy xtra file(s) from %s' "$(fq "$live_xtra")"
 
         # Copy into the antiX/xtra dir if we can,
-    # otherwise copy directly to the aufs from the initrd
-        if remasterable; then mkdir -p "$xtra_dir" (cd "$live_xtra" && tar cf -
-            *) | tar x -C "$xtra_dir" else xtra_dir="$live_xtra" fi fi
+        # otherwise copy directly to the aufs from the initrd
+        if remasterable; then
+            mkdir -p "$xtra_dir"
+            (cd "$live_xtra" && tar cf - *) | tar x -C "$xtra_dir"
+        else
+            xtra_dir="$live_xtra"
+        fi
+    fi
 
     [ -d "$xtra_dir" ] || return
 
