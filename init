@@ -2420,6 +2420,9 @@ find_crypt_or_linuxfs() {
     BOOT_UUID=$CRYPT_UUID
 
     tsplash_clear
+
+    mkdir -p /run/cryptsetup
+
     msg "Checking for encrypted partition on device %s ..." "$crypt_dev"
 
     test -e "$crypt_dev" || fatal "Encrypted device %s does not exist"                 "$(dqe $crypt_dev)"
