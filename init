@@ -5997,6 +5997,16 @@ copy_xtra() {
         gunzip -c "$tarball" | tar x -C $NEW_ROOT/
     fi
 
+    local live_xtra='/live/xtra'
+
+    if  [ -d "$live_xtra" -a ! -d "$xtra_dir" ]; then
+        msg 'Copy xtra file(s) from %s' "$(fq "$live_xtra")"
+
+        # Copy into the antiX/xtra dir if we can,
+    # otherwise copy directly to the aufs from the initrd
+        if remasterable; then mkdir -p "$xtra_dir" (cd "$live_xtra" && tar cf -
+            *) | tar x -C "$xtra_dir" else xtra_dir="$live_xtra" fi fi
+
     [ -d "$xtra_dir" ] || return
 
     local list=$(ls $xtra_dir)
