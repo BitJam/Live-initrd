@@ -2439,7 +2439,7 @@ find_crypt_or_linuxfs() {
     fi
 
     warn "Found encrypted device.  You will be asked to enter your passphrase below."
-    cttyhack cryptsetup open --type luks $crypt_dev $LUKS_NAME || fatal "Could not open LUKS device %s" $crypt_dev
+    cttyhack cryptsetup open $crypt_dev $LUKS_NAME || fatal "Could not open LUKS device %s" $crypt_dev
     local mapper_dev=/dev/mapper/$LUKS_NAME
     msg "Opened encrypted device %s at %s" "$crypt_dev" "$mapper_dev"
     try_mount "$mapper_dev" "$BOOT_MP" || fatal_dmesg "Could not mount encrypted device"
@@ -2471,7 +2471,7 @@ change_passphrase() {
         echo -n "> "
         read old
         echo -n "$old" > $file
-        cryptsetup open --type luks --test-passphrase --key-file $file $dev &>/dev/null && break
+        cryptsetup open --test-passphrase --key-file $file $dev &>/dev/null && break
 
         warn "The entered passphrase does not match"
         YES_no "Do you want to try again?" && continue
@@ -2504,7 +2504,7 @@ reset_passphrase() {
         return 1
     fi
 
-    if ! cryptsetup open --type luks --test-passphrase --key-file $file $dev &>/dev/null; then
+    if ! cryptsetup open --test-passphrase --key-file $file $dev &>/dev/null; then
         warn "Reset aborted: wrong passphrase in passphrase file"
         return 2
     fi
