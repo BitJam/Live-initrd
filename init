@@ -2429,6 +2429,8 @@ find_crypt_or_linuxfs() {
     test -b "$crypt_dev" || fatal "Encrypted device %s is not a block device"          "$(dqe $crypt_dev)"
     cryptsetup isLuks "$crypt_dev" || fatal "Encrypted device %s is not a LUKS device" "$(dqe $crypt_dev)"
 
+    #check_luks_version "$crypt_dev"
+
     mount -o remount,rw $BIOS_DEV
 
     local phrase_full=$BIOS_MP/$boot_dir/$PHRASE_FNAME
@@ -2454,6 +2456,27 @@ find_crypt_or_linuxfs() {
         local xxxx
         read xxxx
     fi
+}
+
+#------------------------------------------------------------------------------
+# Note: od is giving us leading whitespace which I remove with echo
+# FIXME: busybox od does not have the --endian optiont
+#------------------------------------------------------------------------------
+check_luks_version() {
+    local part=$1
+
+    if ! test -b "$part"; then
+        warn "Encrypted partition %s is not a block device" "$(pqw $part)"
+        return 1
+    fi
+    local luks=$(echo $(dd status=none if=$part bs=1 count=4 | od -An -t x4 --endian=big))
+    if [ "$luks" != '4c554b53' ]; then
+        warn "%s does not look like a Luks partition.  Found %s" "$(pqw $part)" "$(pqw $luks)"
+        return 2
+    fi
+    local type=$(echo $(dd status=none if=$part bs=1 skip=6 count=2 | od -An -t x2 --endian=big))
+    msg "Luks type  %s" "$(nq $(printf "%d" "0x$type"))"
+    return 0
 }
 
 #------------------------------------------------------------------------------
