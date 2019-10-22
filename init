@@ -800,7 +800,7 @@ read_cmdline_params()
                         splasht) DO_TSPLASH=Z                                    ;;
                       splasht=*) DO_TSPLASH=$value                               ;;
                       console=*) CMD_MY_TTY=${value#tty}                         ;;
-                        tty1off) TTY1_OFF=true                                   ;;
+                 notty1|tty1off) TTY1_OFF=true                                   ;;
                       CONSOLE=*) CMD_MY_TTY=${value#tty}                         ;;
                        poweroff) poweroff -f -n                                  ;;
                          reboot) reboot -f -n                                    ;;
